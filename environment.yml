@@ -1,0 +1,13 @@
+name: klay-beam
+
+channels:
+  - defaults
+
+dependencies:
+  - pip
+  - python=3.8
+  - ffmpeg=4.4
+  - pytorch::pytorch=2.0.0
+  - pytorch::torchaudio=2.0.0
+  - pip:
+    - -e '.[code-style, tests, type-check]'
