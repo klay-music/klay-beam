@@ -18,10 +18,7 @@ output_1 = "/Users/charles/projects/klay/python/klay-beam/output/{}.mp3"
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--input",
-        dest="input",
-        default=input_1,
-        help="Input files (glob) to process."
+        "--input", dest="input", default=input_1, help="Input files (glob) to process."
     )
     parser.add_argument(
         "--output",
@@ -46,7 +43,6 @@ def run():
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
-
         readable_files = (
             p
             # MatchFiles produces a PCollection of FileMetadata objects
@@ -55,9 +51,8 @@ def run():
             | beam.io.fileio.ReadMatches()
         )
 
-        audio_elements = (
-            readable_files
-            | "Load audio with pytorch" >> beam.ParDo(LoadWithTorchaudio())
+        audio_elements = readable_files | "Load audio with pytorch" >> beam.ParDo(
+            LoadWithTorchaudio()
         )
 
         # Write each file to an mp3. Note the ungodly lambda function, which
@@ -65,8 +60,21 @@ def run():
         # tuple.
         (
             audio_elements
-            | "Creating (filename, tensor, sr) tuples" >> beam.Map(lambda x: (known_args.output.format(pathlib.Path(x[0]).name), x[2], x[3]))
-            | "Convert to (filename, mp3_blob) tuples" >> beam.Map(lambda x: (x[0], numpy_to_mp3(x[1].numpy().transpose().reshape(-1, 2), x[2])))
+            | "Creating (filename, tensor, sr) tuples"
+            >> beam.Map(
+                lambda x: (
+                    known_args.output.format(pathlib.Path(x[0]).name),
+                    x[2],
+                    x[3],
+                )
+            )
+            | "Convert to (filename, mp3_blob) tuples"
+            >> beam.Map(
+                lambda x: (
+                    x[0],
+                    numpy_to_mp3(x[1].numpy().transpose().reshape(-1, 2), x[2]),
+                )
+            )
             | "Write mp3 files" >> beam.Map(write_file)
         )
 
@@ -74,11 +82,12 @@ def run():
         (
             audio_elements
             | "Get writable text" >> beam.Map(lambda x: "{}\t({})".format(x[0], x[1]))
-            | "Log to local file" >> beam.io.WriteToText(
-                "out.txt", # hard coded for now
-                append_trailing_newlines=True
+            | "Log to local file"
+            >> beam.io.WriteToText(
+                "out.txt", append_trailing_newlines=True  # hard coded for now
             )
         )
+
 
 if __name__ == "__main__":
     run()
