@@ -4,7 +4,9 @@ import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 
+# import klay_beam.audio
 from klay_beam.transforms import LoadWithTorchaudio
+from klay_beam.audio_util import numpy_to_mp3
 
 
 input_1 = "/Users/charles/Downloads/fma_large/005/0051*"
@@ -46,6 +48,12 @@ def run():
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam.io.fileio.ReadMatches()
             | "Load audio with pytorch" >> beam.ParDo(LoadWithTorchaudio())
+        )
+
+        # Write each file to an mp3
+        (
+            audio_elements
+            | "Creating mp3 files" >> beam.FlatMap(lambda x: (x[0], numpy_to_mp3(x[2].numpy(), x[3])))
         )
 
         # Log every processed filename to a local file

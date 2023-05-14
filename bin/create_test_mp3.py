@@ -1,5 +1,5 @@
 import torch
-from klay_beam.audio import numpy_to_mp3
+from klay_beam.audio_util import numpy_to_mp3
 
 def run():
     # create several seconds of random noise with a fade in

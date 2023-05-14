@@ -1,9 +1,6 @@
 import pathlib
 import apache_beam as beam
-import apache_beam.io.fileio
 import torchaudio
-import pydub
-import io
 
 class LoadWithTorchaudio(beam.DoFn):
     """Use torchaudio to load audio files to tensors
@@ -85,34 +82,3 @@ class LoadWithTorchaudio(beam.DoFn):
         key = ".".join(path.name.split(".")[1:])
 
         return [(id, key, audio_tensor, sr)]
-
-class WriteTorchaudio(beam.DoFn):
-    """Uses convert audio tensors to data.
-
-    This needs to write a file-like object in memory. Loading file-like objects
-    is supported by torchaudio (both sox_io and soundfile backends), but
-    torchaudio.save can only write to disk. As a result, we use pydub, which
-    uses ffmpeg.
-
-    For pytorch support see: https://pytorch.org/audio/stable/backend.html
-    For pydub docs see: https://github.com/jiaaro/pydub
-    """
-
-    def process(self, element):
-        id, key, audio_tensor, sr = element
-
-        # convert the audio tensor to an in-memory mp3 encoded file-like object using pydub
-
-        audio_data = audio_tensor.numpy()
-        audio_data *= 32767
-        audio_data = audio_data.astype(np.int16)
-        audio_data_mono = audio_data.mean(axis=1)
-        raw_audio_buffer = io.BytesIO(audio_data_mono.tobytes())
-
-        audio_segment = pydub.AudioSegment.from_raw(raw_audio_buffer, frame_rate=sr, channels=1, sample_width=2)
-
-        mp3_buffer = io.BytesIO()
-        audio_segment.export(mp3_buffer, format="mp3")
-        mp3_buffer.seek(0)
-
-        return [(id, key, mp3_buffer)]
