@@ -1,28 +1,33 @@
 import argparse
+import pathlib
 
 import apache_beam as beam
+import apache_beam.io.fileio
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 
 # import klay_beam.audio
-from klay_beam.transforms import LoadWithTorchaudio
-from klay_beam.audio_util import numpy_to_mp3
+from klay_beam.transforms import LoadWithTorchaudio, write_file, numpy_to_mp3
 
 
-input_1 = "/Users/charles/Downloads/fma_large/005/0051*"
+input_1 = "/Users/charles/Downloads/fma_large/005/0059*"
 input_2 = "gs://klay-datasets/char-lossless-50gb/The Beatles/**"
+output_1 = "/Users/charles/projects/klay/python/klay-beam/output/{}.mp3"
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--input", dest="input", default=input_1, help="Input files (glob) to process."
+        "--input",
+        dest="input",
+        default=input_1,
+        help="Input files (glob) to process."
     )
     parser.add_argument(
         "--output",
         dest="output",
-        default="out.txt",
-        help="Output file to log results to.",
+        default=output_1,
+        help="Output format.",
     )
     return parser.parse_known_args(None)
 
@@ -41,19 +46,28 @@ def run():
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
-        audio_elements = (
+
+        readable_files = (
             p
             # MatchFiles produces a PCollection of FileMetadata objects
             | beam.io.fileio.MatchFiles(known_args.input)
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam.io.fileio.ReadMatches()
+        )
+
+        audio_elements = (
+            readable_files
             | "Load audio with pytorch" >> beam.ParDo(LoadWithTorchaudio())
         )
 
-        # Write each file to an mp3
+        # Write each file to an mp3. Note the ungodly lambda function, which
+        # interleaves the audio channels, and creates a (filename, mp3_data)
+        # tuple.
         (
             audio_elements
-            | "Creating mp3 files" >> beam.FlatMap(lambda x: (x[0], numpy_to_mp3(x[2].numpy(), x[3])))
+            | "Creating (filename, tensor, sr) tuples" >> beam.Map(lambda x: (known_args.output.format(pathlib.Path(x[0]).name), x[2], x[3]))
+            | "Convert to (filename, mp3_blob) tuples" >> beam.Map(lambda x: (x[0], numpy_to_mp3(x[1].numpy().transpose().reshape(-1, 2), x[2])))
+            | "Write mp3 files" >> beam.Map(write_file)
         )
 
         # Log every processed filename to a local file
@@ -61,7 +75,7 @@ def run():
             audio_elements
             | "Get writable text" >> beam.Map(lambda x: "{}\t({})".format(x[0], x[1]))
             | "Log to local file" >> beam.io.WriteToText(
-                known_args.output,
+                "out.txt", # hard coded for now
                 append_trailing_newlines=True
             )
         )
