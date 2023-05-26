@@ -1,25 +1,18 @@
 import pathlib
 import io
+import packaging
 
 import apache_beam as beam
 from apache_beam.io import filesystems
 import torchaudio
 import pydub
+import soundfile as sf
 import numpy as np
 
 
-def numpy_to_mp3(audio_data: np.ndarray, sr: int, noisy=False):
-    """Convert the audio data to an in-memory mp3 encoded file-like object.
-
-    This needs to write a file-like object in memory. Loading file-like objects
-    is now supported by torchaudio (both sox_io and soundfile backends), but
-    torchaudio.save can only write to disk. As a result, we use pydub, which
-    invokes ffmpeg to write to memory.
-
-    For pytorch support see: https://pytorch.org/audio/stable/backend.html
-    For pydub docs see: https://github.com/jiaaro/pydub
-    """
-
+def numpy_to_pydub_audio_segment(
+    audio_data: np.ndarray, sr: int, bit_depth=16, noisy=False
+) -> pydub.AudioSegment:
     assert audio_data.ndim == 2, "audio_data must be 2 dimensional"
     channels, samples = audio_data.shape
 
@@ -39,21 +32,116 @@ def numpy_to_mp3(audio_data: np.ndarray, sr: int, noisy=False):
         2,
     ], f"PyDub only supports mono and stereo audio (found {channels} channels)"
 
-    audio_data = audio_data.T  # pydub expects interleaved audio
-    audio_data *= 2**15 - 1
-    # audio_data = audio_data.mean(axis=1)  # convert to mono
-    audio_data = audio_data.astype(np.int16)
+    # PuDub only supports 8 and 16 bit depth.
+    assert bit_depth in [8, 16], f"bit_depth must be 8 or 16 (found {bit_depth}))"
 
+    audio_data = audio_data.T  # pydub expects interleaved audio
+    audio_data *= 2 ** (bit_depth - 1) - 1  # scale to bit_depth.
+
+    np_type = None
+    sample_width = None
+    if bit_depth == 8:
+        np_type = np.int8
+        sample_width = 1
+    elif bit_depth == 16:
+        np_type = np.int16
+        sample_width = 2
+    else:
+        assert False, f"bit_depth must be 8, 16 (found {bit_depth}))"
+
+    audio_data = audio_data.astype(np_type)
     raw_audio_buffer = io.BytesIO(audio_data.tobytes())
 
     audio_segment = pydub.AudioSegment.from_raw(
-        raw_audio_buffer, frame_rate=sr, channels=channels, sample_width=2
+        raw_audio_buffer, frame_rate=sr, channels=channels, sample_width=sample_width
     )
 
-    mp3_buffer = io.BytesIO()
-    audio_segment.export(mp3_buffer, format="mp3")
-    mp3_buffer.seek(0)
-    return mp3_buffer
+    return audio_segment
+
+
+def numpy_to_mp3(
+    audio_data: np.ndarray,
+    sr: int,
+    noisy=False,
+    bitrate="256k",
+    intermediary_bit_depth=16,
+):
+    """Convert the audio data to an in-memory mp3 encoded file-like object.
+
+    This needs to write a file-like object in memory. Loading file-like objects
+    is now supported by torchaudio (both sox_io and soundfile backends), but
+    torchaudio.save can only write to disk. As a result, we use pydub, which
+    invokes ffmpeg to write to memory.
+
+    For pytorch support see: https://pytorch.org/audio/stable/backend.html
+    For pydub docs see: https://github.com/jiaaro/pydub
+    """
+    audio_segment = numpy_to_pydub_audio_segment(
+        audio_data, sr, noisy=noisy, bit_depth=intermediary_bit_depth
+    )
+
+    # create an in-memory file-like object to write to
+    in_memory_file_buffer = io.BytesIO()
+
+    # Encode the pydub.AudioSegment as an mp3 (in-memory).
+    #
+    # ```
+    # # Figure out which encoders are available (libmp3lame):
+    # ffmpeg -encoders | grep mp3
+    #
+    # # Identify supported bit-rates
+    # ffmpeg -h encoder=libmp3lame
+    # ```
+    audio_segment.export(in_memory_file_buffer, format="mp3", bitrate=bitrate)
+    in_memory_file_buffer.seek(0)
+    return in_memory_file_buffer
+
+
+def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
+    """Convert the audio data to an in-memory ogg encoded file-like object.
+
+    This function is not yet reliable due to feature gaps in pydub, ffmpeg,
+    pip's soundfile, and libsndfile.
+
+    For pydub, we need to ensure that the underlying ffmpeg command is compiled
+    with vorbis support. This is not the case when installing with `conda
+    install ffmpeg` on an Intel Mac in May 2023.
+
+    `pip install soundfile` also has buggy vorbis support. soundfile can only
+    reliably write ogg files when the underlying libsndfile is 1.2.0 or greater
+    You can check this with `soundfile.__libsndfile_version__`. For defails, see:
+    https://github.com/bastibe/python-soundfile/issues/130
+    """
+
+    current_version = packaging.version.parse(sf.__libsndfile_version__)
+    required_version = packaging.version.parse("1.2.0")
+
+    if safe:
+        assert (
+            current_version >= required_version
+        ), f"Out of date libsndfile. Found {current_version} but need {required_version} or greater."
+
+    in_memory_file_buffer = io.BytesIO()
+    sf.write(in_memory_file_buffer, audio_data.T, sr, subtype="VORBIS", format="OGG")
+    in_memory_file_buffer.seek(0)
+    return in_memory_file_buffer
+
+
+def numpy_to_wav(audio_data: np.ndarray, sr: int, bit_depth=16, noisy=False):
+    subtype = None
+    if bit_depth == 8:
+        subtype = "PCM_8"
+    elif bit_depth == 16:
+        subtype = "PCM_16"
+    elif bit_depth == 24:
+        subtype = "PCM_24"
+    else:
+        raise ValueError(f"bit_depth must be 8, 16, or 24 (found {bit_depth}))")
+
+    in_memory_file_buffer = io.BytesIO()
+    sf.write(in_memory_file_buffer, audio_data.T, sr, format="WAV", subtype=subtype)
+    in_memory_file_buffer.seek(0)
+    return in_memory_file_buffer
 
 
 def extract_wds_id_and_ext(readable_file):

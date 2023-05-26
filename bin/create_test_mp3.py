@@ -68,10 +68,6 @@ def run():
         found_error
     ), "Expected an assertion error when passing 4 channel audio to numpy_to_mp3"
 
-    with open("test_4ch.mp3", "wb") as out_file:
-        out_file.write(mp3_buffer.getvalue())
-        mp3_buffer.seek(0)
-
 
 if __name__ == "__main__":
     run()

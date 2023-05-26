@@ -9,5 +9,6 @@ dependencies:
   - ffmpeg=4.4
   - pytorch::pytorch=2.0.0
   - pytorch::torchaudio=2.0.0
+  - conda-forge::libsndfile>=1.2.0
   - pip:
     - -e '.[code-style, tests, type-check]'

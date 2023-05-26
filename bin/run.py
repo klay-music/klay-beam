@@ -7,12 +7,20 @@ from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 
 # import klay_beam.audio
-from klay_beam.transforms import LoadWithTorchaudio, write_file, numpy_to_mp3
+from klay_beam.transforms import (
+    LoadWithTorchaudio,
+    write_file,
+    numpy_to_mp3,
+    numpy_to_ogg,
+    numpy_to_wav,
+)
 
 
-input_1 = "/Users/charles/projects/fma_large/005/0059*"
+input_1 = "/Users/charles/projects/fma_large/005/00591*"
 input_2 = "gs://klay-datasets/char-lossless-50gb/The Beatles/**"
 output_1 = "/Users/charles/projects/klay/python/klay-beam/output/{}.mp3"
+output_2 = "/Users/charles/projects/klay/python/klay-beam/output/ogg/{}.ogg"
+output_3 = "/Users/charles/projects/klay/python/klay-beam/output/wav/{}.wav"
 
 
 def parse_args():
@@ -23,7 +31,7 @@ def parse_args():
     parser.add_argument(
         "--output",
         dest="output",
-        default=output_1,
+        default=output_3,
         help="Output format.",
     )
     return parser.parse_known_args(None)
@@ -72,7 +80,7 @@ def run():
             >> beam.Map(
                 lambda x: (
                     x[0],
-                    numpy_to_mp3(x[1].numpy(), x[2]),
+                    numpy_to_wav(x[1].numpy(), x[2], bit_depth=24),
                 )
             )
             | "Write mp3 files" >> beam.Map(write_file)

@@ -10,6 +10,7 @@ dynamic = ["version"]
 dependencies = [
   "apache-beam[gcp]>=2.46",
   "pydub",
+  "soundfile>=0.12.1"
 ]
 requires-python = ">=3.8"
 
