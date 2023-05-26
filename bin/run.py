@@ -10,7 +10,7 @@ from apache_beam.options.pipeline_options import SetupOptions
 from klay_beam.transforms import LoadWithTorchaudio, write_file, numpy_to_mp3
 
 
-input_1 = "/Users/charles/Downloads/fma_large/005/0059*"
+input_1 = "/Users/charles/projects/fma_large/005/0059*"
 input_2 = "gs://klay-datasets/char-lossless-50gb/The Beatles/**"
 output_1 = "/Users/charles/projects/klay/python/klay-beam/output/{}.mp3"
 
@@ -72,7 +72,7 @@ def run():
             >> beam.Map(
                 lambda x: (
                     x[0],
-                    numpy_to_mp3(x[1].numpy().transpose().reshape(-1, 2), x[2]),
+                    numpy_to_mp3(x[1].numpy(), x[2]),
                 )
             )
             | "Write mp3 files" >> beam.Map(write_file)
