@@ -8,7 +8,7 @@ description = ""
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
-  "apache-beam[gcp]>=2.46",
+  "apache-beam[gcp]==2.48.0",
   "pydub",
   "soundfile>=0.12.1"
 ]
