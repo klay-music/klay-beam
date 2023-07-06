@@ -5,9 +5,10 @@ import apache_beam as beam
 import apache_beam.io.fileio
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
+import logging
 
 # import klay_beam.audio
-from klay_beam.transforms import (
+from .transforms import (
     LoadWithTorchaudio,
     write_file,
     numpy_to_mp3,
@@ -21,6 +22,7 @@ input_2 = "gs://klay-datasets/char-lossless-50gb/The Beatles/**"
 output_1 = "/Users/charles/projects/klay/python/klay-beam/output/{}.mp3"
 output_2 = "/Users/charles/projects/klay/python/klay-beam/output/ogg/{}.ogg"
 output_3 = "/Users/charles/projects/klay/python/klay-beam/output/wav/{}.wav"
+output_4 = "gs://klay-dataflow-test-000/results/outputs/1/{}.wav"
 
 
 def parse_args():
@@ -38,6 +40,7 @@ def parse_args():
 
 
 def run():
+    logging.basicConfig(level=logging.INFO)
     known_args, pipeline_args = parse_args()
     print("known_args: {}".format(known_args))
     print("pipeline_args: {}".format(pipeline_args))
@@ -95,6 +98,8 @@ def run():
                 "out.txt", append_trailing_newlines=True  # hard coded for now
             )
         )
+
+        p.run().wait_until_finish()
 
 
 if __name__ == "__main__":

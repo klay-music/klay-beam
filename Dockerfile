@@ -52,7 +52,7 @@ COPY  src/klay_beam/ ./src/klay_beam/
 # create the conda environment in /env (intalling packages by copying)
 
 # TODO: use environment lock file. At the moment, I'm using a hacky workaround
-# to create an conda lock file in the build container. This is necessary because
+# to create a conda lock file in the build container. This is necessary because
 # I do not yet have an appropriate environment lock file, and there is no way to
 # create an environment from a yaml file while copying the packages.
 RUN mamba env create --file environment.yml -p /tmp-env

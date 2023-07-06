@@ -1,6 +1,7 @@
 import pathlib
 import io
 import packaging
+import traceback
 
 import apache_beam as beam
 from apache_beam.io import filesystems
@@ -8,6 +9,7 @@ import torchaudio
 import pydub
 import soundfile as sf
 import numpy as np
+import logging
 
 
 def numpy_to_pydub_audio_segment(
@@ -21,7 +23,7 @@ def numpy_to_pydub_audio_segment(
     ), "incoming audio data must not be interleaved (last dimension must be audio)"
 
     if noisy:
-        print(
+        logging.info(
             "Creating mp3: length: {} seconds. Channels: {}".format(
                 samples / sr, channels
             )
@@ -164,7 +166,7 @@ def write_file(output_path_and_buffer):
     Can be used with beam.Map(write_file)
     """
     output_path, buffer = output_path_and_buffer
-    print("Writing to {}".format(output_path))
+    logging.info("Writing to {}".format(output_path))
     with filesystems.FileSystems.create(output_path) as file_handle:
         file_handle.write(buffer.read())
 
@@ -237,9 +239,14 @@ class LoadWithTorchaudio(beam.DoFn):
         # which are thrown when torchaudio can't load the file.
         try:
             audio_tensor, sr = torchaudio.load(file_like, format=ext_without_dot)
-        except RuntimeError:
-            # TODO handle/log this error
-            print("Error loading file: {}".format(path))
+        except RuntimeError as e:
+            # TODO handle/log this error 
+            # 
+            # July 2023: It's not the best practice to put a stacktrace in a log
+            # message. For now, I need just a little bit more information when
+            # this fails
+            tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+            logging.warning("Error loading file: {}\n{}".format(path, tb_str))
             return []
 
         # Get a webdataset style id and key, where the id is everything up the
