@@ -248,7 +248,8 @@ class LoadWithTorchaudio(beam.DoFn):
             tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
             logging.warning("Error loading file: {}\n{}".format(path, tb_str))
             return []
-
+        C, T = audio_tensor.shape
+        logging.info("Loaded {} second {} channel file: {}".format(T / sr, C, path))
         # Get a webdataset style id and key, where the id is everything up the
         # first dot in the filename, and the key is everything after the first
         # dot in the filename.

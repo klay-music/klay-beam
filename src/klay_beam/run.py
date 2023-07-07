@@ -89,7 +89,8 @@ def run():
             | "Write mp3 files" >> beam.Map(write_file)
         )
 
-        # Log every processed filename to a local file
+        # Log every processed filename to a local file (this is unhelpful when
+        # running remotely via Dataflow)
         (
             audio_elements
             | "Get writable text" >> beam.Map(lambda x: "{}\t({})".format(x[0], x[1]))
