@@ -28,7 +28,7 @@ def numpy_to_pydub_audio_segment(
     assert bit_depth in [8, 16], f"bit_depth must be 8 or 16 (found {bit_depth}))"
 
     audio_data = audio_data.T  # pydub expects interleaved audio
-    audio_data *= 2 ** (bit_depth - 1) - 1  # scale to bit_depth.
+    audio_data = audio_data * (2 ** (bit_depth - 1) - 1)  # scale to bit_depth.
 
     np_type: Optional[Type[np.signedinteger]] = None
     sample_width: Optional[int] = None
@@ -97,6 +97,15 @@ def numpy_to_mp3(
     return in_memory_file_buffer
 
 
+# `pip install soundfile` has buggy vorbis support. soundfile can only
+# reliably write ogg files when the underlying libsndfile is 1.2.0 or greater
+# You can check this with `soundfile.__libsndfile_version__`. For details,
+# see: https://github.com/bastibe/python-soundfile/issues/130
+sf_current_version = packaging_version.parse(sf.__libsndfile_version__)
+sf_required_version = packaging_version.parse("1.2.0")
+sf_version_ok = sf_current_version >= sf_required_version
+
+
 def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
     """Convert the audio data to an in-memory ogg encoded file-like object using
     the soundfile library.
@@ -116,11 +125,6 @@ def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
     # is compiled with vorbis support. This is not the case when installing with
     # `conda install ffmpeg` on an Intel Mac in May 2023.
 
-    # `pip install soundfile` has buggy vorbis support. soundfile can only
-    # reliably write ogg files when the underlying libsndfile is 1.2.0 or greater
-    # You can check this with `soundfile.__libsndfile_version__`. For details,
-    # see: https://github.com/bastibe/python-soundfile/issues/130
-
     assert audio_data.ndim == 2, "audio_data must be 2 dimensional"
     channels, samples = audio_data.shape
     logging.info(
@@ -129,13 +133,12 @@ def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
         )
     )
 
-    current_version = packaging_version.parse(sf.__libsndfile_version__)
-    required_version = packaging_version.parse("1.2.0")
-
-    if safe:
-        assert (
-            current_version >= required_version
-        ), f"Out of date libsndfile. Found:{current_version} needed:{required_version} or greater."
+    if not sf_version_ok:
+        error_message = f"Old libsndfile. Found:{sf_current_version} need:{sf_required_version}"
+        if safe:
+            assert False, error_message
+        else:
+            logging.warning(error_message)
 
     in_memory_file_buffer = io.BytesIO()
     sf.write(in_memory_file_buffer, audio_data.T, sr, subtype="VORBIS", format="OGG")
@@ -151,8 +154,19 @@ def numpy_to_wav(audio_data: np.ndarray, sr: int, bit_depth=16):
         subtype = "PCM_16"
     elif bit_depth == 24:
         subtype = "PCM_24"
+    elif bit_depth == 32:
+        subtype = "FLOAT"
+    elif bit_depth == 64:
+        subtype = "DOUBLE"
     else:
-        raise ValueError(f"bit_depth must be 8, 16, or 24 (found {bit_depth}))")
+        raise ValueError(f"bit_depth must be 8, 16, 24, 32, or 64 (found {bit_depth}))")
+
+    channels, samples = audio_data.shape
+    logging.info(
+        "Creating wav: length: {:.3f} seconds. Channels: {}".format(
+            samples / sr, channels
+        )
+    )
 
     in_memory_file_buffer = io.BytesIO()
     sf.write(in_memory_file_buffer, audio_data.T, sr, format="WAV", subtype=subtype)
