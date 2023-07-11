@@ -13,21 +13,10 @@ import logging
 
 
 def numpy_to_pydub_audio_segment(
-    audio_data: np.ndarray, sr: int, bit_depth=16, noisy=False
+    audio_data: np.ndarray, sr: int, bit_depth=16
 ) -> pydub.AudioSegment:
     assert audio_data.ndim == 2, "audio_data must be 2 dimensional"
-    channels, samples = audio_data.shape
-
-    assert (
-        samples > channels
-    ), "incoming audio data must not be interleaved (last dimension must be audio)"
-
-    if noisy:
-        logging.info(
-            "Creating mp3: length: {} seconds. Channels: {}".format(
-                samples / sr, channels
-            )
-        )
+    channels, _ = audio_data.shape
 
     assert channels in [
         1,
@@ -64,22 +53,30 @@ def numpy_to_pydub_audio_segment(
 def numpy_to_mp3(
     audio_data: np.ndarray,
     sr: int,
-    noisy=False,
     bitrate="256k",
     intermediary_bit_depth=16,
 ):
-    """Convert the audio data to an in-memory mp3 encoded file-like object.
+    """Convert the audio data to an in-memory mp3 encoded file-like object."""
+    channels, samples = audio_data.shape
+    assert (
+        samples > channels
+    ), "incoming audio data must not be interleaved (last dimension must be audio)"
 
-    This needs to write a file-like object in memory. Loading file-like objects
-    is now supported by torchaudio (both sox_io and soundfile backends), but
-    torchaudio.save can only write to disk. As a result, we use pydub, which
-    invokes ffmpeg to write to memory.
+    logging.info(
+        "Creating mp3: length: {:.3f} seconds. Channels: {}".format(
+            samples / sr, channels
+        )
+    )
 
-    For pytorch support see: https://pytorch.org/audio/stable/backend.html
-    For pydub docs see: https://github.com/jiaaro/pydub
-    """
+    # This needs to write a file-like object in memory. Loading file-like objects
+    # is now supported by torchaudio (both sox_io and soundfile backends), but
+    # torchaudio.save can only write to disk. As a result, we use pydub, which
+    # invokes ffmpeg to write to memory.
+
+    # For pytorch support see: https://pytorch.org/audio/stable/backend.html
+    # For pydub docs see: https://github.com/jiaaro/pydub
     audio_segment = numpy_to_pydub_audio_segment(
-        audio_data, sr, noisy=noisy, bit_depth=intermediary_bit_depth
+        audio_data, sr, bit_depth=intermediary_bit_depth
     )
 
     # create an in-memory file-like object to write to
@@ -100,20 +97,36 @@ def numpy_to_mp3(
 
 
 def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
-    """Convert the audio data to an in-memory ogg encoded file-like object.
+    """Convert the audio data to an in-memory ogg encoded file-like object using
+    the soundfile library.
 
-    This function is not yet reliable due to feature gaps in pydub, ffmpeg,
-    pip's soundfile, and libsndfile.
-
-    For pydub, we need to ensure that the underlying ffmpeg command is compiled
-    with vorbis support. This is not the case when installing with `conda
-    install ffmpeg` on an Intel Mac in May 2023.
-
-    `pip install soundfile` also has buggy vorbis support. soundfile can only
-    reliably write ogg files when the underlying libsndfile is 1.2.0 or greater
-    You can check this with `soundfile.__libsndfile_version__`. For defails, see:
+    Due to limitations in the available libraries for writing ogg files,
+    numpy_to_ogg requires libsndfile 1.2.0 or greater to work reliably. When
+    invoked, this function will check the version of libsndfile and raise an
+    error if an older version is found. You can disable this check by calling
+    with `safe=False`. For details, see:
     https://github.com/bastibe/python-soundfile/issues/130
     """
+
+    # Why use the soundfile package instead of pydub?
+    # feature gaps in pydub, ffmpeg, pip's soundfile, and libsndfile.
+
+    # We could use pydub, but need to ensure that the underlying ffmpeg command
+    # is compiled with vorbis support. This is not the case when installing with
+    # `conda install ffmpeg` on an Intel Mac in May 2023.
+
+    # `pip install soundfile` has buggy vorbis support. soundfile can only
+    # reliably write ogg files when the underlying libsndfile is 1.2.0 or greater
+    # You can check this with `soundfile.__libsndfile_version__`. For defails,
+    # see: https://github.com/bastibe/python-soundfile/issues/130
+
+    assert audio_data.ndim == 2, "audio_data must be 2 dimensional"
+    channels, samples = audio_data.shape
+    logging.info(
+        "Creating ogg: length: {:.3f} seconds. Channels: {}".format(
+            samples / sr, channels
+        )
+    )
 
     current_version = packaging.version.parse(sf.__libsndfile_version__)
     required_version = packaging.version.parse("1.2.0")
@@ -121,7 +134,7 @@ def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
     if safe:
         assert (
             current_version >= required_version
-        ), f"Out of date libsndfile. Found {current_version} but need {required_version} or greater."
+        ), f"Out of date libsndfile. Found:{current_version} needed:{required_version} or greater."
 
     in_memory_file_buffer = io.BytesIO()
     sf.write(in_memory_file_buffer, audio_data.T, sr, subtype="VORBIS", format="OGG")
@@ -129,7 +142,7 @@ def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
     return in_memory_file_buffer
 
 
-def numpy_to_wav(audio_data: np.ndarray, sr: int, bit_depth=16, noisy=False):
+def numpy_to_wav(audio_data: np.ndarray, sr: int, bit_depth=16):
     subtype = None
     if bit_depth == 8:
         subtype = "PCM_8"
@@ -237,19 +250,22 @@ class LoadWithTorchaudio(beam.DoFn):
 
         # try loading the audio file with torchaudio, but catch RuntimeError,
         # which are thrown when torchaudio can't load the file.
+        logging.info("Loading: {}".format(path))
         try:
             audio_tensor, sr = torchaudio.load(file_like, format=ext_without_dot)
         except RuntimeError as e:
-            # TODO handle/log this error 
-            # 
+            # TODO handle/log this error
+            #
             # July 2023: It's not the best practice to put a stacktrace in a log
             # message. For now, I need just a little bit more information when
             # this fails
-            tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+            tb_str = traceback.format_exception(
+                etype=type(e), value=e, tb=e.__traceback__
+            )
             logging.warning("Error loading file: {}\n{}".format(path, tb_str))
             return []
         C, T = audio_tensor.shape
-        logging.info("Loaded {} second {} channel file: {}".format(T / sr, C, path))
+        logging.info("Loaded {:.3f} second {}-channel file: {}".format(T / sr, C, path))
         # Get a webdataset style id and key, where the id is everything up the
         # first dot in the filename, and the key is everything after the first
         # dot in the filename.

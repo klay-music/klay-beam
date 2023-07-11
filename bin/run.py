@@ -2,13 +2,13 @@ import argparse
 import pathlib
 
 import apache_beam as beam
-import apache_beam.io.fileio
+import apache_beam.io.fileio as beam_io
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 import logging
 
 # import klay_beam.audio
-from .transforms import (
+from klay_beam.transforms import (
     LoadWithTorchaudio,
     write_file,
     numpy_to_mp3,
@@ -57,18 +57,16 @@ def run():
         readable_files = (
             p
             # MatchFiles produces a PCollection of FileMetadata objects
-            | beam.io.fileio.MatchFiles(known_args.input)
+            | beam_io.MatchFiles(known_args.input)
             # ReadMatches produces a PCollection of ReadableFile objects
-            | beam.io.fileio.ReadMatches()
+            | beam_io.ReadMatches()
         )
 
         audio_elements = readable_files | "Load audio with pytorch" >> beam.ParDo(
             LoadWithTorchaudio()
         )
 
-        # Write each file to an mp3. Note the ungodly lambda function, which
-        # interleaves the audio channels, and creates a (filename, mp3_data)
-        # tuple.
+        # Convert audio tensors to in-memory files. Persist resulting files.
         (
             audio_elements
             | "Creating (filename, tensor, sr) tuples"
@@ -79,14 +77,14 @@ def run():
                     x[3],
                 )
             )
-            | "Convert to (filename, mp3_blob) tuples"
+            | "Convert to (filename, BytesIO) tuples"
             >> beam.Map(
                 lambda x: (
                     x[0],
-                    numpy_to_wav(x[1].numpy(), x[2], bit_depth=24),
+                    numpy_to_ogg(x[1].numpy(), x[2]),
                 )
             )
-            | "Write mp3 files" >> beam.Map(write_file)
+            | "Write audio files" >> beam.Map(write_file)
         )
 
         # Log every processed filename to a local file (this is unhelpful when
