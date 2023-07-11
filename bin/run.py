@@ -11,30 +11,42 @@ import logging
 from klay_beam.transforms import (
     LoadWithTorchaudio,
     write_file,
-    numpy_to_mp3,
-    numpy_to_ogg,
     numpy_to_wav,
 )
 
 
-input_1 = "/Users/charles/projects/fma_large/005/00591*"
-input_2 = "gs://klay-datasets/char-lossless-50gb/The Beatles/**"
-output_1 = "/Users/charles/projects/klay/python/klay-beam/output/{}.mp3"
-output_2 = "/Users/charles/projects/klay/python/klay-beam/output/ogg/{}.ogg"
-output_3 = "/Users/charles/projects/klay/python/klay-beam/output/wav/{}.wav"
-output_4 = "gs://klay-dataflow-test-000/results/outputs/1/{}.wav"
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
+
     parser.add_argument(
-        "--input", dest="input", default=input_1, help="Input files (glob) to process."
+        "--input",
+        dest="input",
+        required=True,
+        help="""
+        Specify the input file pattern. This can be a local path or a GCS path,
+        and may use the * or ** wildcard.
+
+        To get only some wav files, try:
+        '/Users/alice/datasets/fma_large/005/00591*'
+
+        To find all files in directory and subdirectories, use **:
+        'gs://klay-datasets/char-lossless-50gb/The Beatles/**'
+
+        This indirectly uses apache_beam.io.filesystems.FileSystems.match:
+        https://beam.apache.org/releases/pydoc/2.48.0/apache_beam.io.filesystems.html#apache_beam.io.filesystems.FileSystems.match
+        """,
     )
+
     parser.add_argument(
         "--output",
         dest="output",
-        default=output_3,
-        help="Output format.",
+        required=True,
+        help="""
+        Specify the output file format, using {} as a filename placeholder.
+
+        For example:
+        'gs://klay-dataflow-test-000/results/outputs/1/{}.wav'
+        """,
     )
     return parser.parse_known_args(None)
 
@@ -81,7 +93,7 @@ def run():
             >> beam.Map(
                 lambda x: (
                     x[0],
-                    numpy_to_ogg(x[1].numpy(), x[2]),
+                    numpy_to_wav(x[1].numpy(), x[2]),
                 )
             )
             | "Write audio files" >> beam.Map(write_file)

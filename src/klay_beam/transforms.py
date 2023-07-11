@@ -134,7 +134,9 @@ def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
     )
 
     if not sf_version_ok:
-        error_message = f"Old libsndfile. Found:{sf_current_version} need:{sf_required_version}"
+        error_message = (
+            f"Old libsndfile. Found:{sf_current_version} need:{sf_required_version}"
+        )
         if safe:
             assert False, error_message
         else:
