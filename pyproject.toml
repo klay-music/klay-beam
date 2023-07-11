@@ -35,5 +35,10 @@ plugins = [
 ]
 
 [[tool.mypy.overrides]]
-module = []
+module = [
+  "apache_beam.*",
+  "torchaudio",
+  "pydub",
+  "soundfile"
+]
 ignore_missing_imports = true

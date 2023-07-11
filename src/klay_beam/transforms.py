@@ -1,7 +1,8 @@
 import pathlib
 import io
-import packaging
 import traceback
+from typing import Optional, Type
+from packaging import version as packaging_version
 
 import apache_beam as beam
 from apache_beam.io import filesystems
@@ -29,8 +30,8 @@ def numpy_to_pydub_audio_segment(
     audio_data = audio_data.T  # pydub expects interleaved audio
     audio_data *= 2 ** (bit_depth - 1) - 1  # scale to bit_depth.
 
-    np_type = None
-    sample_width = None
+    np_type: Optional[Type[np.signedinteger]] = None
+    sample_width: Optional[int] = None
     if bit_depth == 8:
         np_type = np.int8
         sample_width = 1
@@ -117,7 +118,7 @@ def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
 
     # `pip install soundfile` has buggy vorbis support. soundfile can only
     # reliably write ogg files when the underlying libsndfile is 1.2.0 or greater
-    # You can check this with `soundfile.__libsndfile_version__`. For defails,
+    # You can check this with `soundfile.__libsndfile_version__`. For details,
     # see: https://github.com/bastibe/python-soundfile/issues/130
 
     assert audio_data.ndim == 2, "audio_data must be 2 dimensional"
@@ -128,8 +129,8 @@ def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
         )
     )
 
-    current_version = packaging.version.parse(sf.__libsndfile_version__)
-    required_version = packaging.version.parse("1.2.0")
+    current_version = packaging_version.parse(sf.__libsndfile_version__)
+    required_version = packaging_version.parse("1.2.0")
 
     if safe:
         assert (
@@ -241,7 +242,7 @@ class LoadWithTorchaudio(beam.DoFn):
 
         path = pathlib.Path(readable_file.metadata.path)
 
-        # get the file extension without a period in an safe way
+        # get the file extension without a period in a safe way
         ext_without_dot = path.suffix.lstrip(".")
         ext_without_dot = None if ext_without_dot == "" else ext_without_dot
 
@@ -266,7 +267,7 @@ class LoadWithTorchaudio(beam.DoFn):
             return []
         C, T = audio_tensor.shape
         logging.info("Loaded {:.3f} second {}-channel file: {}".format(T / sr, C, path))
-        # Get a webdataset style id and key, where the id is everything up the
+        # Get a WebDataset style id and key, where the id is everything up the
         # first dot in the filename, and the key is everything after the first
         # dot in the filename.
         id, ext = extract_wds_id_and_ext(readable_file)
