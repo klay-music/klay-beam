@@ -5,7 +5,7 @@
 ## Quick Start
 Create `conda` environment:
 ```sh
-conda env create -f environment.yml
+conda env create -f environments/main.yml
 ```
 
 ## Dependencies

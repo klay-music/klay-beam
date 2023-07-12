@@ -1,5 +1,5 @@
 #!/bin/sh
-VERSION=0.0.1-rc.6
+VERSION=0.0.1-rc.9
 docker tag klay-beam:latest us-docker.pkg.dev/klay-home/klay-docker/klay-beam:latest
 docker tag klay-beam:latest us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$VERSION
 

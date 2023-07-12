@@ -3,6 +3,10 @@ name: klay-beam
 channels:
   - defaults
 
+# IMPORTANT: THERE ARE MULTIPLE ENVIRONMENT FILES IN THIS REPO!!
+#
+# Are you making a change??? UPDATE THEM ALL!!!!!!!!!!!!!!!!!!!!
+
 dependencies:
   - pip
   - python=3.10
@@ -18,9 +22,4 @@ dependencies:
   - pytorch::torchaudio>=2
   - pytorch::torchvision>=0.15
   - pip:
-    - -e '.[code-style, tests, type-check]'
-    - -e './submodules/klaypy[torch, typing]'
-    - -e './submodules/klay-data[torch, type-check]'
-    - -e './submodules/semantic-model[torch, type-check]'
-    - -e './submodules/klay-data/submodules/mirdata'
-    - -e './submodules/klay-data/submodules/miditoolkit'
+    - -e '..[code-style, tests, type-check]'

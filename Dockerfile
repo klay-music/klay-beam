@@ -46,8 +46,9 @@ ARG beam_version
 
 WORKDIR /klay/build
 # TODO: use environment lock file
-COPY environment.yml pyproject.toml ./
-COPY  src/klay_beam/ ./src/klay_beam/
+COPY pyproject.toml ./
+COPY src/klay_beam/ ./src/klay_beam/
+COPY environment/docker.yml ./environment/docker.yml
 
 # create the conda environment in /env (intalling packages by copying)
 
@@ -55,13 +56,31 @@ COPY  src/klay_beam/ ./src/klay_beam/
 # to create a conda lock file in the build container. This is necessary because
 # I do not yet have an appropriate environment lock file, and there is no way to
 # create an environment from a yaml file while copying the packages.
-RUN mamba env create --file environment.yml -p /tmp-env
+RUN mamba env create --file environment/docker.yml -p /tmp-env
 RUN conda list --explicit -p /tmp-env > conda-linux-64.lock
 RUN mamba create --copy -p /env --file conda-linux-64.lock && conda clean -afy
 
-# Max's example installed gcc. I don't neet it, but I may still need to install
-# other debian packages
-# RUN apt-get update && apt-get install -y gcc
+# Install submodules
+COPY submodules ./submodules
+
+# If you change submodules below, you also may need to change the conda environment.yaml
+RUN conda run -p /env python -m pip install \
+  './submodules/klaypy[torch, typing]' \
+  './submodules/klay-data[torch, type-check]' \
+  './submodules/semantic-model[torch, type-check]' \
+  './submodules/klay-data/submodules/mirdata' \
+  './submodules/klay-data/submodules/miditoolkit'
+
+# Clean in a separate layer as calling conda still generates some __pycache__ files
+RUN find -name '*.a' -delete && \
+  rm -rf /env/conda-meta && \
+  rm -rf /env/include && \
+  rm /env/lib/libpython3.10.so.1.0 && \
+  find -name '__pycache__' -type d -exec rm -rf '{}' '+' && \
+  find /env/lib/python3.10/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  find /env/lib/python3.10/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  find /env/lib/python3.10/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  find /env/lib/python3.10/site-packages -name '*.pyx' -delete
 
 
 FROM python:${py_version}-slim as ok
@@ -69,11 +88,16 @@ ARG py_version
 ARG beam_version
 
 WORKDIR /klay/app
-COPY . ./
+
+# Copy the conda environment from the conda image
 COPY --from=conda /env /env
 RUN python3 -m venv /env
 RUN . /env/bin/activate
 ENV PATH="/env/bin:$PATH"
+
+# Install the klay_beam package
+COPY ./src ./src
+COPY pyproject.toml setup.cfg setup.py ./
 RUN python3 -m pip install '.'
 
 
