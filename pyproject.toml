@@ -12,7 +12,7 @@ dependencies = [
   "pydub==0.25.1",
   "soundfile>=0.12.1"
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 [project.optional-dependencies]
 code-style = ["black>=22.9.0", "flake8>=5"]
