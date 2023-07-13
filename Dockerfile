@@ -5,9 +5,9 @@
 #
 # 1. Apache Beam SDK
 #
-# We'll use this to get beam sdk artifacts, which are needed for for the beam
-# "worker harness" (the process that connects the execution to the job). Note
-# that we still need to pip install the beam SDK in the final image.
+# We'll use the Beam container to get beam sdk artifacts, which are needed for
+# for the beam "worker harness" (the process that connects the execution to the
+# job). Note that we still need to pip install the beam SDK in the final image.
 #
 # Some resources with clues for how to use Beam in a custom container:
 # https://cloud.google.com/dataflow/docs/guides/using-custom-containers#use_a_custom_base_image_or_multi-stage_builds
@@ -45,23 +45,15 @@ ARG py_version
 ARG beam_version
 
 WORKDIR /klay/build
-# TODO: use environment lock file
-COPY pyproject.toml ./
-COPY src/klay_beam/ ./src/klay_beam/
-COPY environment/docker.yml ./environment/docker.yml
 
 # create the conda environment in /env (intalling packages by copying)
+COPY environment/conda-linux-64.lock ./environment/conda-linux-64.lock
+RUN mamba create --copy -p /env --file environment/conda-linux-64.lock && conda clean -afy
 
-# TODO: use environment lock file. At the moment, I'm using a hacky workaround
-# to create a conda lock file in the build container. This is necessary because
-# I do not yet have an appropriate environment lock file, and there is no way to
-# create an environment from a yaml file while copying the packages.
-RUN mamba env create --file environment/docker.yml -p /tmp-env
-RUN conda list --explicit -p /tmp-env > conda-linux-64.lock
-RUN mamba create --copy -p /env --file conda-linux-64.lock && conda clean -afy
-
-# Install submodules
+# Install submodules and klay_beam
 COPY submodules ./submodules
+COPY pyproject.toml setup.cfg ./
+COPY src/klay_beam/ ./src/klay_beam/
 
 # If you change submodules below, you also may need to change the conda environment.yaml
 RUN conda run -p /env python -m pip install \
@@ -69,7 +61,8 @@ RUN conda run -p /env python -m pip install \
   './submodules/klay-data[torch, type-check]' \
   './submodules/semantic-model[torch, type-check]' \
   './submodules/klay-data/submodules/mirdata' \
-  './submodules/klay-data/submodules/miditoolkit'
+  './submodules/klay-data/submodules/miditoolkit' \
+  '.[code-style, tests, type-check]'
 
 # Clean in a separate layer as calling conda still generates some __pycache__ files
 RUN find -name '*.a' -delete && \
@@ -83,13 +76,13 @@ RUN find -name '*.a' -delete && \
   find /env/lib/python3.10/site-packages -name '*.pyx' -delete
 
 
-FROM python:${py_version}-slim as ok
+FROM python:${py_version}-slim
 ARG py_version
 ARG beam_version
 
 WORKDIR /klay/app
 
-# Copy the conda environment from the conda image
+# Copy the conda environment from the conda build stage
 COPY --from=conda /env /env
 RUN python3 -m venv /env
 RUN . /env/bin/activate
@@ -97,9 +90,10 @@ ENV PATH="/env/bin:$PATH"
 
 # Install the klay_beam package
 COPY ./src ./src
+COPY ./bin ./bin
+COPY ./tests ./tests
 COPY pyproject.toml setup.cfg setup.py ./
 RUN python3 -m pip install '.'
-
 
 # Verify that the image does not have conflicting dependencies.
 RUN pip check

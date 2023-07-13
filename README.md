@@ -1,5 +1,44 @@
 # klay-beam
 
+Base repo for running Apache Beam jobs locally or on GCP via Dataflow. Talk to Charles or Max for GCP permissions. 
+
+The basic process for running a job on Dataflow is
+1. Activate the `klay-beam` conda environment
+1. Edit `bin/run.py` to define an execution graph.
+1. Optionally update the `klay_beam` package with new functions or transforms
+1. Run `bin/run.py` (see example below for arguments)
+1. This package and will be bundled as an `sdist` and installed on the worker nodes. Any missing pip dependencies specified in `pyproject.toml` will also be installed at runtime. 
+1. See the execution details and logs at  https://console.cloud.google.com/dataflow/jobs?project=klay-beam-tests
+
+```bash
+# Remote Job
+python bin/run.py \
+    --region us-east1 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --runner DataflowRunner \
+    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
+    --disk_size_gb=50 \
+    --experiments=use_runner_v2 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:latest \
+    --sdk_location=container \
+    --setup_file=./setup.py \
+    --temp_location gs://klay-dataflow-test-000/tmp/ \
+    --project klay-beam-tests \
+    --input 'gs://klay-dataflow-test-000/test-audio/fma_large/005/**' \
+    --output 'gs://klay-dataflow-test-000/results/outputs/15/{}.wav' \
+    --job_name 'klay-audio-test-015'
+```
+
+You can also run the job locally which allows you to use inputs or outputs on your local filesystem.
+
+```bash
+# Run Locally
+python bin/run.py \
+    --input 'gs://klay-dataflow-test-000/test-audio/fma_large/005/00500*.mp3' \
+    --output 'test_audio/job_output/{}.wav' \
+    --runner Direct \
+    --temp_location gs://klay-dataflow-test-000/tmp/
+```
 
 # Development
 ## Quick Start
@@ -8,15 +47,30 @@ Create `conda` environment:
 conda env create -f environments/main.yml
 ```
 
-## Dependencies
+## Docker Container
+
+This docker will be run on all workers. When running a Beam job on GCP Dataflow,
+missing dependencies will be installed using pip. However, to save time, large
+or non-pip dependencies (such as ffmpeg 4) should be included in the docker
+container.
+
+## Docker Build Steps
+
+These steps build the Docker container and push to our GCP docker registry.
+
+1. Run `./make-conda-lock-file.sh` to generate a new `environment/conda-linux-64.lock`. **IMPORTANT: Only run this step when you are changing the conda dependencies in the `environment/docker.yml` file.**
+2. Run `docker build -t klay-beam:latest .`
+3. Edit `tag.sh` to update the version, for example `0.1.0-rc.2`
+4. Run `tag.sh` to tag and push to GCP
+
+To test the container interactively: `docker run --rm -it --entrypoint /bin/sh klay-beam:latest`
+
 ### conda
-We use `conda` to handle python dependencies, the default `conda` environment creation is currently supported for 64-bit Linux operating system.  To create or update an environment:
+We use `conda` to handle python dependencies. To create or update an environment:
 
 ```sh
 conda env update -f environment.yml
 ```
-
-All dependencies are either handled by `conda` or by `pip` via `conda`. The `pip` dependencies are all listed in the `pyproject.toml` file.
 
 ## Code Quality
 ### Testing

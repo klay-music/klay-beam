@@ -21,5 +21,3 @@ dependencies:
   - pytorch::pytorch>=2.0
   - pytorch::torchaudio>=2
   - pytorch::torchvision>=0.15
-  - pip:
-    - -e '..[code-style, tests, type-check]'
