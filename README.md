@@ -22,7 +22,7 @@ python bin/run.py \
 
 ```bash
 # Run remotely via GCP Dataflow. Should be executed in the `klay-beam` conda
-# environment to ensure that Beam SDK, python, and dependency parity between the
+# environment to ensure Beam SDK, python, and dependency parity between the
 # local environment and Worker environments.
 python bin/run.py \
     --region us-east1 \
@@ -59,7 +59,7 @@ conda env create -f environments/main.yml
 To create or update an environment:
 
 ```sh
-conda env update -f environment.yml
+conda env update -f environment/main.yml
 ```
 
 ## Docker Container
