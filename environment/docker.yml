@@ -18,6 +18,5 @@ dependencies:
   # libsndfile 1.2.0 is required for the soundfile pip package
   - conda-forge::libsndfile>=1.2.0
   # pytorch deps copied from klay-music/audiolm
-  - pytorch::pytorch>=2.0
-  - pytorch::torchaudio>=2
-  - pytorch::torchvision>=0.15
+  - pytorch::pytorch>=1.10
+  - pytorch::torchaudio

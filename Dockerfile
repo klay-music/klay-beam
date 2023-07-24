@@ -76,6 +76,7 @@ RUN find -name '*.a' -delete && \
   find /env/lib/python3.10/site-packages -name '*.pyx' -delete
 
 
+# python:3.10-slim comes from debian-12-slim
 FROM python:${py_version}-slim
 ARG py_version
 ARG beam_version
@@ -103,3 +104,32 @@ COPY --from=beam /opt/apache/beam /opt/apache/beam
 
 # Set the entrypoint to Apache Beam SDK launcher.
 ENTRYPOINT ["/opt/apache/beam/boot"]
+
+
+# Install CUDA toolkit (but not cuda drivers) and cuDNN.
+ENV NVIDIA_INSTALLER_DIR="/tmp/installer_dir"
+# Download CUDA installer (contains the CUDA toolkit).
+# https://developer.nvidia.com/cuda-downloads
+ADD https://developer.download.nvidia.com/compute/cuda/12.2.0/local_installers/cuda_12.2.0_535.54.03_linux.run $NVIDIA_INSTALLER_DIR/cuda.run
+# Download cuDNN.
+# https://developer.nvidia.com/cudnn
+ADD cuda/cudnn-linux-x86_64-8.9.3.28_cuda12-archive.tar.xz $NVIDIA_INSTALLER_DIR/cudnn/
+# results in /tmp/installer_dir/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/lib
+# results in /tmp/installer_dir/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/include
+
+RUN apt update
+RUN apt install -y libxml2-dev gcc
+RUN sh $NVIDIA_INSTALLER_DIR/cuda.run --toolkit --silent || (egrep '^\[ERROR\]' /var/log/cuda-installer.log && exit 1)
+
+# Install cuDNN.
+RUN cp $NVIDIA_INSTALLER_DIR/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/include/cudnn*.h /usr/local/cuda/include 
+RUN cp $NVIDIA_INSTALLER_DIR/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/lib/libcudnn* /usr/local/cuda/lib64 
+RUN chmod a+r /usr/local/cuda/include/cudnn*.h /usr/local/cuda/lib64/libcudnn*  
+
+# In the future, we'll merge the steps above into a single RUN command. For now,
+# we're keeping them separate to make it easier to debug. When we do merge them,
+# we should also remove the NVIDIA_INSTALLER_DIR at the end of the RUN command.
+# rm -rf $NVIDIA_INSTALLER_DIR
+
+# # A volume with GPU drivers will be mounted at runtime at /usr/local/nvidia.
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/nvidia/lib64:/usr/local/cuda/lib64
