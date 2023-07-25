@@ -97,36 +97,14 @@ RUN pip check
 
 # Copy files from official SDK image, including script/dependencies.
 COPY --from=beam /opt/apache/beam /opt/apache/beam
+
+# In some situations, Beam will create a new python virtual environment to run
+# the job. Suppress this behavior by setting this environment variable. See:
+# https://github.com/apache/beam/blob/65ef48888fa8ee5e4c61cf3eeaf5900f1e8be65b/sdks/python/container/boot.go#L160-L178
 ENV RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1
 
 # Set the entrypoint to Apache Beam SDK launcher.
 ENTRYPOINT ["/opt/apache/beam/boot"]
-
-
-# # Install CUDA toolkit (but not cuda drivers) and cuDNN.
-# ENV NVIDIA_INSTALLER_DIR="/tmp/installer_dir"
-# # Download CUDA installer (contains the CUDA toolkit).
-# # https://developer.nvidia.com/cuda-downloads
-# ADD https://developer.download.nvidia.com/compute/cuda/12.2.0/local_installers/cuda_12.2.0_535.54.03_linux.run $NVIDIA_INSTALLER_DIR/cuda.run
-# # Download cuDNN.
-# # https://developer.nvidia.com/cudnn
-# ADD cuda/cudnn-linux-x86_64-8.9.3.28_cuda12-archive.tar.xz $NVIDIA_INSTALLER_DIR/cudnn/
-# # results in /tmp/installer_dir/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/lib
-# # results in /tmp/installer_dir/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/include
-
-# RUN apt update
-# RUN apt install -y libxml2-dev gcc
-# RUN sh $NVIDIA_INSTALLER_DIR/cuda.run --toolkit --silent || (egrep '^\[ERROR\]' /var/log/cuda-installer.log && exit 1)
-
-# # Install cuDNN.
-# RUN cp $NVIDIA_INSTALLER_DIR/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/include/cudnn*.h /usr/local/cuda/include
-# RUN cp $NVIDIA_INSTALLER_DIR/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/lib/libcudnn* /usr/local/cuda/lib64
-# RUN chmod a+r /usr/local/cuda/include/cudnn*.h /usr/local/cuda/lib64/libcudnn*
-
-# In the future, we'll merge the steps above into a single RUN command. For now,
-# we're keeping them separate to make it easier to debug. When we do merge them,
-# we should also remove the NVIDIA_INSTALLER_DIR at the end of the RUN command.
-# rm -rf $NVIDIA_INSTALLER_DIR
 
 # A volume with GPU drivers will be mounted at runtime at /usr/local/nvidia.
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/nvidia/lib64:/usr/local/cuda/lib64

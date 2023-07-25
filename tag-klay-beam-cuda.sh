@@ -1,6 +1,6 @@
 #!/bin/sh
 set -x
-VERSION=0.0.1-rc.5
+VERSION=0.0.2-rc.1
 docker tag klay-beam-cuda:latest us-docker.pkg.dev/klay-home/klay-docker/klay-beam-cuda:latest
 docker tag klay-beam-cuda:latest us-docker.pkg.dev/klay-home/klay-docker/klay-beam-cuda:$VERSION
 
