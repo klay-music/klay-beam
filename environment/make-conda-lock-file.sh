@@ -7,15 +7,17 @@
 
 set -x
 
-docker build -t klay-beam-conda-lock-file -f- . <<EOF
+NAME=cuda-001
+
+docker build -t conda-lock-helper:$NAME -f- . <<EOF
 FROM condaforge/mambaforge:latest
 
 WORKDIR /klay/build
-COPY environment/docker.yml ./environment/docker.yml
-RUN mamba env create --file environment/docker.yml -p /tmp-env
-RUN conda list --explicit -p /tmp-env > conda-linux-64.lock
+COPY ./conda-lock-helper.${NAME}.yml ./conda-lock-helper.${NAME}.yml
+RUN mamba env create --file ./conda-lock-helper.${NAME}.yml -p /tmp-env
+RUN conda list --explicit -p /tmp-env > conda-linux-64.${NAME}.lock
 EOF
 
-ID=$(docker create klay-beam-conda-lock-file)
-docker cp $ID:/klay/build/conda-linux-64.lock ./environment/conda-linux-64.lock
+ID=$(docker create conda-lock-helper:$NAME)
+docker cp $ID:/klay/build/conda-linux-64.${NAME}.lock ./conda-linux-64.${NAME}.lock
 docker rm -v $ID
