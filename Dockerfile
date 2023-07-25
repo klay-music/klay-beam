@@ -14,7 +14,7 @@
 # https://github.com/apache/beam/issues/22349
 #
 # 2. Conda
-# 
+#
 # We're managing some dependencies conda. We'll build these in a preliminary
 # container and copy the resulting artifacts to our runtime container.
 #
@@ -25,7 +25,7 @@
 # When launching a Beam job, we must use the same python version to launch the
 # job as is used in the we use in the final image. This means that the beam
 # invocation (which we'll probably run locally from a command line) must match
-# this python version, which also must match the final image. 
+# this python version, which also must match the final image.
 #
 # TLDR:
 # py_version must match the python version specified in environment.yml
@@ -57,11 +57,7 @@ COPY src/klay_beam/ ./src/klay_beam/
 
 # If you change submodules below, you also may need to change the conda environment.yaml
 RUN conda run -p /env python -m pip install \
-  './submodules/klaypy[torch, typing]' \
-  './submodules/klay-data[torch, type-check]' \
-  './submodules/semantic-model[torch, type-check]' \
-  './submodules/klay-data/submodules/mirdata' \
-  './submodules/klay-data/submodules/miditoolkit' \
+  # './submodules/klay-data[torch, type-check]' \
   '.[code-style, tests, type-check]'
 
 # Clean in a separate layer as calling conda still generates some __pycache__ files
@@ -70,9 +66,9 @@ RUN find -name '*.a' -delete && \
   rm -rf /env/include && \
   rm /env/lib/libpython3.10.so.1.0 && \
   find -name '__pycache__' -type d -exec rm -rf '{}' '+' && \
-  find /env/lib/python3.10/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  # find /env/lib/python3.10/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
   find /env/lib/python3.10/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  find /env/lib/python3.10/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  # find /env/lib/python3.10/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
   find /env/lib/python3.10/site-packages -name '*.pyx' -delete
 
 
@@ -101,35 +97,36 @@ RUN pip check
 
 # Copy files from official SDK image, including script/dependencies.
 COPY --from=beam /opt/apache/beam /opt/apache/beam
+ENV RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1
 
 # Set the entrypoint to Apache Beam SDK launcher.
 ENTRYPOINT ["/opt/apache/beam/boot"]
 
 
-# Install CUDA toolkit (but not cuda drivers) and cuDNN.
-ENV NVIDIA_INSTALLER_DIR="/tmp/installer_dir"
-# Download CUDA installer (contains the CUDA toolkit).
-# https://developer.nvidia.com/cuda-downloads
-ADD https://developer.download.nvidia.com/compute/cuda/12.2.0/local_installers/cuda_12.2.0_535.54.03_linux.run $NVIDIA_INSTALLER_DIR/cuda.run
-# Download cuDNN.
-# https://developer.nvidia.com/cudnn
-ADD cuda/cudnn-linux-x86_64-8.9.3.28_cuda12-archive.tar.xz $NVIDIA_INSTALLER_DIR/cudnn/
-# results in /tmp/installer_dir/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/lib
-# results in /tmp/installer_dir/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/include
+# # Install CUDA toolkit (but not cuda drivers) and cuDNN.
+# ENV NVIDIA_INSTALLER_DIR="/tmp/installer_dir"
+# # Download CUDA installer (contains the CUDA toolkit).
+# # https://developer.nvidia.com/cuda-downloads
+# ADD https://developer.download.nvidia.com/compute/cuda/12.2.0/local_installers/cuda_12.2.0_535.54.03_linux.run $NVIDIA_INSTALLER_DIR/cuda.run
+# # Download cuDNN.
+# # https://developer.nvidia.com/cudnn
+# ADD cuda/cudnn-linux-x86_64-8.9.3.28_cuda12-archive.tar.xz $NVIDIA_INSTALLER_DIR/cudnn/
+# # results in /tmp/installer_dir/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/lib
+# # results in /tmp/installer_dir/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/include
 
-RUN apt update
-RUN apt install -y libxml2-dev gcc
-RUN sh $NVIDIA_INSTALLER_DIR/cuda.run --toolkit --silent || (egrep '^\[ERROR\]' /var/log/cuda-installer.log && exit 1)
+# RUN apt update
+# RUN apt install -y libxml2-dev gcc
+# RUN sh $NVIDIA_INSTALLER_DIR/cuda.run --toolkit --silent || (egrep '^\[ERROR\]' /var/log/cuda-installer.log && exit 1)
 
-# Install cuDNN.
-RUN cp $NVIDIA_INSTALLER_DIR/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/include/cudnn*.h /usr/local/cuda/include 
-RUN cp $NVIDIA_INSTALLER_DIR/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/lib/libcudnn* /usr/local/cuda/lib64 
-RUN chmod a+r /usr/local/cuda/include/cudnn*.h /usr/local/cuda/lib64/libcudnn*  
+# # Install cuDNN.
+# RUN cp $NVIDIA_INSTALLER_DIR/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/include/cudnn*.h /usr/local/cuda/include
+# RUN cp $NVIDIA_INSTALLER_DIR/cudnn/cudnn-linux-x86_64-8.9.3.28_cuda12-archive/lib/libcudnn* /usr/local/cuda/lib64
+# RUN chmod a+r /usr/local/cuda/include/cudnn*.h /usr/local/cuda/lib64/libcudnn*
 
 # In the future, we'll merge the steps above into a single RUN command. For now,
 # we're keeping them separate to make it easier to debug. When we do merge them,
 # we should also remove the NVIDIA_INSTALLER_DIR at the end of the RUN command.
 # rm -rf $NVIDIA_INSTALLER_DIR
 
-# # A volume with GPU drivers will be mounted at runtime at /usr/local/nvidia.
+# A volume with GPU drivers will be mounted at runtime at /usr/local/nvidia.
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/nvidia/lib64:/usr/local/cuda/lib64

@@ -5,6 +5,8 @@
 # change the conda dependencies, we need to update the lock file. This script
 # will create a new lock file and copy it to the local environment directory.
 
+set -x
+
 docker build -t klay-beam-conda-lock-file -f- . <<EOF
 FROM condaforge/mambaforge:latest
 

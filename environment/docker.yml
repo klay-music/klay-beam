@@ -18,5 +18,8 @@ dependencies:
   # libsndfile 1.2.0 is required for the soundfile pip package
   - conda-forge::libsndfile>=1.2.0
   # pytorch deps copied from klay-music/audiolm
-  - pytorch::pytorch>=1.10
+  - pytorch::pytorch>=1.11=py3.10_cuda11.3_cudnn8.2.0_0
   - pytorch::torchaudio
+  # We could try installing Beam via conda, but I've only tested that the java
+  # binaries are correctly available by manually copying from the docker image
+  # - conda-forge::apache-beam=2.48
