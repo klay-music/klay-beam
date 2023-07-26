@@ -1,0 +1,25 @@
+name: klay-beam
+
+channels:
+  - defaults
+
+# IMPORTANT: THERE ARE MULTIPLE ENVIRONMENT FILES IN THIS REPO!!
+#
+# Are you making a change??? UPDATE THEM ALL!!!!!!!!!!!!!!!!!!!!
+
+dependencies:
+  - pip
+  - python=3.10
+  # ffmpeg 4.4 is required for torchaudio
+  - conda-forge::ffmpeg=4.4
+  # libiconv and xorg-libxau are required for ffmpeg
+  - conda-forge::libiconv=1.17
+  - conda-forge::xorg-libxau=1.0
+  # libsndfile 1.2.0 is required for the soundfile pip package
+  - conda-forge::libsndfile>=1.2.0
+  # pytorch deps copied from klay-music/audiolm
+  - pytorch::pytorch>=2.0
+  - pytorch::torchaudio
+  # We could try installing Beam via conda, but I've only tested that the java
+  # binaries are correctly available by manually copying from the docker image
+  # - conda-forge::apache-beam=2.48
