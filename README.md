@@ -14,7 +14,7 @@ images, and local environments, (1, 2, and 3 respectively).
 
 To run an example job:
 1. Talk to Charles or Max for GCP IAP permissions.
-1. Activate the `klay-beam` conda environment locally, (for example
+1. Activate a `klay-beam` conda environment locally, (for example
    `environment/osx-64-klay-beam.yml`)
 1. Run `bin/run.py` (see example below for arguments).
 
