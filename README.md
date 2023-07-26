@@ -2,11 +2,20 @@
 
 Base repo for running Apache Beam jobs locally or on GCP via Dataflow.
 
-Talk to Charles or Max for GCP permissions.
+Most Beam jobs require three compatible ingredients:
 
-The process for running a job:
-1. Activate the `klay-beam` conda environment
-1. Edit `bin/run.py` to define an execution graph.
+1. A pipeline script to define and launch the job
+2. A specialized Docker image including Beam SDK and any dependencies required
+   by the pipeline
+3. A local python environment that also includes the Beam SDK and job dependencies
+
+This repo includes helpers and examples for creating compatible scripts, Docker
+images, and local environments, (1, 2, and 3 respectively).
+
+To run an example job:
+1. Talk to Charles or Max for GCP IAP permissions.
+1. Activate the `klay-beam` conda environment locally, (for example
+   `environment/osx-64-klay-beam.yml`)
 1. Run `bin/run.py` (see example below for arguments).
 
 ```bash
@@ -41,23 +50,23 @@ python bin/run.py \
 
 Notes:
 
-- When running remotely you can use the `--setup_file` option to upload a local package to the workers. For example `--setup_file=./klay_beam/setup.py` would cause `klay_beam` to be bundled as an `sdist` (when you execute `bin/run.py`) and installed on the worker nodes. Any missing pip dependencies specified in `pyproject.toml` will also be installed at runtime.
+- When running remotely you can use the `--setup_file` option to upload a local package to the workers. For example `--setup_file=./klay_beam/setup.py` would cause `klay_beam` to be bundled as an `sdist` (when you execute `bin/run.py`) and installed on the worker nodes replacing any existing installation of `klay_beam` that may be in the docker container. Any missing pip dependencies specified in `pyproject.toml` will also be installed at runtime.
 - When running on Dataflow, view the job execution details and logs at  https://console.cloud.google.com/dataflow/jobs?project=klay-beam-tests
 - options for `--autoscaling_algorithm` are `THROUGHPUT_BASED` and `NONE`
 
 # Development
 ## Quick Start
 
-Create `conda` environment:
+Create `conda` environment. Environments labeled `osx-64` are likely to work on linux albeit without cuda support:
 
 ```sh
-conda env create -f environments/main.yml
+conda env create -f environments/osx-64-klay-beam.yml
 ```
 
 To create or update an environment:
 
 ```sh
-conda env update -f environment/main.yml
+conda env update -f environment/osx-64-klay-beam.yml
 ```
 
 ## Docker Container
@@ -71,10 +80,11 @@ container.
 
 These steps build the Docker container and push to our GCP docker registry.
 
-1. Run `./make-conda-lock-file.sh` to generate a new `environment/conda-linux-64.lock`. **IMPORTANT: Only run this step when you are changing the conda dependencies in the `environment/docker.yml` file.**
+1. `cd environment/`
+1. `./make-conda-lock-file.sh 002-py310` to generate a new `environment/conda-linux-64.002-py310.lock`. **IMPORTANT: Only run this step when you are changing the conda dependencies in the `environment/conda-linux-64.002-py310.yml` file.**
 2. Run `docker build -t klay-beam:latest .`
-3. Edit `tag.sh` to update the version, for example `0.1.0-rc.2`
-4. Run `tag.sh` to tag and push to GCP
+3. Edit `tag-klay-beam.sh` to update the version, for example `0.2.0-rc.2`
+4. Run `tag-klay-beam.sh` to tag and push to GCP
 
 To test the container interactively: `docker run --rm -it --entrypoint /bin/sh klay-beam:latest`
 
