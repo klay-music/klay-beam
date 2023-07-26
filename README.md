@@ -6,7 +6,6 @@ Talk to Charles or Max for GCP permissions.
 
 The process for running a job:
 1. Activate the `klay-beam` conda environment
-1. Optionally update the `klay_beam` package with new functions or transforms
 1. Edit `bin/run.py` to define an execution graph.
 1. Run `bin/run.py` (see example below for arguments).
 
@@ -44,7 +43,7 @@ Notes:
 
 - When running remotely you can use the `--setup_file` option to upload a local package to the workers. For example `--setup_file=./klay_beam/setup.py` would cause `klay_beam` to be bundled as an `sdist` (when you execute `bin/run.py`) and installed on the worker nodes. Any missing pip dependencies specified in `pyproject.toml` will also be installed at runtime.
 - When running on Dataflow, view the job execution details and logs at  https://console.cloud.google.com/dataflow/jobs?project=klay-beam-tests
-
+- options for `--autoscaling_algorithm` are `THROUGHPUT_BASED` and `NONE`
 
 # Development
 ## Quick Start

@@ -19,6 +19,7 @@ if [ -z "$NAME" ]; then
     exit 1
 fi
 
+set -e
 set -x
 
 # build an image with the environment from the yaml file
