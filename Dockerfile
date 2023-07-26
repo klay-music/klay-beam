@@ -51,18 +51,17 @@ ARG CONDA_LOCK_NAME
 WORKDIR /klay/build
 
 # create the conda environment in /env (intalling packages by copying)
-COPY ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock ./environment/conda-linux-64.lock
-RUN mamba create --copy -p /env --file environment/conda-linux-64.lock && conda clean -afy
+COPY ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock
+RUN mamba create --copy -p /env --file environment/conda-linux-64.${CONDA_LOCK_NAME}.lock && conda clean -afy
 
 # Install submodules and klay_beam
 COPY submodules ./submodules
-COPY pyproject.toml setup.cfg ./
-COPY src/klay_beam/ ./src/klay_beam/
+COPY klay_beam ./klay_beam
 
 # If you change submodules below, you also may need to change the conda environment.yaml
 RUN conda run -p /env python -m pip install \
   './submodules/klay-data[torch, type-check]' \
-  '.[code-style, tests, type-check]'
+  './klay_beam[code-style, tests, type-check]'
 
 # Clean in a separate layer as calling conda still generates some __pycache__ files
 RUN find -name '*.a' -delete && \
@@ -90,17 +89,14 @@ RUN . /env/bin/activate
 ENV PATH="/env/bin:$PATH"
 
 # Install the klay_beam package
-COPY ./src ./src
-COPY ./bin ./bin
-COPY ./tests ./tests
-COPY pyproject.toml setup.cfg setup.py ./
-RUN python3 -m pip install '.'
-
-# Verify that the image does not have conflicting dependencies.
-RUN pip check
+# COPY ./klay_beam ./klay_beam
+# RUN python3 -m pip install './klay_beam'
 
 # Copy files from official SDK image, including script/dependencies.
 COPY --from=beam /opt/apache/beam /opt/apache/beam
+
+# Verify that the image does not have conflicting dependencies.
+RUN pip check
 
 # In some situations, Beam will create a new python virtual environment to run
 # the job. Suppress this behavior by setting this environment variable. See:

@@ -31,19 +31,18 @@ python bin/run.py \
     --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
     --disk_size_gb=50 \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.1.0 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.2.0 \
     --sdk_location=container \
-    --setup_file=./setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/ \
     --project klay-beam-tests \
     --input 'gs://klay-dataflow-test-000/test-audio/fma_large/005/**' \
-    --output 'gs://klay-dataflow-test-000/results/outputs/16/{}.wav' \
-    --job_name 'klay-audio-test-016'
+    --output 'gs://klay-dataflow-test-000/results/outputs/17/{}.wav' \
+    --job_name 'klay-audio-test-017'
 ```
 
 Notes:
 
-- When running remotely, `klay_beam` will be bundled as an `sdist` (when you execute `bin/run.py`) and installed on the worker nodes. Any missing pip dependencies specified in `pyproject.toml` will also be installed at runtime.
+- When running remotely you can use the `--setup_file` option to upload a local package to the workers. For example `--setup_file=./klay_beam/setup.py` would cause `klay_beam` to be bundled as an `sdist` (when you execute `bin/run.py`) and installed on the worker nodes. Any missing pip dependencies specified in `pyproject.toml` will also be installed at runtime.
 - When running on Dataflow, view the job execution details and logs at  https://console.cloud.google.com/dataflow/jobs?project=klay-beam-tests
 
 
