@@ -1,5 +1,6 @@
 # This environment should allow running and testing demucs pipelines on osx.
-# Unlike the linux environment
+# Unlike the linux environment, we specify the pip dependencies here, because
+# there is no local pyproject directly associated with the demucs examples.
 
 name: demucs
 
@@ -32,6 +33,10 @@ dependencies:
     - soundfile
     - submitit
     - treetable>=0.2.3
-    - --editable=git+https://github.com/facebookresearch/demucs.git@2e79e6e#egg=demucs
+    # I'm going to start by using demucs from klay-beam, but if we end up
+    # needing to bundle it directly, here's how we do it:
+    # - --editable=git+https://github.com/facebookresearch/demucs.git@2e79e6e#egg=demucs
     - apache-beam[gcp]==2.48
-    - -e '..[code-style, tests, type-check]'
+    - -e '../klay_beam[code-style, tests, type-check]'
+    - -e '../submodules/klaypy[torch, typing]'
+    - -e '../submodules/klay-data[torch, type-check]'
