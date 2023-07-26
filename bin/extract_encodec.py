@@ -13,8 +13,8 @@ import logging
 from klay_beam.transforms import (
     LoadWithTorchaudio,
     write_file,
-    numpy_to_wav,
 )
+
 
 import klay_data.transform
 

@@ -9,4 +9,4 @@ import setuptools
 # it to GCS. The sdist package is then downloaded by the workers.
 
 if __name__ == "__main__":
-   setuptools.setup()
+    setuptools.setup()

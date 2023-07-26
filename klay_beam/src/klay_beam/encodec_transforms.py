@@ -1,4 +1,4 @@
-#%%
+# %%
 import io
 import math
 import numpy as np
@@ -8,6 +8,14 @@ import encodec
 import encodec.modules
 import encodec.quantization
 
+
+# %%
+import torch
+from apache_beam.ml.inference.base import KeyedModelHandler
+from apache_beam.ml.inference.pytorch_inference import PytorchModelHandlerTensor
+
+
+# %%
 def get_encodec_model_params():
     """Get parameters suitable for EncodecModel(**params)
 
@@ -28,16 +36,24 @@ def get_encodec_model_params():
     just passing in the params dict was simpler and cleaner than maintaining a
     custom wrapper AND a custom parameters file.
     """
-    target_bandwidths = [1.5, 3., 6, 12., 24.]
-    bandwidth = 24.0
+    target_bandwidths = [1.5, 3.0, 6.0, 12.0, 24.0]
+    # bandwidth = 24.0
     sample_rate = 24_000
     channels = 1
     causal: bool = True
-    model_norm: str = 'weight_norm'
-    name='encodec_24khz'
-    encoder = encodec.modules.SEANetEncoder(channels=channels, norm=model_norm, causal=causal)
-    decoder = encodec.modules.SEANetDecoder(channels=channels, norm=model_norm, causal=causal)
-    n_q = int(1000 * target_bandwidths[-1] // (math.ceil(sample_rate / encoder.hop_length) * 10))
+    model_norm: str = "weight_norm"
+    name = "encodec_24khz"
+    encoder = encodec.modules.SEANetEncoder(
+        channels=channels, norm=model_norm, causal=causal
+    )
+    decoder = encodec.modules.SEANetDecoder(
+        channels=channels, norm=model_norm, causal=causal
+    )
+    n_q = int(
+        1000
+        * target_bandwidths[-1]
+        // (math.ceil(sample_rate / encoder.hop_length) * 10)
+    )
 
     return {
         "encoder": encoder,
@@ -56,6 +72,7 @@ def get_encodec_model_params():
         "name": name,
     }
 
+
 def get_encodec_state_dict_url():
     """Apache Beam requires that we pass in a path to the model parameters.
     Usually we would just call EncodecModel.encodec_model_24khz() which
@@ -67,24 +84,18 @@ def get_encodec_state_dict_url():
     # package changes this path and breaks this code. If this assertion fails,
     # we must inspect the source code of the encodec package ane ensure the path
     # below is correct.
-    assert encodec.__version__ == '0.1.1'
-    return 'https://dl.fbaipublicfiles.com/encodec/v0/'+'encodec_24khz-d7cc33bc.th'
+    assert encodec.__version__ == "0.1.1"
+    return "https://dl.fbaipublicfiles.com/encodec/v0/" + "encodec_24khz-d7cc33bc.th"
+
 
 def get_encodec_state_dict_local_path():
-    return os.path.join(torch.hub.get_dir(), 'checkpoints', 'encodec_24khz-d7cc33bc.th')
-
-
-#%%
-import apache_beam as beam
-import numpy
-import torch
-from apache_beam.ml.inference.base import RunInference, KeyedModelHandler
-from apache_beam.ml.inference.pytorch_inference import PytorchModelHandlerTensor
+    return os.path.join(torch.hub.get_dir(), "checkpoints", "encodec_24khz-d7cc33bc.th")
 
 
 # References
 # https://cloud.google.com/dataflow/docs/notebooks/run_inference_generative_ai
 # https://beam.apache.org/documentation/transforms/python/elementwise/runinference-pytorch/
+
 
 def handle_keyed_result(keyed_result):
     """Convert a keyed result to a numpy array"""
@@ -94,11 +105,13 @@ def handle_keyed_result(keyed_result):
     in_memory_file.seek(0)
     return (key, in_memory_file)
 
+
 def create_encodec_model():
     model = encodec.EncodecModel.encodec_model_24khz()
     model.set_target_bandwidth(24.0)
     model.eval()
     return model
+
 
 def get_model_handler():
     return KeyedModelHandler(
@@ -107,7 +120,10 @@ def get_model_handler():
             max_batch_size=2,
             model_class=create_encodec_model,
             model_params={},
-            state_dict_path=get_encodec_state_dict_local_path()))
+            state_dict_path=get_encodec_state_dict_local_path(),
+        )
+    )
+
 
 # def convert_to_mono_and_24khz(audio_tensor, original_sample_rate):
 #     """Convert a stereo sample to mono and 24khz"""
