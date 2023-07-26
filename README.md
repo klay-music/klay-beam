@@ -31,14 +31,14 @@ python bin/run.py \
     --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
     --disk_size_gb=50 \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:latest \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.1.0 \
     --sdk_location=container \
     --setup_file=./setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/ \
     --project klay-beam-tests \
     --input 'gs://klay-dataflow-test-000/test-audio/fma_large/005/**' \
-    --output 'gs://klay-dataflow-test-000/results/outputs/15/{}.wav' \
-    --job_name 'klay-audio-test-015'
+    --output 'gs://klay-dataflow-test-000/results/outputs/16/{}.wav' \
+    --job_name 'klay-audio-test-016'
 ```
 
 Notes:

@@ -34,7 +34,7 @@ ARG py_version=3.10
 # beam_version must match the version specified in pyproject.toml
 ARG beam_version=2.48.0
 
-ARG CONDA_LOCK_NAME=001-py310-cuda
+ARG CONDA_LOCK_NAME=002-py310
 
 FROM apache/beam_python${py_version}_sdk:${beam_version} as beam
 ARG py_version
@@ -51,7 +51,7 @@ ARG CONDA_LOCK_NAME
 WORKDIR /klay/build
 
 # create the conda environment in /env (intalling packages by copying)
-ADD ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock ./environment/conda-linux-64.lock
+COPY ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock ./environment/conda-linux-64.lock
 RUN mamba create --copy -p /env --file environment/conda-linux-64.lock && conda clean -afy
 
 # Install submodules and klay_beam
@@ -61,7 +61,7 @@ COPY src/klay_beam/ ./src/klay_beam/
 
 # If you change submodules below, you also may need to change the conda environment.yaml
 RUN conda run -p /env python -m pip install \
-  # './submodules/klay-data[torch, type-check]' \
+  './submodules/klay-data[torch, type-check]' \
   '.[code-style, tests, type-check]'
 
 # Clean in a separate layer as calling conda still generates some __pycache__ files
@@ -72,7 +72,7 @@ RUN find -name '*.a' -delete && \
   find -name '__pycache__' -type d -exec rm -rf '{}' '+' && \
   find /env/lib/python3.10/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
   find /env/lib/python3.10/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  # find /env/lib/python3.10/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  find /env/lib/python3.10/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
   find /env/lib/python3.10/site-packages -name '*.pyx' -delete
 
 
