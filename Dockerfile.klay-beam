@@ -1,3 +1,7 @@
+# Example usage:
+# docker build -f Dockerfile.klay-beam -t klay-beam:latest .
+
+
 # Conda + Apache Beam
 #
 # We need two prelimiary images for our multistage build: Apache Beam SDK and
@@ -87,10 +91,6 @@ COPY --from=conda /env /env
 RUN python3 -m venv /env
 RUN . /env/bin/activate
 ENV PATH="/env/bin:$PATH"
-
-# Install the klay_beam package
-# COPY ./klay_beam ./klay_beam
-# RUN python3 -m pip install './klay_beam'
 
 # Copy files from official SDK image, including script/dependencies.
 COPY --from=beam /opt/apache/beam /opt/apache/beam
