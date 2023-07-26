@@ -12,6 +12,19 @@
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [],
+    },
+    {
+      "name": "Python: extract encodec",
+      "type": "python",
+      "request": "launch",
+      "program": "bin/extract_encodec.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "--input", "/Users/charles/projects/fma_large/005/00500*.mp3",
+        "--output", "./test_audio/encodec_tokens/{}.npy",
+        "--runner", "Direct"
+      ],
     }
   ]
 }

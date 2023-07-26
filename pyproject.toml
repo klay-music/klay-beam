@@ -10,7 +10,21 @@ dynamic = ["version"]
 dependencies = [
   "apache-beam[gcp]==2.48.0",
   "pydub==0.25.1",
-  "soundfile>=0.12.1"
+  "soundfile>=0.12.1",
+  # klay-music/audiolm deps:
+  "accelerate",
+  "deepspeed",
+  "einops>=0.6",
+  "encodec",
+  "joblib",
+  "ninja",
+  "pytorch_lightning",
+  "scikit-learn>=1.2.1",
+  "tensorboardx",
+  "tiktoken",
+  "transformers>=4.26",
+  "tqdm",
+  "wandb",
 ]
 requires-python = ">=3.9"
 
