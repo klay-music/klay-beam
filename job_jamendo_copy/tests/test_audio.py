@@ -1,9 +1,10 @@
 import numpy as np
 from job_jamendo_copy.audio import random_crop
 
-def test_random_crop():
 
-    SR=10
+def test_random_crop():
+    SR = 10
+
     def create_x_seconds_of_data(x, sr=SR, ch=2):
         single_channel = np.arange(x * sr)
         return np.tile(single_channel, (ch, 1))

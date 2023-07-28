@@ -64,6 +64,7 @@ def test_get_target_path_gcp_to_local():
         actual_output_filename = get_target_path(source, source_dir, target_dir)
         assert actual_output_filename == expected
 
+
 def test_get_target_path_local_to_gcp():
     source_dir = "/klay-datasets/mtg_jamendo_autotagging/audios/"
     target_dir = "gs://klay-datasets/mtg_jamendo/"
@@ -85,18 +86,27 @@ def test_get_target_path_local_to_gcp():
         actual_output_filename = get_target_path(source, source_dir, target_dir)
         assert actual_output_filename == expected
 
+
 def test_pathlib_relative_to():
     # Ensure that pathlib.Path.relative_to can handle both paths and URIs
     uri = "gs://klay-datasets/mtg_jamendo_autotagging/audios/00/1009600.mp3"
-    result1 = pathlib.PurePosixPath(uri).relative_to("gs://klay-datasets/mtg_jamendo_autotagging/audios/")
+    result1 = pathlib.PurePosixPath(uri).relative_to(
+        "gs://klay-datasets/mtg_jamendo_autotagging/audios/"
+    )
     assert result1 == pathlib.PurePosixPath("00/1009600.mp3")
-    result2 = pathlib.PurePosixPath(uri).relative_to("gs://klay-datasets/mtg_jamendo_autotagging/audios")
+    result2 = pathlib.PurePosixPath(uri).relative_to(
+        "gs://klay-datasets/mtg_jamendo_autotagging/audios"
+    )
     assert result2 == pathlib.PurePosixPath("00/1009600.mp3")
 
     filepath = "/klay-datasets/mtg_jamendo_autotagging/audios/00/1009600.mp3"
-    result3 = pathlib.PurePosixPath(filepath).relative_to("/klay-datasets/mtg_jamendo_autotagging/audios/")
+    result3 = pathlib.PurePosixPath(filepath).relative_to(
+        "/klay-datasets/mtg_jamendo_autotagging/audios/"
+    )
     assert result3 == pathlib.PurePosixPath("00/1009600.mp3")
-    result4 = pathlib.PurePosixPath(filepath).relative_to("/klay-datasets/mtg_jamendo_autotagging/audios")
+    result4 = pathlib.PurePosixPath(filepath).relative_to(
+        "/klay-datasets/mtg_jamendo_autotagging/audios"
+    )
     assert result4 == pathlib.PurePosixPath("00/1009600.mp3")
 
     # path_as_string = "gs://klay-datasets/mtg_jamendo_autotagging/audios/00/1009600.mp3"

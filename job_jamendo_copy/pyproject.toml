@@ -34,5 +34,7 @@ plugins = [
 ]
 
 [[tool.mypy.overrides]]
-module = []
+module = [
+  "apache_beam.*",
+]
 ignore_missing_imports = true

@@ -2,7 +2,7 @@ from pathlib import PurePosixPath
 import os.path
 
 
-def get_target_path(input_uri: str, source_dir:str, target_dir: str) -> str:
+def get_target_path(input_uri: str, source_dir: str, target_dir: str) -> str:
     """
     When processing datasets, we often have multi-layer directories, and we need to
     map input files to output files. For example, inputs could look like this:
@@ -35,5 +35,6 @@ def get_target_path(input_uri: str, source_dir:str, target_dir: str) -> str:
     # As a result, we just use os.path.join. Mixing pathlib and os.path is suboptimal.
     # Is there a better way?
     return os.path.join(target_dir, relative_target_filename)
+
 
 assert os.path.sep == "/", "os.path.join (in get_target_path) breaks on Windows"

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 # klay_data depends on Python > 3.9?
 # copy pastaing this from klay-data/src/klay_data/utils.py
 def klay_data_random_crop(x: np.ndarray, crop_length: int, dim: int = 0) -> np.ndarray:
@@ -44,7 +45,12 @@ def klay_data_random_crop(x: np.ndarray, crop_length: int, dim: int = 0) -> np.n
     return cropped
 
 
-def random_crop(audio_data: np.ndarray, sr: int, max_duration_seconds:float = 90, min_duration_seconds:float = 20):
+def random_crop(
+    audio_data: np.ndarray,
+    sr: int,
+    max_duration_seconds: float = 90,
+    min_duration_seconds: float = 20,
+):
     """
     Given a multi-channel audio ndarray, trim the audio to random 90 seconds.
     Return None if audio is shorter than 20 seconds
@@ -55,7 +61,8 @@ def random_crop(audio_data: np.ndarray, sr: int, max_duration_seconds:float = 90
     assert channels <= 128, "audio_data must have <= 128 channels"
 
     min_duration_samples = int(min_duration_seconds * sr)
-    if audio_duration_samples < min_duration_samples: return None
+    if audio_duration_samples < min_duration_samples:
+        return None
 
     max_duration_samples = int(max_duration_seconds * sr)
     max_duration_samples = min(max_duration_samples, audio_duration_samples)

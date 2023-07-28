@@ -18,8 +18,10 @@ from job_jamendo_copy.transforms import Trim
 Example usage:
 
 python bin/run_job_jamendo_copy.py \
-    --source_audio_path '/Users/charles/projects/klay/python/klay-beam/test_audio/full_mixes/' \
-    --target_audio_path '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/jamendo_copy' \
+    --source_audio_path \
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/full_mixes/' \
+    --target_audio_path \
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/jamendo_copy' \
     --runner Direct
 """
 
