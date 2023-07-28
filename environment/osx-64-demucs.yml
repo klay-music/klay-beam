@@ -11,7 +11,7 @@ channels:
 
 dependencies:
   - python=3.9
-  - ffmpeg>=4.2
+  - ffmpeg>=4.2,<5
   # demucs uses pytorch 1.8.1 (https://github.com/facebookresearch/demucs/blob/main/environment-cuda.yml)
   # klaypy uses 1.12 (https://github.com/klay-music/klaypy/blob/main/environment/linux-64.yml)
   # conda-linux-64.003-demux uses pytorch 1.12

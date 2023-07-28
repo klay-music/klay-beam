@@ -41,4 +41,4 @@ dependencies:
     - -e '../klay_beam[code-style, tests, type-check]'
     - -e '../submodules/klaypy[torch, typing]'
     - -e '../submodules/klay-data[torch, type-check]'
-    - -e '../job-jamendo-copy[coda-style, tests, type-check]'
+    - -e '../job_jamendo_copy[coda-style, tests, type-check]'

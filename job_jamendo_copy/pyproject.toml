@@ -7,7 +7,10 @@ name = "job_jamendo_copy"
 description = "initial job for copying+triming jamendo dataset"
 readme = "README.md"
 dynamic = ["version"]
-dependencies = []
+dependencies = [
+  "numpy",
+  "klay_beam",
+]
 requires-python = ">=3.9"
 
 [project.optional-dependencies]
