@@ -35,8 +35,7 @@ To run the example job:
 python bin/run_example.py \
     --input 'gs://klay-dataflow-test-000/test-audio/fma_large/005/00500*.mp3' \
     --output 'test_audio/job_output/{}.wav' \
-    --runner Direct \
-    --temp_location gs://klay-dataflow-test-000/tmp/
+    --runner Direct
 ```
 
 ```bash

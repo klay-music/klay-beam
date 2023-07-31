@@ -108,7 +108,3 @@ def test_pathlib_relative_to():
         "/klay-datasets/mtg_jamendo_autotagging/audios"
     )
     assert result4 == pathlib.PurePosixPath("00/1009600.mp3")
-
-    # path_as_string = "gs://klay-datasets/mtg_jamendo_autotagging/audios/00/1009600.mp3"
-    # path1 = pathlib.PurePosixPath(path_as_string)
-    # assert (str(path1) == path_as_string)
