@@ -1,4 +1,6 @@
 import numpy as np
+import torch
+import torchaudio
 
 
 # klay_data depends on Python > 3.9?
@@ -45,6 +47,7 @@ def klay_data_random_crop(x: np.ndarray, crop_length: int, dim: int = 0) -> np.n
     return cropped
 
 
+# This is mostly a wrapper around klay_data's random_crop method.
 def random_crop(
     audio_data: np.ndarray,
     sr: int,
@@ -68,3 +71,35 @@ def random_crop(
     max_duration_samples = min(max_duration_samples, audio_duration_samples)
 
     return klay_data_random_crop(audio_data, max_duration_samples, dim=1)
+
+
+# Copied from klay_data/src/klay_data/transform.py
+def klay_data_convert_audio(
+    wav: torch.Tensor, sr: int, target_sr: int, target_channels: int
+):
+    """Copied from encodec"""
+    if wav.ndim == 1:
+        wav.unsqueeze_(0)
+    assert wav.shape[0] in [1, 2], "Audio must be mono or stereo."
+    if target_channels == 1:
+        wav = wav.mean(0, keepdim=True)
+    elif target_channels == 2:
+        *shape, _, length = wav.shape
+        wav = wav.expand(*shape, target_channels, length)
+    elif wav.shape[0] == 1:
+        wav = wav.expand(target_channels, -1)
+    wav = torchaudio.transforms.Resample(sr, target_sr)(wav)
+    return wav
+
+
+# Wrapper around klay_data's convert_audio method, which
+def ensure_audio_format(
+    audio_data: np.ndarray, source_sr: int, target_sr: int, target_channels
+):
+    """
+    Convert audio data to the specified sample rate and number of channels
+    """
+    resampled = klay_data_convert_audio(
+        torch.from_numpy(audio_data), source_sr, target_sr, target_channels
+    )
+    return resampled.numpy()

@@ -1,7 +1,7 @@
 import logging
 import apache_beam as beam
 from .paths import get_target_path
-from .audio import random_crop
+from .audio import random_crop, ensure_audio_format
 from klay_beam.transforms import numpy_to_wav
 
 
@@ -32,21 +32,37 @@ class Trim(beam.DoFn):
         )
         ```
         """
-        path, key, audio_tensor, sr = loaded_audio_tuple
-        input_filename = f"{path}.{key}"
-        target_filename = get_target_path(
-            input_filename, self.source_dir, self.target_dir
-        )
-        cropped_audio_tensor = random_crop(audio_tensor.numpy(), sr)
+        try:
+            path, key, audio_tensor, sr = loaded_audio_tuple
+            input_filename = f"{path}.{key}"
 
-        if cropped_audio_tensor is None:
-            logging.warn(f"Audio file {input_filename} is too short. Skipping.")
+            # Get destination filename
+            target_filename = get_target_path(
+                input_filename, self.source_dir, self.target_dir
+            )
+
+            # Crop audio
+            cropped_audio_data = random_crop(audio_tensor.numpy(), sr)
+
+            if cropped_audio_data is None:
+                logging.warn(f"Audio file {input_filename} is too short. Skipping.")
+                return []
+
+            # Ensure 48k stereo audio
+            new_sr = 48_000
+            resampled_audio = ensure_audio_format(cropped_audio_data, sr, new_sr, 2)
+
+            # Convert to wav
+            final_duration_seconds = resampled_audio.shape[1] / new_sr
+            in_memory_wav = numpy_to_wav(resampled_audio, new_sr)
+
+            # Log success
+            logging.info(
+                f"converted '{input_filename}' to a {final_duration_seconds:.3f} second .wav file"
+            )
+
+            return [(target_filename, in_memory_wav)]
+
+        except Exception as e:
+            logging.error(f"Error processing {input_filename}: {e}")
             return []
-
-        cropped_duration_seconds = cropped_audio_tensor.shape[1] / sr
-        in_memory_wav = numpy_to_wav(cropped_audio_tensor, sr)
-        logging.info(
-            f"converted '{input_filename}' to a {cropped_duration_seconds:.3f} second .wav file"
-        )
-
-        return [(target_filename, in_memory_wav)]
