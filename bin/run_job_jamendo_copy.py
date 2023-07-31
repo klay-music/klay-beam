@@ -18,9 +18,15 @@ from job_jamendo_copy.transforms import Trim
 Example usage:
 
 python bin/run_job_jamendo_copy.py \
-    --wait_until_finish \
     --source_audio_path \
         '/Users/charles/projects/klay/python/klay-beam/test_audio/abbey_road/mp3/' \
+    --target_audio_path \
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/jamendo_copy' \
+    --runner Direct
+
+python bin/run_job_jamendo_copy.py \
+    --source_audio_path \
+        'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3' \
     --target_audio_path \
         '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/jamendo_copy' \
     --runner Direct
@@ -57,13 +63,6 @@ def parse_args():
         """,
     )
 
-    parser.add_argument(
-        "--wait_until_finish",
-        dest="wait_until_finish",
-        default=False,
-        action="store_true",
-        help="If true, wait until the pipeline finishes before exiting",
-    )
     return parser.parse_known_args(None)
 
 
@@ -90,11 +89,6 @@ def run():
             | "Random Trim" >> beam.ParDo(Trim(known_args.input, known_args.output))
             | "Write Audio" >> beam.Map(write_file)
         )
-
-        pipeline_result = p.run()
-
-        if known_args.wait_until_finish:
-            pipeline_result.wait_until_finish()
 
 
 if __name__ == "__main__":

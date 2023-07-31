@@ -98,14 +98,12 @@ def run():
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     with beam.Pipeline(options=pipeline_options) as p:
-        _ = (
+        (
             p
             | "CreateSingleton" >> beam.Create([None])
             | "CudaDebug" >> beam.Map(log_debug_info)
             | "ListDirectories" >> beam.Map(list_some_directories)
         )
-
-        p.run().wait_until_finish()
 
 
 if __name__ == "__main__":
