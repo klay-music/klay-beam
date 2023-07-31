@@ -45,10 +45,10 @@ python bin/run_job_jamendo_copy.py \
     --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets/mtg_jamendo_autotagging/audios' \
+        'gs://klay-datasets/mtg_jamendo_autotagging/audios/00/' \
     --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --job_name 'jamendo-copy-002'
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00-test/' \
+    --job_name 'jamendo-copy-003'
 
     # Possible values for --source_audio_path
         'gs://klay-datasets/mtg_jamendo_autotagging/audios' \
@@ -88,6 +88,20 @@ def parse_args():
 
     return parser.parse_known_args(None)
 
+def split_path(file_metadata):
+    # split the file path into a prefix and the rest
+    try:
+        return (file_metadata.path, file_metadata)
+    except Exception as e:
+        logging.error("Missing Metadata for {}: \n{}".format(file_metadata, e))
+        raise e
+
+
+def ungroup(kv):
+    # ungroup the files, returning one element per file
+    _, metadatas = kv
+    return metadatas
+
 
 def run():
     known_args, pipeline_args = parse_args()
@@ -106,6 +120,11 @@ def run():
             p
             # MatchFiles produces a PCollection of FileMetadata objects
             | beam_io.MatchFiles(match_pattern)
+            # Group and ungroup to prevent "fusion". See:
+            # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
+            | 'Split path' >> beam.Map(split_path)
+            | 'Group by key' >> beam.GroupByKey()
+            | 'Ungroup' >> beam.FlatMap(ungroup)
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "Load Audio" >> beam.ParDo(LoadWithTorchaudio())
