@@ -30,6 +30,29 @@ python bin/run_job_jamendo_copy.py \
     --target_audio_path \
         '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/jamendo_copy' \
     --runner Direct
+
+
+python bin/run_job_jamendo_copy.py \
+    --region us-east1 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --runner DataflowRunner \
+    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+    --disk_size_gb=50 \
+    --experiments=use_runner_v2 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.2.0 \
+    --sdk_location=container \
+    --setup_file ./job_jamendo_copy/setup.py \
+    --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
+    --project klay-training \
+    --source_audio_path \
+        'gs://klay-datasets/mtg_jamendo_autotagging/audios' \
+    --target_audio_path \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --job_name 'jamendo-copy-002'
+
+    # Possible values for --source_audio_path
+        'gs://klay-datasets/mtg_jamendo_autotagging/audios' \
+        'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
 """
 
 

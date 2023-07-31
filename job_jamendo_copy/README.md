@@ -14,6 +14,29 @@ python bin/run_job_jamendo_copy.py \
     --source_audio_path '/absolute/path/to/mp3/data/' \
     --target_audio_path '/absolute/path/to/job_output/' \
     --runner Direct
+
+# Run remote job with autoscaling
+python bin/run_job_jamendo_copy.py \
+    --region us-east1 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --runner DataflowRunner \
+    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+    --disk_size_gb=50 \
+    --experiments=use_runner_v2 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.2.0 \
+    --sdk_location=container \
+    --setup_file ./job_jamendo_copy/setup.py \
+    --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
+    --project klay-training \
+    --source_audio_path \
+        'gs://klay-datasets/mtg_jamendo_autotagging/audios' \
+    --target_audio_path \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --job_name 'jamendo-copy-002'
+
+    # Possible values for --source_audio_path
+        'gs://klay-datasets/mtg_jamendo_autotagging/audios' \
+        'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
 ```
 
 # Development
