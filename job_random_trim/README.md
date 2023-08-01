@@ -1,22 +1,22 @@
-# job_jamendo_copy
+# job_random_trim
 
 Initial job for copying+triming jamendo dataset
 
 
 To run locally, activate a python environment that includes these pip deps.
-(`../environments/osx-64-job-jamendo` should work)
+(`../environments/osx-64-job-random-trim` should work)
 - `apache_beam@2.48.0`
-- this package (`job_jamendo_copy`)
+- this package (`job_random_trim`)
 
 ```
 # CD into the parent dir (one level up from this package) and run the launch script
-python bin/run_job_jamendo_copy.py \
+python bin/run_job_random_trim.py \
     --source_audio_path '/absolute/path/to/mp3/data/' \
     --target_audio_path '/absolute/path/to/job_output/' \
     --runner Direct
 
 # Run remote job with autoscaling
-python bin/run_job_jamendo_copy.py \
+python bin/run_job_random_trim.py \
     --max_num_workers=32 \
     --region us-east1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
@@ -26,7 +26,7 @@ python bin/run_job_jamendo_copy.py \
     --experiments=use_runner_v2 \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.2.0 \
     --sdk_location=container \
-    --setup_file ./job_jamendo_copy/setup.py \
+    --setup_file ./job_random_trim/setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
     --project klay-training \
     --source_audio_path \

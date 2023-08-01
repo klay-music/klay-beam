@@ -1,4 +1,4 @@
-from job_jamendo_copy.paths import get_target_path
+from job_random_trim.paths import get_target_path
 import pathlib
 import pytest
 

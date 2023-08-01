@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "job_jamendo_copy"
+name = "job_random_trim"
 description = "initial job for copying+triming jamendo dataset"
 readme = "README.md"
 dynamic = ["version"]
@@ -23,7 +23,7 @@ tests = ["pytest"]
 type-check = ["mypy>=0.990", "pydantic>=1.10"]
 
 [tool.setuptools.dynamic]
-version = {attr = "job_jamendo_copy.__version__"}
+version = {attr = "job_random_trim.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

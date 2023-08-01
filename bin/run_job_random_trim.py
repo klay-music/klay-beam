@@ -11,20 +11,20 @@ from klay_beam.transforms import (
     LoadWithTorchaudio,
     write_file,
 )
-from job_jamendo_copy.transforms import Trim
+from job_random_trim.transforms import Trim
 
 
 """
 Example usage:
 
-python bin/run_job_jamendo_copy.py \
+python bin/run_job_random_trim.py \
     --source_audio_path \
         '/Users/charles/projects/klay/python/klay-beam/test_audio/abbey_road/mp3/' \
     --target_audio_path \
         '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/jamendo_copy' \
     --runner Direct
 
-python bin/run_job_jamendo_copy.py \
+python bin/run_job_random_trim.py \
     --source_audio_path \
         'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3' \
     --target_audio_path \
@@ -32,7 +32,7 @@ python bin/run_job_jamendo_copy.py \
     --runner Direct
 
 
-python bin/run_job_jamendo_copy.py \
+python bin/run_job_random_trim.py \
     --max_num_workers=32 \
     --region us-east1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
@@ -42,7 +42,7 @@ python bin/run_job_jamendo_copy.py \
     --experiments=use_runner_v2 \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.2.0 \
     --sdk_location=container \
-    --setup_file ./job_jamendo_copy/setup.py \
+    --setup_file ./job_random_trim/setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
     --project klay-training \
     --source_audio_path \

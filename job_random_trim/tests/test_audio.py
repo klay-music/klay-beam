@@ -1,5 +1,5 @@
 import numpy as np
-from job_jamendo_copy.audio import random_crop
+from job_random_trim.audio import random_crop
 
 
 def test_random_crop():

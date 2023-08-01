@@ -1,9 +1,8 @@
-# This environment is setup to run the "job-jamendo". It should also allow
-# running and testing demucs pipelines on osx. Unlike the linux environment, we
-# specify the pip dependencies here, because there is no local pyproject
-# directly associated with the jamendo job.
+# This environment is setup to launch the "job-random-trim". This environment
+# will NOT be used on remote workers. Instead, remote workers will use a
+# docker-image to manage dependencies.
 
-name: job-jamendo
+name: job-random-trim
 
 channels:
   - defaults
@@ -25,4 +24,4 @@ dependencies:
     # - --editable=git+https://github.com/facebookresearch/demucs.git@2e79e6e#egg=demucs
     - apache-beam[gcp]==2.48
     - -e '../klay_beam[code-style, tests, type-check]'
-    - -e '../job_jamendo_copy[coda-style, tests, type-check]'
+    - -e '../job_random_trim[coda-style, tests, type-check]'
