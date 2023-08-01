@@ -17,6 +17,7 @@ python bin/run_job_jamendo_copy.py \
 
 # Run remote job with autoscaling
 python bin/run_job_jamendo_copy.py \
+    --max_num_workers=32 \
     --region us-east1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --runner DataflowRunner \
@@ -29,14 +30,14 @@ python bin/run_job_jamendo_copy.py \
     --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets/mtg_jamendo_autotagging/audios' \
+        'gs://klay-datasets/mtg_jamendo_autotagging/audios/' \
     --target_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --job_name 'jamendo-copy-002'
+    --machine_type n1-standard-2 \
+    --job_name 'jamendo-copy-008'
 
-    # Possible values for --source_audio_path
-        'gs://klay-datasets/mtg_jamendo_autotagging/audios' \
-        'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
+# Possible test values for --source_audio_path
+    'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
 ```
 
 # Development

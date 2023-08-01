@@ -33,6 +33,7 @@ python bin/run_job_jamendo_copy.py \
 
 
 python bin/run_job_jamendo_copy.py \
+    --max_num_workers=32 \
     --region us-east1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --runner DataflowRunner \
@@ -48,7 +49,8 @@ python bin/run_job_jamendo_copy.py \
         'gs://klay-datasets/mtg_jamendo_autotagging/audios/' \
     --target_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --job_name 'jamendo-copy-006'
+    --machine_type n1-standard-2 \
+    --job_name 'jamendo-copy-008'
 
     # Possible values for --source_audio_path
         'gs://klay-datasets/mtg_jamendo_autotagging/audios' \
