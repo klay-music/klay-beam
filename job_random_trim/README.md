@@ -1,12 +1,21 @@
 # job_random_trim
 
-Initial job for copying+triming jamendo dataset
+Initial job for copying+triming an audio dataset. This job will:
 
+1. Recursively search a path for `.mp3` files (`--source_audio_path`)
+2. Load all audio files
+3. For each audio file that is at least 20 seconds long, trim a random excerpt
+   of 90 seconds. If the file is between 20 and 90 seconds, use the entire file.
+4. Convert to `2-channel` `48kHz` audio.
+5. Save that file to a different directory (`--target_audio_path`) with the
+   extension `.source.wav`, preserving the directory structure.
 
-To run locally, activate a python environment that includes these pip deps.
-(`../environments/osx-64-job-random-trim` should work)
+To run, activate a python environment that includes these pip deps.
+(`../environments/osx-64-job-random-trim.yml` should work)
 - `apache_beam@2.48.0`
-- this package (`job_random_trim`)
+- This package (`job_random_trim`)
+- Python 3.10 is required for running the job remotely in the `klay-beam:0.2.0`
+  container (Python version must match in the local+remove environments).
 
 ```
 # CD into the parent dir (one level up from this package) and run the launch script
