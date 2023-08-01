@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job_demucs"
+description = "initial job for copying+triming jamendo dataset"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+  "numpy",
+  "klay_beam",
+  # If at some point, we want to use klay_data.transform.convert_audio, then we
+  # may no longer need to explicitly list torch and torchaudio as dependencies.
+  "torch",
+  "torchaudio",
+]
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+code-style = ["black>=22.9.0", "flake8>=5"]
+tests = ["pytest"]
+type-check = ["mypy>=0.990", "pydantic>=1.10"]
+
+[tool.setuptools.dynamic]
+version = {attr = "job_demucs.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+warn_redundant_casts = true
+check_untyped_defs = true
+allow_redefinition = true
+warn_unreachable = true
+plugins = [
+  "pydantic.mypy",
+]
+
+[[tool.mypy.overrides]]
+module = [
+  "apache_beam.*",
+]
+ignore_missing_imports = true
