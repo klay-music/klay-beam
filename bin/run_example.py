@@ -51,8 +51,18 @@ def parse_args():
     return parser.parse_known_args(None)
 
 
+def format_output_path(pattern: str, source_filename: str):
+    """
+    Given a pattern like 'gs://data/outputs/01/{}.wav'
+    and a source_filename like 'gs://klay-datasets/jamendo/00/okay.what.mp3'
+    return 'gs://data/outputs/01/okay.wav'
+    """
+    path = pathlib.Path(source_filename)
+    id = str(path.parent / path.name.split(".")[0])
+    return pattern.format(pathlib.Path(id).name)
+
+
 def run():
-    logging.basicConfig(level=logging.INFO)
     known_args, pipeline_args = parse_args()
     print("known_args: {}".format(known_args))
     print("pipeline_args: {}".format(pipeline_args))
@@ -84,9 +94,9 @@ def run():
             | "Creating (filename, tensor, sr) tuples"
             >> beam.Map(
                 lambda x: (
-                    known_args.output.format(pathlib.Path(x[0]).name),
+                    format_output_path(known_args.output, x[0]),
+                    x[1],
                     x[2],
-                    x[3],
                 )
             )
             | "Convert to (filename, BytesIO) tuples"
@@ -103,7 +113,7 @@ def run():
         # running remotely via Dataflow)
         (
             audio_elements
-            | "Get writable text" >> beam.Map(lambda x: "{}\t({})".format(x[0], x[1]))
+            | "Get writable text" >> beam.Map(lambda x: x[0])
             | "Log to local file"
             >> beam.io.WriteToText(
                 "out.txt", append_trailing_newlines=True  # hard coded for now
@@ -112,4 +122,5 @@ def run():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     run()

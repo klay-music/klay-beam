@@ -13,12 +13,11 @@ class Trim(beam.DoFn):
     def process(self, loaded_audio_tuple):
         """
         For a stereo audio file originally named '/path/to.some/file.key.mp3',
-        and loaded with LoadWithTorchaudio expect:
+        and loaded with LoadWithTorchaudio (>= 0.3.0) expect:
 
         ```
         (
-            '/path/to.some/file',
-            'key.mp3',
+            '/path/to.some/file.key.mp3',
             tensor([[0.1, 0.2, 0.3], [0.1, 0.2, 0.3]]),
             44100
         )
@@ -33,8 +32,7 @@ class Trim(beam.DoFn):
         ```
         """
         try:
-            path, key, audio_tensor, sr = loaded_audio_tuple
-            input_filename = f"{path}.{key}"
+            input_filename, audio_tensor, sr = loaded_audio_tuple
 
             # Get destination filename
             target_filename = get_target_path(

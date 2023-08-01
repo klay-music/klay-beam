@@ -226,17 +226,15 @@ class LoadWithTorchaudio(beam.DoFn):
 
     def process(self, readable_file):
         """
-        Given an Apache Beam ReadableFile, return a `(id, key, a, sr)` tuple where
-            - `id` is a string
-            - `key` is string
+        Given an Apache Beam ReadableFile, return a `(input_filename, a, sr)` tuple where
+            - `input_filename` is a string
             - `a` is a pytorch Tensor
             - `sr` is an int
 
         For a stereo audio file named '/path/to.some/file.key.mp3', return
         ```
         (
-            '/path/to.some/file',
-            'key.mp3',
+            '/path/to.some/file.key.mp3',
             tensor([[0.1, 0.2, 0.3], [0.1, 0.2, 0.3]]),
             44100
         )
@@ -283,9 +281,5 @@ class LoadWithTorchaudio(beam.DoFn):
             return []
         C, T = audio_tensor.shape
         logging.info("Loaded {:.3f} second {}-channel file: {}".format(T / sr, C, path))
-        # Get a WebDataset style id and key, where the id is everything up the
-        # first dot in the filename, and the key is everything after the first
-        # dot in the filename.
-        id, ext = extract_wds_id_and_ext(readable_file)
 
-        return [(id, ext, audio_tensor, sr)]
+        return [(readable_file.metadata.path, audio_tensor, sr)]
