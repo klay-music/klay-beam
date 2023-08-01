@@ -13,8 +13,8 @@ import logging
 from klay_beam.transforms import (
     LoadWithTorchaudio,
     write_file,
-    numpy_to_wav,
 )
+
 
 import klay_data.transform
 
@@ -115,8 +115,6 @@ def run():
                 "out.txt", append_trailing_newlines=True  # hard coded for now
             )
         )
-
-        p.run().wait_until_finish()
 
 
 if __name__ == "__main__":
