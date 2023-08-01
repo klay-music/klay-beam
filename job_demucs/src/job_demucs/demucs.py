@@ -17,7 +17,7 @@ class DemucsSeparator:
         shifts: bool = True,
         split: bool = True,
     ):
-        """Separates a signal into it's sources using demucs3.
+        """Separates a signal into it's sources using demucs.
 
         Arguments
         ---------
