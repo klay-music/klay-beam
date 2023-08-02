@@ -11,5 +11,5 @@ def test_demucs_separator():
     output = separator(signal)
     for k, s in output.items():
         assert k in ["vocals", "other", "drums", "bass"]
-        assert type(s) == np.ndarray
+        assert isinstance(s, np.ndarray)
         assert len(s) == len(signal)

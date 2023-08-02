@@ -84,9 +84,12 @@ def run():
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
             | "44.1kResample" >> beam.ParDo(ResampleAudioTensor(44_100))
-            | "SourceSeparate" >> beam.ParDo(SeparateSources(
-                source_dir=known_args.input,
-                target_dir=known_args.output))
+            | "SourceSeparate"
+            >> beam.ParDo(
+                SeparateSources(
+                    source_dir=known_args.input, target_dir=known_args.output
+                )
+            )
             | "WriteAudio" >> beam.Map(write_file)
         )
 

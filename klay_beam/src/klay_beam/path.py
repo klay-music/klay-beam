@@ -2,11 +2,12 @@ from pathlib import PurePosixPath
 from urllib.parse import urlparse, urlunparse
 import os.path
 
+
 def move(filename, source_dir, target_dir):
     """Move a file from source_dir to target_dir, preserving the relative
     directory structure. Should work across local paths and GCS URIs. Throw if
-    input is not in source_dir. 
-    
+    input is not in source_dir.
+
     ```
     # Example usage:
     move(
@@ -28,10 +29,12 @@ def move(filename, source_dir, target_dir):
     target_dir_is_uri = urlparse(target_dir).scheme != ""
     if target_dir_is_uri:
         target_uri = urlparse(target_dir)
-        new_path = str(PurePosixPath(target_uri.path) / PurePosixPath(relative_source_filename))
+        new_path = str(
+            PurePosixPath(target_uri.path) / PurePosixPath(relative_source_filename)
+        )
         target_uri = target_uri._replace(path=new_path)
         result = urlunparse(target_uri)
-    
+
     return result
 
 

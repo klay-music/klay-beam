@@ -3,6 +3,7 @@ import apache_beam as beam
 from klay_beam.transforms import numpy_to_wav
 from klay_beam.path import move
 
+
 class SeparateSources(beam.DoFn):
     def __init__(self, source_dir: str, target_dir: str):
         self.source_dir = source_dir

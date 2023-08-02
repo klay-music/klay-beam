@@ -293,8 +293,11 @@ class ResampleAudioTensor(beam.DoFn):
     - `a` is a pytorch Tensor
     - `sr` is an int
     """
+
     def __init__(self, target_sr: int):
-        assert isinstance(target_sr, int), f"target_sr must be an int (found {target_sr})"
+        assert isinstance(
+            target_sr, int
+        ), f"target_sr must be an int (found {target_sr})"
         self.target_sr = target_sr
 
     def setup(self):
@@ -304,8 +307,12 @@ class ResampleAudioTensor(beam.DoFn):
         key, audio_tensor, sr = audio_tuple
 
         channels, _ = audio_tensor.shape
-        if (channels > 128):
-            raise ValueError(f"audio_tensor ({key}) must have 128 or fewer channels (found {channels})")
+        if channels > 128:
+            raise ValueError(
+                f"audio_tensor ({key}) must have 128 or fewer channels (found {channels})"
+            )
 
-        resampled_audio = torchaudio.transforms.Resample(sr, self.target_sr)(audio_tensor)
+        resampled_audio = torchaudio.transforms.Resample(sr, self.target_sr)(
+            audio_tensor
+        )
         return [(key, resampled_audio, self.target_sr)]
