@@ -22,7 +22,7 @@ python bin/run_job_demucs.py \
     --source_audio_path \
         '/Users/charles/projects/klay/python/klay-beam/test_audio/abbey_road_48k' \
     --target_audio_path \
-        '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/resampled' \
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/split' \
     --runner Direct
 """
 
@@ -87,7 +87,9 @@ def run():
             | "SourceSeparate"
             >> beam.ParDo(
                 SeparateSources(
-                    source_dir=known_args.input, target_dir=known_args.output
+                    source_dir=known_args.input,
+                    target_dir=known_args.output,
+                    model_name="mdx",
                 )
             )
             | "WriteAudio" >> beam.Map(write_file)

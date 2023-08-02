@@ -16,6 +16,7 @@ class DemucsSeparator:
         device: Optional[torch.device] = None,
         shifts: bool = True,
         split: bool = True,
+        progress_bar: bool = False,
     ):
         """Separates a signal into it's sources using demucs.
 
@@ -53,6 +54,7 @@ class DemucsSeparator:
         self.device = device or torch.device("cpu")
         self.shifts = shifts
         self.split = split
+        self.progress_bar = progress_bar
 
     def __call__(self, signal: torch.Tensor):
         # normalize
@@ -67,7 +69,7 @@ class DemucsSeparator:
             shifts=self.shifts,
             split=self.split,
             overlap=self.overlap,
-            progress=True,
+            progress=self.progress_bar,
             num_workers=self.num_workers,
         )[0]
         sources = sources * ref.std() + ref.mean()
