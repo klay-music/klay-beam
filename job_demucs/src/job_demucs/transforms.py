@@ -8,7 +8,6 @@ class SeparateSources(beam.DoFn):
     def __init__(self, source_dir: str, target_dir: str):
         self.source_dir = source_dir
         self.target_dir = target_dir
-        pass
 
     def setup(self):
         # This will be executed only once when the pipeline starts. This is

@@ -204,13 +204,19 @@ def write_file(output_path_and_buffer):
 class LoadWithTorchaudio(beam.DoFn):
     """Use torchaudio to load audio files to tensors
 
-    Note that torchaudio depends on libavcodec, which can be installed with:
-    `conda install 'ffmpeg<5'`.
+    NOTES:
 
-    See: https://github.com/pytorch/audio/issues/2363#issuecomment-1179089175
+    - torchaudio depends on libavcodec, which can be installed with:
+    `conda install 'ffmpeg<5'`. See:
+    https://github.com/pytorch/audio/issues/2363#issuecomment-1179089175
 
-    Note that generally, custom  functions have a few requirements that help
-    them work well in on distributed runners. They are:
+
+    - Torchaudio supports loading in-memory (file-like) files since at least
+    v0.9.0. See: https://pytorch.org/audio/0.9.0/backend.html#load
+
+
+    Note that generally, custom functions have a few requirements that help them
+    work well in on distributed runners. They are:
         - The function should be thread-compatible
         - The function should be serializable
         - Recommended: the function be idempotent
