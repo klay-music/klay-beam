@@ -1,6 +1,6 @@
 import logging
 import apache_beam as beam
-
+from klay_beam.transforms import numpy_to_wav
 
 class SeparateSources(beam.DoFn):
     def __init__(self):
@@ -12,4 +12,7 @@ class SeparateSources(beam.DoFn):
         pass
 
     def process(self, loaded_audio_tuple):
-        return []
+        key, audio_tensor, sr = loaded_audio_tuple
+
+        in_memory_audio_file = numpy_to_wav(audio_tensor.numpy(), sr)
+        return [(key+".44k1.wav", in_memory_audio_file)]

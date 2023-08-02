@@ -283,3 +283,29 @@ class LoadWithTorchaudio(beam.DoFn):
         logging.info("Loaded {:.3f} second {}-channel file: {}".format(T / sr, C, path))
 
         return [(readable_file.metadata.path, audio_tensor, sr)]
+
+
+class ResampleAudioTensor(beam.DoFn):
+    """Resample an audio Tensor to a new sample rate. Accepts and returns a
+    `(key, a, sr)` tuple where:
+
+    - `key` is a string
+    - `a` is a pytorch Tensor
+    - `sr` is an int
+    """
+    def __init__(self, target_sr: int):
+        assert isinstance(target_sr, int), f"target_sr must be an int (found {target_sr})"
+        self.target_sr = target_sr
+
+    def setup(self):
+        pass
+
+    def process(self, audio_tuple):
+        key, audio_tensor, sr = audio_tuple
+
+        channels, _ = audio_tensor.shape
+        if (channels > 128):
+            raise ValueError(f"audio_tensor ({key}) must have 128 or fewer channels (found {channels})")
+
+        resampled_audio = torchaudio.transforms.Resample(sr, self.target_sr)(audio_tensor)
+        return [(key, resampled_audio, self.target_sr)]
