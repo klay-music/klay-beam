@@ -14,14 +14,10 @@ Initial job for copying+triming an audio dataset. This job will:
 1. Source separate and save to (`--target_audio_path`) preserving the directory
    structure.
 
-To run, activate a suitable python environment that includes these pip deps.
-(`../environments/osx-64-job-random-trim.yml` should work)
-- `apache_beam@2.48.0`
-- This package (`job_demucs`)
-- Python 3.10 is required for running the job remotely in the `klay-beam-cuda:0.2.0`
-  container (Python version must match in the local+remove environments).
-```
+To run, activate a suitable python environment such as
+``../environments/osx-64-job-random-trim.yml`.
 
+```
 # CD into the parent dir (one level up from this package) and run the launch script
 python bin/run_job_demucs.py \
     --source_audio_path '/absolute/path/to/mp3/data/' \

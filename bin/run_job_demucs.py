@@ -12,6 +12,7 @@ from klay_beam.transforms import (
     ResampleAudioTensor,
     write_file,
 )
+
 from job_demucs.transforms import SeparateSources
 
 
@@ -69,7 +70,7 @@ def run():
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     # Pattern to recursively find mp3s inside source_audio_path
-    match_pattern = os.path.join(known_args.input, "**.wav")
+    match_pattern = os.path.join(known_args.input, "**.source.wav")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         (
@@ -83,7 +84,9 @@ def run():
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
             | "44.1kResample" >> beam.ParDo(ResampleAudioTensor(44_100))
-            | "SourceSeparate" >> beam.ParDo(SeparateSources())
+            | "SourceSeparate" >> beam.ParDo(SeparateSources(
+                source_dir=known_args.input,
+                target_dir=known_args.output))
             | "WriteAudio" >> beam.Map(write_file)
         )
 
