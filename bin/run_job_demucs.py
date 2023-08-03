@@ -13,7 +13,7 @@ from klay_beam.transforms import (
     write_file,
 )
 
-from job_demucs.transforms import SeparateSources
+from job_demucs.transforms import SeparateSources, SkipCompleted
 
 
 """
@@ -81,6 +81,12 @@ def run():
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | "Reshuffle" >> beam.Reshuffle()
             # ReadMatches produces a PCollection of ReadableFile objects
+            | "SkipCompleted" >> beam.ParDo(
+                SkipCompleted(
+                    source_dir=known_args.input,
+                    target_dir=known_args.output,
+                )
+            )
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
             | "44.1kResample" >> beam.ParDo(ResampleAudioTensor(44_100))
@@ -89,7 +95,7 @@ def run():
                 SeparateSources(
                     source_dir=known_args.input,
                     target_dir=known_args.output,
-                    model_name="mdx",
+                    model_name="htdemucs_ft",
                 )
             )
             | "WriteAudio" >> beam.Map(write_file)

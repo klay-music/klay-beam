@@ -1,6 +1,8 @@
 import logging
 import apache_beam as beam
-import numpy as np
+from apache_beam.io.filesystem import FileMetadata
+from apache_beam.io.filesystems import FileSystems
+
 from klay_beam.transforms import numpy_to_wav
 from klay_beam.path import move
 
@@ -54,6 +56,44 @@ class SeparateSources(beam.DoFn):
         ]
 
         for pair in pairs:
-            logging.info(f"Completed: {pair[0]}")
+            logging.info(f"Separated: {pair[0]}")
 
         return pairs
+
+
+class SkipCompleted(beam.DoFn):
+    def __init__(self, source_dir: str, target_dir: str):
+        self.source_dir = source_dir
+        self.target_dir = target_dir
+
+    def process(self, file_metadata: FileMetadata):
+        out_filename = move(file_metadata.path, self.source_dir, self.target_dir)
+
+        if not out_filename.endswith(".source.wav"):
+            logging.warn(f"Expected `.source.wav` extension: {file_metadata.path}")
+
+        base_file_prefix = out_filename.rstrip('.source.wav')
+
+        derived_files = [
+            f"{base_file_prefix}.drums.wav",
+            f"{base_file_prefix}.bass.wav",
+            f"{base_file_prefix}.vocals.wav",
+            f"{base_file_prefix}.other.wav",
+        ]
+        limits = [1, 1, 1, 1]
+
+        logging.info(f"Checking if targets exist for: {file_metadata.path}")
+        try:
+            results = FileSystems.match(derived_files, limits=limits)
+            for result in results:
+                num_matches = len(result.metadata_list)
+                # If any of the files do not exist, just forward the input
+                logging.info(f"Found {num_matches} of: {result.pattern}")
+                if num_matches != 1:
+                    return [file_metadata]
+            # At this point, we know a match was found for every file
+            logging.info(f"Targets already exist. Skipping: {file_metadata.path}")
+            return []
+        except Exception as e:
+            logging.warn(f"Will not skip due to Exception while checking for target files. ({file_metadata.path}). Exception: {e}")
+            return [file_metadata]

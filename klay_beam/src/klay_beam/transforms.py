@@ -196,7 +196,7 @@ def write_file(output_path_and_buffer):
     Can be used with beam.Map(write_file)
     """
     output_path, buffer = output_path_and_buffer
-    logging.info("Writing to {}".format(output_path))
+    logging.info("Writing to: {}".format(output_path))
     with filesystems.FileSystems.create(output_path) as file_handle:
         file_handle.write(buffer.read())
 
@@ -274,19 +274,18 @@ class LoadWithTorchaudio(beam.DoFn):
         logging.info("Loading: {}".format(path))
         try:
             audio_tensor, sr = torchaudio.load(file_like, format=ext_without_dot)
-        except RuntimeError as e:
-            # TODO handle/log this error
+        except RuntimeError:
+            # We don't want to log the stacktrace, but for debugging, here's how
+            # we could access it we can access it
             #
-            # July 2023: It's not the best practice to put a stacktrace in a log
-            # message. For now, I need just a little bit more information when
-            # this fails
-            tb_str = traceback.format_exception(
-                etype=type(e), value=e, tb=e.__traceback__
-            )
-            logging.warning("Error loading file: {}\n{}".format(path, tb_str))
+            # tb_str = traceback.format_exception(
+            #     etype=type(e), value=e, tb=e.__traceback__
+            # )
+            logging.warning(f"Error loading audio: {path}")
             return []
+
         C, T = audio_tensor.shape
-        logging.info("Loaded {:.3f} second {}-channel file: {}".format(T / sr, C, path))
+        logging.info("Loaded {:.3f} second {}-channel audio: {}".format(T / sr, C, path))
 
         return [(readable_file.metadata.path, audio_tensor, sr)]
 
