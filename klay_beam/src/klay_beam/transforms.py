@@ -1,6 +1,5 @@
 import pathlib
 import io
-import traceback
 from typing import Optional, Type
 from packaging import version as packaging_version
 
@@ -276,8 +275,9 @@ class LoadWithTorchaudio(beam.DoFn):
             audio_tensor, sr = torchaudio.load(file_like, format=ext_without_dot)
         except RuntimeError:
             # We don't want to log the stacktrace, but for debugging, here's how
-            # we could access it we can access it
+            # we could access it we can access it:
             #
+            # import traceback
             # tb_str = traceback.format_exception(
             #     etype=type(e), value=e, tb=e.__traceback__
             # )
@@ -285,7 +285,9 @@ class LoadWithTorchaudio(beam.DoFn):
             return []
 
         C, T = audio_tensor.shape
-        logging.info("Loaded {:.3f} second {}-channel audio: {}".format(T / sr, C, path))
+        logging.info(
+            "Loaded {:.3f} second {}-channel audio: {}".format(T / sr, C, path)
+        )
 
         return [(readable_file.metadata.path, audio_tensor, sr)]
 

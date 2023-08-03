@@ -72,7 +72,7 @@ class SkipCompleted(beam.DoFn):
         if not out_filename.endswith(".source.wav"):
             logging.warn(f"Expected `.source.wav` extension: {file_metadata.path}")
 
-        base_file_prefix = out_filename.rstrip('.source.wav')
+        base_file_prefix = out_filename.rstrip(".source.wav")
 
         derived_files = [
             f"{base_file_prefix}.drums.wav",
@@ -95,5 +95,8 @@ class SkipCompleted(beam.DoFn):
             logging.info(f"Targets already exist. Skipping: {file_metadata.path}")
             return []
         except Exception as e:
-            logging.warn(f"Will not skip due to Exception while checking for target files. ({file_metadata.path}). Exception: {e}")
+            logging.warn(
+                "Will not skip due to Exception while checking for target files. "
+                + f"({file_metadata.path}). Exception: {e}"
+            )
             return [file_metadata]

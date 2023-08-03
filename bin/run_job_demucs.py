@@ -81,7 +81,8 @@ def run():
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | "Reshuffle" >> beam.Reshuffle()
             # ReadMatches produces a PCollection of ReadableFile objects
-            | "SkipCompleted" >> beam.ParDo(
+            | "SkipCompleted"
+            >> beam.ParDo(
                 SkipCompleted(
                     source_dir=known_args.input,
                     target_dir=known_args.output,
