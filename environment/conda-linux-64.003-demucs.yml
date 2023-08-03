@@ -7,28 +7,15 @@ channels:
 
 dependencies:
   - python=3.9
-  - ffmpeg>=4.2
+  - ffmpeg>=4.2,<5
   # demucs uses pytorch 1.8.1 (https://github.com/facebookresearch/demucs/blob/main/environment-cuda.yml)
   # klaypy uses 1.12 (https://github.com/klay-music/klaypy/blob/main/environment/linux-64.yml)
-  # Technically >=1.9 should be valid. Some promising options include
-  # pytorch-1.12.1-py3.9_cuda11.6_cudnn8.3.2_0.tar.bz2
-  # pytorch-1.13.0-py3.9_cuda11.7_cudnn8.5.0_0.tar.bz2 (failed to solve environment)
-  - pytorch::pytorch>=1.12=py3.9_cuda11.6_cudnn8.3.2_0
+  # Technically >=1.9 should be valid.
+  - pytorch::pytorch>=1.12
   - torchaudio>=0.8
-  - cudatoolkit>=10
   - tqdm>=4.36
   - pip
-  - pip:
-    - diffq>=0.2
-    - dora-search
-    - einops
-    - hydra-colorlog>=1.1
-    - hydra-core>=1.1
-    - julius>=0.2.3
-    - lameenc>=1.2
-    - openunmix
-    - musdb>=0.4.0
-    - museval>=0.4.0
-    - soundfile
-    - submitit
-    - treetable>=0.2.3
+  # demucs is listed as a dependency in the job_demucs package's pyproject.toml.
+  # However, it is specified as a git dependency, so the the conda environment
+  # needs to have git installed locally
+  - git

@@ -20,7 +20,7 @@ To run, activate a suitable python environment such as
 ```
 # CD into the parent dir (one level up from this package) and run the launch script
 python bin/run_job_demucs.py \
-    --source_audio_path '/absolute/path/to/mp3/data/' \
+    --source_audio_path '/absolute/path/to/source.wav/files/' \
     --target_audio_path '/absolute/path/to/job_output/' \
     --runner Direct
 
@@ -31,19 +31,19 @@ python bin/run_job_demucs.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --runner DataflowRunner \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --disk_size_gb=50 \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.2.0 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.3.0-demucs \
     --sdk_location=container \
     --setup_file ./job_demucs/setup.py \
-    --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
+    --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets/mtg_jamendo_autotagging/audios/' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00/' \
     --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --machine_type n1-standard-2 \
-    --job_name 'jamendo-copy-008'
+        'gs://klay-dataflow-test-000/results/demucs/000/00/' \
+    --machine_type n1-standard-4 \
+    --experiments=no_use_multiple_sdk_containers \
+    --job_name 'demucs-001'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
