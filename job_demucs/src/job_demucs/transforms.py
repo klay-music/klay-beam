@@ -42,7 +42,7 @@ class SeparateSources(beam.DoFn):
         logging.info(f"Setting up DemucsSeparator: {self.model_name}")
         self.separator = DemucsSeparator(
             model_name=self.model_name,
-            num_workers=2,
+            num_workers=1,
         )
         logging.info("DemucsSeparator setup")
 
@@ -54,6 +54,7 @@ class SeparateSources(beam.DoFn):
         out_filename = out_filename.rstrip(".wav")
         out_filename = out_filename.rstrip(".source")
 
+        logging.info(f"Separating: {key}")
         result_dict = self.separator(audio_tensor)
         pairs = [
             (f"{out_filename}.{k}.wav", numpy_to_wav(v, sr))
