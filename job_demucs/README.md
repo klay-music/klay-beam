@@ -9,7 +9,7 @@ Initial job for copying+triming an audio dataset. This job will:
   - `${TARGET_PATH}/00/001.drums.wav`
   - `${TARGET_PATH}/00/001.bass.wav`
   - `${TARGET_PATH}/00/001.vocals.wav`
-  - `${TARGET_PATH}/00/001.other.wav` 
+  - `${TARGET_PATH}/00/001.other.wav`
 1. Load the audio file, resample to 44.1kHz
 1. Source separate and save to (`--target_audio_path`) preserving the directory
    structure.
@@ -28,7 +28,7 @@ python bin/run_job_demucs.py \
 python bin/run_job_demucs.py \
     --runner DataflowRunner \
     --machine_type n1-standard-4 \
-    --max_num_workers=4 \
+    --max_num_workers=128 \
     --region us-east1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
@@ -39,12 +39,10 @@ python bin/run_job_demucs.py \
     --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/10' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/10/' \
     --target_audio_path \
-        'gs://klay-dataflow-test-000/results/demucs/017/10' \
-    --job_name 'demucs-017' \
-    --experiments=no_use_multiple_sdk_containers \
-    --default_sdk_harness_log_level=INFO 
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/10/' \
+    --job_name 'demucs-018-noop'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
