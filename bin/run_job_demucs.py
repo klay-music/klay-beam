@@ -11,7 +11,9 @@ from klay_beam.transforms import (
     LoadWithTorchaudio,
     ResampleAudioTensor,
     write_file,
+    numpy_to_wav
 )
+from klay_beam.path import move
 
 from job_demucs.transforms import SeparateSources, SkipCompleted
 
@@ -69,6 +71,12 @@ def run():
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
+    # This is currently just used for debugging. Delete once #13 is fixed.
+    def tensor_to_wav(element):
+        key, audio_tensor, sr = element
+        key = move(key, known_args.input, known_args.output)
+        return f"{key}.out.wav", numpy_to_wav(audio_tensor.numpy(), sr)
+
     # Pattern to recursively find mp3s inside source_audio_path
     match_pattern = os.path.join(known_args.input, "**.source.wav")
 
@@ -79,7 +87,7 @@ def run():
             | beam_io.MatchFiles(match_pattern)
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
-            | "Reshuffle" >> beam.Reshuffle()
+            | beam.Reshuffle()
             # ReadMatches produces a PCollection of ReadableFile objects
             | "SkipCompleted"
             >> beam.ParDo(
@@ -99,6 +107,7 @@ def run():
                     model_name="htdemucs_ft",
                 )
             )
+            # | "WriteWav" >> beam.Map(tensor_to_wav) # Currently just used for debugging. Delete once #13 is fixed.
             | "WriteAudio" >> beam.Map(write_file)
         )
 

@@ -39,10 +39,12 @@ class SeparateSources(beam.DoFn):
 
     def setup(self):
         # This will be executed only once when the pipeline starts.
+        logging.info(f"Setting up DemucsSeparator: {self.model_name}")
         self.separator = DemucsSeparator(
             model_name=self.model_name,
             num_workers=2,
         )
+        logging.info("DemucsSeparator setup")
 
     def process(self, loaded_audio_tuple):
         key, audio_tensor, sr = loaded_audio_tuple

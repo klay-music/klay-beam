@@ -26,27 +26,31 @@ python bin/run_job_demucs.py \
 
 # Run remote job with autoscaling
 python bin/run_job_demucs.py \
-    --max_num_workers=32 \
+    --runner DataflowRunner \
+    --machine_type n1-standard-4 \
+    --max_num_workers=4 \
     --region us-east1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
-    --runner DataflowRunner \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.3.0-demucs \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.4.0-demucs \
     --sdk_location=container \
     --setup_file ./job_demucs/setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00/' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/10' \
     --target_audio_path \
-        'gs://klay-dataflow-test-000/results/demucs/000/00/' \
-    --machine_type n1-standard-4 \
+        'gs://klay-dataflow-test-000/results/demucs/017/10' \
+    --job_name 'demucs-017' \
     --experiments=no_use_multiple_sdk_containers \
-    --job_name 'demucs-001'
+    --default_sdk_harness_log_level=INFO 
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
+
+# Options for --autoscaling-algorithm
+    THROUGHPUT_BASED, NONE
 
 # Extra options to consider
 

@@ -22,6 +22,5 @@ dependencies:
     # I'm going to start by using demucs from klay-beam, but if we end up
     # needing to bundle it directly, here's how we do it:
     # - --editable=git+https://github.com/facebookresearch/demucs.git@2e79e6e#egg=demucs
-    - apache-beam[gcp]==2.48
     - -e '../klay_beam[code-style, tests, type-check]'
     - -e '../job_random_trim[coda-style, tests, type-check]'
