@@ -2,6 +2,8 @@ import logging
 import apache_beam as beam
 from apache_beam.io.filesystem import FileMetadata
 from apache_beam.io.filesystems import FileSystems
+import torch
+import torchaudio
 
 from klay_beam.transforms import numpy_to_wav
 from klay_beam.path import move
@@ -44,6 +46,7 @@ class SeparateSources(beam.DoFn):
             model_name=self.model_name,
             num_workers=1,
         )
+        self.to_48k = torchaudio.transforms.Resample(44_100, 48_000)
         logging.info("DemucsSeparator setup")
 
     def process(self, loaded_audio_tuple):
@@ -56,8 +59,12 @@ class SeparateSources(beam.DoFn):
 
         logging.info(f"Separating: {key}")
         result_dict = self.separator(audio_tensor)
+
         pairs = [
-            (f"{out_filename}.{k}.wav", numpy_to_wav(v, sr))
+            (f"{out_filename}.{k}.wav", numpy_to_wav(
+                self.to_48k(torch.from_numpy(v)).numpy(),
+                48_000,
+            ))
             for k, v in result_dict.items()
         ]
 
