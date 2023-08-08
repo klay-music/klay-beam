@@ -71,11 +71,9 @@ def run():
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
-    # This is currently just used for debugging. Delete once #13 is fixed.
-    def tensor_to_wav(element):
-        key, audio_tensor, sr = element
-        key = move(key, known_args.input, known_args.output)
-        return f"{key}.out.wav", numpy_to_wav(audio_tensor.numpy(), sr)
+    def to_wav(element):
+        key, numpy_audio, sr = element
+        return key, numpy_to_wav(numpy_audio, sr)
 
     # Pattern to recursively find mp3s inside source_audio_path
     match_pattern = os.path.join(known_args.input, "**.source.wav")
@@ -98,7 +96,13 @@ def run():
             )
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
-            | "44.1kResample" >> beam.ParDo(ResampleAudio(44_100))
+            | "Resample: 44.1k"
+            >> beam.ParDo(
+                ResampleAudio(
+                    target_sr=44_100,
+                    source_sr_hint=48_000,
+                )
+            )
             | "SourceSeparate"
             >> beam.ParDo(
                 SeparateSources(
@@ -107,8 +111,15 @@ def run():
                     model_name="htdemucs_ft",
                 )
             )
-            # | "WriteWav" >> beam.Map(tensor_to_wav) # Currently just used for debugging. Delete once #13 is fixed.
-            | "WriteAudio" >> beam.Map(write_file)
+            | "Resample: 48K" >> beam.ParDo(
+                ResampleAudio(
+                    target_sr=48_000,
+                    source_sr_hint=44_100,
+                    output_numpy=True,
+                )
+            )
+            | "CreateWavFile" >> beam.Map(to_wav)
+            | "PersistFile" >> beam.Map(write_file)
         )
 
 

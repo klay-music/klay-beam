@@ -9,7 +9,7 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
   "numpy",
-  "klay_beam~=0.3",
+  "klay_beam~=0.5",
   # If at some point, we want to use klay_data.transform.convert_audio, then we
   # may no longer need to explicitly list torch and torchaudio as dependencies.
   "torch",

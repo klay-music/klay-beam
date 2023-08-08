@@ -317,11 +317,10 @@ class ResampleAudio(beam.DoFn):
         self._source_sr_hint = source_sr_hint
         self._output_numpy = output_numpy
         self.resample = None
-        if (self._source_sr_hint is not None):
-            self.resample = torchaudio.transforms.Resample(self._source_sr_hint, self._target_sr)
 
     def setup(self):
-        pass
+        if (self._source_sr_hint is not None):
+            self.resample = torchaudio.transforms.Resample(self._source_sr_hint, self._target_sr)
 
     def process(self, audio_tuple: Tuple[str, Union[torch.Tensor, np.ndarray], int]):
         key, audio, source_sr = audio_tuple

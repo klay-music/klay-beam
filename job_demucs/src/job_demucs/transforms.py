@@ -60,18 +60,15 @@ class SeparateSources(beam.DoFn):
         logging.info(f"Separating: {key}")
         result_dict = self.separator(audio_tensor)
 
-        pairs = [
-            (f"{out_filename}.{k}.wav", numpy_to_wav(
-                self.to_48k(torch.from_numpy(v)).numpy(),
-                48_000,
-            ))
+        triplets = [
+            (f"{out_filename}.{k}.wav", v, sr)
             for k, v in result_dict.items()
         ]
 
-        for pair in pairs:
-            logging.info(f"Separated: {pair[0]}")
+        for triplet in triplets:
+            logging.info(f"Separated: {triplet[0]}")
 
-        return pairs
+        return triplets
 
 
 class SkipCompleted(beam.DoFn):
