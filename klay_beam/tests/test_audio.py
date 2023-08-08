@@ -66,33 +66,54 @@ def test_multichannel_interleave():
         actual_result, expected_result
     ), f"expected {actual_result} to equal {expected_result}"
 
+
 def test_resample():
     """Verify that we can resample both numpy and torch audio (to a torch.Tensor))"""
-    stereo_audio_tensor = ('key1', torch.randn(2, 1000), 1000)
-    stereo_audio_numpy = ('key2', stereo_audio_tensor[1].numpy(), 1000)
+    stereo_audio_tensor = ("key1", torch.randn(2, 1000), 1000)
+    stereo_audio_numpy = ("key2", stereo_audio_tensor[1].numpy(), 1000)
 
     resampleDoFn = ResampleAudio(target_sr=10, source_sr_hint=1000)
 
     _, resampled_stereo_audio_tensor, _ = resampleDoFn.process(stereo_audio_tensor)[0]
-    assert resampled_stereo_audio_tensor.shape == (2, 10), "Failed to resample torch.tensor to sr=10"
-    assert isinstance(resampled_stereo_audio_tensor, torch.Tensor), "Failed to return a torch.Tensor"
+    assert resampled_stereo_audio_tensor.shape == (
+        2,
+        10,
+    ), "Failed to resample torch.tensor to sr=10"
+    assert isinstance(
+        resampled_stereo_audio_tensor, torch.Tensor
+    ), "Failed to return a torch.Tensor"
 
     _, resampled_stereo_audio_numpy, _ = resampleDoFn.process(stereo_audio_numpy)[0]
-    assert resampled_stereo_audio_numpy.shape == (2, 10), "Failed to resample ndarray to sr=10"
-    assert isinstance(resampled_stereo_audio_numpy, torch.Tensor), "Failed to return a torch.tensor"
+    assert resampled_stereo_audio_numpy.shape == (
+        2,
+        10,
+    ), "Failed to resample ndarray to sr=10"
+    assert isinstance(
+        resampled_stereo_audio_numpy, torch.Tensor
+    ), "Failed to return a torch.tensor"
 
 
 def test_resample_to_numpy():
     """Verify that we can resample both numpy and torch audio (to a numpy.ndarray)"""
-    stereo_audio_tensor = ('key1', torch.randn(2, 1000), 1000)
-    stereo_audio_numpy = ('key2', stereo_audio_tensor[1].numpy(), 1000)
+    stereo_audio_tensor = ("key1", torch.randn(2, 1000), 1000)
+    stereo_audio_numpy = ("key2", stereo_audio_tensor[1].numpy(), 1000)
 
     resampleDoFn = ResampleAudio(target_sr=10, output_numpy=True)
 
     _, resampled_stereo_audio_tensor, _ = resampleDoFn.process(stereo_audio_tensor)[0]
-    assert resampled_stereo_audio_tensor.shape == (2, 10), "Failed to resample torch.tensor to sr=10"
-    assert isinstance(resampled_stereo_audio_tensor, np.ndarray), "Failed to return a torch.ndarray"
+    assert resampled_stereo_audio_tensor.shape == (
+        2,
+        10,
+    ), "Failed to resample torch.tensor to sr=10"
+    assert isinstance(
+        resampled_stereo_audio_tensor, np.ndarray
+    ), "Failed to return a torch.ndarray"
 
     _, resampled_stereo_audio_numpy, _ = resampleDoFn.process(stereo_audio_numpy)[0]
-    assert resampled_stereo_audio_numpy.shape == (2, 10), "Failed to resample ndarray to sr=10"
-    assert isinstance(resampled_stereo_audio_numpy, np.ndarray), "Failed to return a np.ndarray"
+    assert resampled_stereo_audio_numpy.shape == (
+        2,
+        10,
+    ), "Failed to resample ndarray to sr=10"
+    assert isinstance(
+        resampled_stereo_audio_numpy, np.ndarray
+    ), "Failed to return a np.ndarray"

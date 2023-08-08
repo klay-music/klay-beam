@@ -11,9 +11,8 @@ from klay_beam.transforms import (
     LoadWithTorchaudio,
     ResampleAudio,
     write_file,
-    numpy_to_wav
+    numpy_to_wav,
 )
-from klay_beam.path import move
 
 from job_demucs.transforms import SeparateSources, SkipCompleted
 
@@ -111,7 +110,8 @@ def run():
                     model_name="htdemucs_ft",
                 )
             )
-            | "Resample: 48K" >> beam.ParDo(
+            | "Resample: 48K"
+            >> beam.ParDo(
                 ResampleAudio(
                     target_sr=48_000,
                     source_sr_hint=44_100,

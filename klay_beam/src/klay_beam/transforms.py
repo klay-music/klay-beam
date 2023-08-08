@@ -305,11 +305,12 @@ class ResampleAudio(beam.DoFn):
     torch.Tensor instance.
     """
 
-    def __init__(self,
-            target_sr: int,
-            source_sr_hint: Optional[int] = None,
-            output_numpy: bool = False,
-        ):
+    def __init__(
+        self,
+        target_sr: int,
+        source_sr_hint: Optional[int] = None,
+        output_numpy: bool = False,
+    ):
         assert isinstance(
             target_sr, int
         ), f"target_sr must be an int (found {target_sr})"
@@ -319,8 +320,10 @@ class ResampleAudio(beam.DoFn):
         self.resample = None
 
     def setup(self):
-        if (self._source_sr_hint is not None):
-            self.resample = torchaudio.transforms.Resample(self._source_sr_hint, self._target_sr)
+        if self._source_sr_hint is not None:
+            self.resample = torchaudio.transforms.Resample(
+                self._source_sr_hint, self._target_sr
+            )
 
     def process(self, audio_tuple: Tuple[str, Union[torch.Tensor, np.ndarray], int]):
         key, audio, source_sr = audio_tuple
@@ -328,12 +331,6 @@ class ResampleAudio(beam.DoFn):
         # check if audio_tensor is a numpy array or a torch tensor
         if isinstance(audio, np.ndarray):
             audio = torch.from_numpy(audio)
-
-        # assert that audio_tensor is a torch tensor
-        assert (
-            isinstance(audio, torch.Tensor),
-            f"Unable to convert audio {type(audio).__name__} to torch.Tensor"
-        )
 
         channels, _ = audio.shape
         if channels > 128:
@@ -345,14 +342,20 @@ class ResampleAudio(beam.DoFn):
 
         if source_sr == self._target_sr:
             resampled_audio = audio
-            logging.info(f"Skipping resample because source was already ${self._target_sr}: {key}")
+            logging.info(
+                f"Skipping resample because source was already ${self._target_sr}: {key}"
+            )
         elif self.resample is not None and source_sr == self._source_sr_hint:
             resampled_audio = self.resample(audio)
-            logging.info(f"Resampled {source_sr} to {self._target_sr} (cached method): {key}")
+            logging.info(
+                f"Resampled {source_sr} to {self._target_sr} (cached method): {key}"
+            )
         else:
             resample = torchaudio.transforms.Resample(source_sr, self._target_sr)
             resampled_audio = resample(audio)
-            logging.info(f"Resampled {source_sr} to {self._target_sr} (uncached method): {key}")
+            logging.info(
+                f"Resampled {source_sr} to {self._target_sr} (uncached method): {key}"
+            )
 
         if self._output_numpy:
             resampled_audio = resampled_audio.numpy()

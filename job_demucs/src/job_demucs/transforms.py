@@ -2,7 +2,6 @@ import logging
 import apache_beam as beam
 from apache_beam.io.filesystem import FileMetadata
 from apache_beam.io.filesystems import FileSystems
-import torch
 import torchaudio
 
 from klay_beam.transforms import numpy_to_wav
