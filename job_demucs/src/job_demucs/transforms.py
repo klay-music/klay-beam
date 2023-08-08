@@ -57,17 +57,23 @@ class SeparateSources(beam.DoFn):
         out_filename = out_filename.rstrip(".source")
 
         logging.info(f"Separating: {key}")
-        result_dict = self.separator(audio_tensor)
+        try:
+            result_dict = self.separator(audio_tensor)
 
-        triplets = [
-            (f"{out_filename}.{k}.wav", v, sr)
-            for k, v in result_dict.items()
-        ]
+            triplets = [
+                (f"{out_filename}.{k}.wav", v, sr)
+                for k, v in result_dict.items()
+            ]
 
-        for triplet in triplets:
-            logging.info(f"Separated: {triplet[0]}")
+            for triplet in triplets:
+                logging.info(f"Separated: {triplet[0]}")
 
-        return triplets
+            return triplets
+
+        except Exception as e:
+            logging.error(f"Exception while separating: {key}. Exception: {e}")
+            return []
+
 
 
 class SkipCompleted(beam.DoFn):

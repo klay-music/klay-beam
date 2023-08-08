@@ -85,7 +85,6 @@ def run():
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
-            # ReadMatches produces a PCollection of ReadableFile objects
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
@@ -93,6 +92,7 @@ def run():
                     target_dir=known_args.output,
                 )
             )
+            # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
             | "Resample: 44.1k"
