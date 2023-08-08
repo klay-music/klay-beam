@@ -36,7 +36,7 @@
 ARG py_version=3.10
 
 # beam_version must match the version specified in pyproject.toml
-ARG beam_version=2.48.0
+ARG beam_version=2.49.0
 
 ARG CONDA_LOCK_NAME=002-py310
 
