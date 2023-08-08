@@ -9,7 +9,7 @@ from apache_beam.options.pipeline_options import SetupOptions
 
 from klay_beam.transforms import (
     LoadWithTorchaudio,
-    ResampleAudioTensor,
+    ResampleAudio,
     write_file,
     numpy_to_wav
 )
@@ -98,7 +98,7 @@ def run():
             )
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
-            | "44.1kResample" >> beam.ParDo(ResampleAudioTensor(44_100))
+            | "44.1kResample" >> beam.ParDo(ResampleAudio(44_100))
             | "SourceSeparate"
             >> beam.ParDo(
                 SeparateSources(

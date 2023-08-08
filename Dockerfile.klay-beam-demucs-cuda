@@ -58,7 +58,6 @@ COPY ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock ./environment/conda-li
 RUN mamba create --copy -p /env --file environment/conda-linux-64.${CONDA_LOCK_NAME}.lock && conda clean -afy
 
 # Install submodules and klay_beam
-COPY submodules ./submodules
 COPY klay_beam ./klay_beam
 COPY job_demucs ./job_demucs
 

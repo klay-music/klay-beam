@@ -1,6 +1,7 @@
 import pathlib
 import io
-from typing import Optional, Type
+import torch
+from typing import Optional, Type, Union, Tuple
 from packaging import version as packaging_version
 
 import apache_beam as beam
@@ -292,34 +293,69 @@ class LoadWithTorchaudio(beam.DoFn):
         return [(readable_file.metadata.path, audio_tensor, sr)]
 
 
-class ResampleAudioTensor(beam.DoFn):
-    """Resample an audio Tensor to a new sample rate. Accepts and returns a
-    `(key, a, sr)` tuple where:
+class ResampleAudio(beam.DoFn):
+    """Resample an audio to a new sample rate. Accepts a `(key, a, sr)` tuple
+    were:
 
     - `key` is a string
-    - `a` is a pytorch Tensor
+    - `a` is a 2D torch.Tensor or numpy.ndarray with audio in the last dimension
     - `sr` is an int
+
+    The return value will also be a `(key, a, sr)` tuple, but 'a' will always be
+    torch.Tensor instance.
     """
 
-    def __init__(self, target_sr: int):
+    def __init__(self,
+            target_sr: int,
+            source_sr_hint: Optional[int] = None,
+            output_numpy: bool = False,
+        ):
         assert isinstance(
             target_sr, int
         ), f"target_sr must be an int (found {target_sr})"
-        self.target_sr = target_sr
+        self._target_sr = target_sr
+        self._source_sr_hint = source_sr_hint
+        self._output_numpy = output_numpy
+        self.resample = None
+        if (self._source_sr_hint is not None):
+            self.resample = torchaudio.transforms.Resample(self._source_sr_hint, self._target_sr)
 
     def setup(self):
         pass
 
-    def process(self, audio_tuple):
-        key, audio_tensor, sr = audio_tuple
+    def process(self, audio_tuple: Tuple[str, Union[torch.Tensor, np.ndarray], int]):
+        key, audio, source_sr = audio_tuple
 
-        channels, _ = audio_tensor.shape
+        # check if audio_tensor is a numpy array or a torch tensor
+        if isinstance(audio, np.ndarray):
+            audio = torch.from_numpy(audio)
+
+        # assert that audio_tensor is a torch tensor
+        assert (
+            isinstance(audio, torch.Tensor),
+            f"Unable to convert audio {type(audio).__name__} to torch.Tensor"
+        )
+
+        channels, _ = audio.shape
         if channels > 128:
             raise ValueError(
                 f"audio_tensor ({key}) must have 128 or fewer channels (found {channels})"
             )
 
-        resampled_audio = torchaudio.transforms.Resample(sr, self.target_sr)(
-            audio_tensor
-        )
-        return [(key, resampled_audio, self.target_sr)]
+        resampled_audio: Optional[torch.Tensor] = None
+
+        if source_sr == self._target_sr:
+            resampled_audio = audio
+            logging.info(f"Skipping resample because source was already ${self._target_sr}: {key}")
+        elif self.resample is not None and source_sr == self._source_sr_hint:
+            resampled_audio = self.resample(audio)
+            logging.info(f"Resampled {source_sr} to {self._target_sr} (cached method): {key}")
+        else:
+            resample = torchaudio.transforms.Resample(source_sr, self._target_sr)
+            resampled_audio = resample(audio)
+            logging.info(f"Resampled {source_sr} to {self._target_sr} (uncached method): {key}")
+
+        if self._output_numpy:
+            resampled_audio = resampled_audio.numpy()
+
+        return [(key, resampled_audio, self._target_sr)]
