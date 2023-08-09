@@ -57,23 +57,13 @@ WORKDIR /klay/build
 COPY ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock
 RUN mamba create --copy -p /env --file environment/conda-linux-64.${CONDA_LOCK_NAME}.lock && conda clean -afy
 
-# Install submodules and klay_beam
-COPY klay_beam ./klay_beam
-COPY job_demucs ./job_demucs
-
-# If you change submodules below, you also may want to also change the local
-# conda environment.
-RUN conda run -p /env python -m pip install \
-  './klay_beam[code-style, tests, type-check]' \
-  './job_demucs[code-style, tests, type-check]'
-
 # Clean in a separate layer as calling conda still generates some __pycache__ files
 RUN find -name '*.a' -delete && \
   rm -rf /env/conda-meta && \
   rm -rf /env/include && \
   rm /env/lib/libpython3.9.so.1.0 && \
   find -name '__pycache__' -type d -exec rm -rf '{}' '+' && \
-  find /env/lib/python3.9/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  # find /env/lib/python3.9/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
   find /env/lib/python3.9/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' && \
   # find /env/lib/python3.9/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
   find /env/lib/python3.9/site-packages -name '*.pyx' -delete
@@ -84,6 +74,9 @@ FROM python:${py_version}-slim
 ARG py_version
 ARG beam_version
 
+# Copy files from official SDK image, including script/dependencies.
+COPY --from=beam /opt/apache/beam /opt/apache/beam
+
 WORKDIR /klay/app
 
 # Copy the conda environment from the conda build stage
@@ -92,14 +85,21 @@ RUN python3 -m venv /env
 RUN . /env/bin/activate
 ENV PATH="/env/bin:$PATH"
 
-# Copy files from official SDK image, including script/dependencies.
-COPY --from=beam /opt/apache/beam /opt/apache/beam
+# Install submodules and klay_beam
+COPY klay_beam ./klay_beam
+COPY job_demucs ./job_demucs
+
+# If you change submodules below, you also may want to also change the local
+# conda environment.
+RUN python3 -m pip install \
+  './klay_beam[code-style, tests, type-check]' \
+  './job_demucs[code-style, tests, type-check]'
 
 # Verify that the image does not have conflicting dependencies.
 RUN pip check
 
-# Download the demucs model to "/root/.cache/torch/hub/checkpoints"
-RUN python -c "import demucs.pretrained as p; p.get_model('htdemucs_ft'); print('Model downloaded')"
+# Download the demucs models to "/root/.cache/torch/hub/checkpoints"
+RUN python3 -c "import demucs.pretrained as p; p.get_model('htdemucs_ft'); print('Models downloaded')"
 
 # In some situations, Beam will create a new python virtual environment to run
 # the job. Suppress this behavior by setting this environment variable. See:
