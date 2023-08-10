@@ -17,19 +17,18 @@ python bin/test_cuda.py \
 # To run on Dataflow
 python bin/test_cuda.py \
     --region us-east4 \
-    --setup_file=./setup.py \
     --autoscaling_algorithm NONE \
     --runner DataflowRunner \
     --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
     --disk_size_gb=50 \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-cuda:latest \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.5.0-demucs-cuda \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/ \
     --project klay-beam-tests \
     --dataflow_service_options \
         "worker_accelerator=type:nvidia-tesla-t4;count:1;install-nvidia-driver" \
-    --job_name 'klay-cuda-test-009'
+    --job_name 'klay-cuda-test-010'
 """
 
 
@@ -75,7 +74,6 @@ def list_some_directories(element):
     log_directory_contents("/usr/local/nvidia/lib64")
     log_directory_contents("/usr/local/cuda/lib64")
     log_directory_contents("/opt/apache/beam/")
-    log_directory_contents("/opt/apache/beam/boot")
     return element
 
 

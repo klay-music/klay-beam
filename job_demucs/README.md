@@ -11,8 +11,9 @@ Initial job for copying+triming an audio dataset. This job will:
   - `${TARGET_PATH}/00/001.vocals.wav`
   - `${TARGET_PATH}/00/001.other.wav`
 1. Load the audio file, resample to 44.1kHz
-1. Source separate and save to (`--target_audio_path`) preserving the directory
-   structure.
+1. Run source separation
+1. Resample back to 48kHz
+1. Save results to (`--target_audio_path`) preserving the directory structure.
 
 To run, activate a suitable python environment such as
 ``../environments/osx-64-job-random-trim.yml`.
