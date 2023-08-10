@@ -176,6 +176,13 @@ def numpy_to_wav(audio_data: np.ndarray, sr: int, bit_depth=16):
     return in_memory_file_buffer
 
 
+def numpy_to_file(numpy_data: np.ndarray):
+    in_memory_file_buffer = io.BytesIO()
+    np.save(in_memory_file_buffer, numpy_data)
+    in_memory_file_buffer.seek(0)
+    return in_memory_file_buffer
+
+
 def extract_wds_id_and_ext(readable_file):
     """Given an apache_beam ReadableFile, get a WebDataset style id and
     extension, where the id is everything up the first dot in the filename, and
