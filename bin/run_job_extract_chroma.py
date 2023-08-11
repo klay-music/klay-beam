@@ -50,8 +50,9 @@ python bin/run_job_extract_chroma.py \
     --setup_file ./klay_beam/setup.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.6.0-py310-rc.2 \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/01' \
-    --job_name 'extract-chroma-001'
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --stem 'vocals' \
+    --job_name 'extract-vocals-chroma-005'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
