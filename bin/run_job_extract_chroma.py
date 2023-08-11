@@ -37,18 +37,18 @@ python bin/run_job_extract_chroma.py \
 
 # Run remote job with autoscaling
 python bin/run_job_extract_chroma.py \
-    --runner DataflowRunner \
-    --machine_type n1-standard-2 \
-    --max_num_workers=256 \
-    --region us-east1 \
-    --autoscaling_algorithm THROUGHPUT_BASED \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.5.0-demucs \
-    --sdk_location=container \
-    --setup_file ./klay_beam/setup.py \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
     --project klay-training \
+    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+    --machine_type n1-standard-2 \
+    --region us-east1 \
+    --max_num_workers=128 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --runner DataflowRunner \
+    --experiments=use_runner_v2 \
+    --sdk_location=container \
+    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
+    --setup_file ./klay_beam/setup.py \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.6.0-py310-rc.2 \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/01' \
     --job_name 'extract_chroma-001'
