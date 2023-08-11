@@ -123,11 +123,3 @@ def get_model_handler():
             state_dict_path=get_encodec_state_dict_local_path(),
         )
     )
-
-
-# def convert_to_mono_and_24khz(audio_tensor, original_sample_rate):
-#     """Convert a stereo sample to mono and 24khz"""
-#     assert audio_tensor.ndim == 2
-#     mono_audio_tensor = torch.mean(audio_tensor, dim=0, keepdim=True)
-#     resample = torchaudio.transforms.Resample(original_sample_rate, 24_000)
-#     return resample(mono_audio_tensor)

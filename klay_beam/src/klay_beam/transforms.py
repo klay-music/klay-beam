@@ -3,7 +3,6 @@ import io
 import torch
 from typing import Optional, Type, Union, Tuple
 from packaging import version as packaging_version
-
 import apache_beam as beam
 from apache_beam.io import filesystems
 import torchaudio
@@ -11,6 +10,8 @@ import pydub
 import soundfile as sf
 import numpy as np
 import logging
+
+from .extractors.spectral import ChromaExtractor
 
 
 def numpy_to_pydub_audio_segment(
@@ -368,3 +369,35 @@ class ResampleAudio(beam.DoFn):
             resampled_audio = resampled_audio.numpy()
 
         return [(key, resampled_audio, self._target_sr)]
+
+
+class ExtractChromaFeatures(beam.DoFn):
+    """Extract features from an audio tensor. Accepts a `(key, a, sr)` tuple
+    were:
+
+    - `key` is a string
+    - `a` is a 2D torch.Tensor or numpy.ndarray with audio in the last dimension
+    - `sr` is an int
+
+    The return value will also be a `(key, features, sr)` tuple
+    """
+
+    def __init__(self, input_audio_sr: int):
+        self._input_audio_sr = input_audio_sr
+
+    def setup(self):
+        self.model = ChromaExtractor(sample_rate=self._input_audio_sr)
+
+    def process(self, element: Tuple[str, torch.Tensor, int]):
+        key, audio, sr = element
+
+        assert sr == self._input_audio_sr, (
+            f"Received audio with invalid sample rate. Received {sr} but this modules is configured for {self._input_audio_sr}"
+        )
+
+        features = self.model(audio)
+
+        # In lieu of proper klay_data path handling just rename the file
+        output_path = f"{key}.chroma.npy"
+
+        return [(output_path, features)]

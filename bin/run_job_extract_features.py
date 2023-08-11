@@ -10,25 +10,26 @@ from apache_beam.options.pipeline_options import SetupOptions
 from klay_beam.transforms import (
     LoadWithTorchaudio,
     ResampleAudio,
+    ExtractChromaFeatures,
     write_file,
-    numpy_to_wav,
+    numpy_to_file
 )
 
 
-
 """
-
 Job for extracting EnCodec and Chroma features:
 
-1. Recursively search a path for `.<something>.wav` files (`--source_audio_path`) where `<something>` is one of `source`, `bass`, `vocals`, `drums`, or `other`.
-1. For each audio file, extract the Chroma and Encoded numpy features, write them to 
-1. Save results to (`--target_audio_path`) preserving the directory structure.
+1. Recursively search a path for `.<something>.wav` files
+   (`--source_audio_path`) where `<something>` is one of `source`, `bass`,
+   `vocals`, `drums`, or `other` as specified by `--stem`
+1. For each audio file, extract features
+1. Write the results to an .npy file adjacent to the source audio file
 
 To run, activate a suitable python environment such as
-``../environments/osx-64-job-random-trim.yml`.
+``../environments/osx-64-demucs.yml`.
 
 ```
-# CD into the parent dir (one level up from this package) and run the launch script
+# CD into the root klay_beam dir to the launch script:
 python bin/run_job_extract_features.py \
     --source_audio_path '/absolute/path/to/source.wav/files/' \
     --runner Direct
@@ -48,8 +49,6 @@ python bin/run_job_extract_features.py \
     --temp_location gs://klay-dataflow-test-000/tmp/extract_features/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --target_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --experiments=no_use_multiple_sdk_containers \
     --number_of_worker_harness_threads=1 \
@@ -95,15 +94,11 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--target_audio_path",
-        dest="output",
-        required=True,
-        help="""
-        Specify the output directory.
-
-        For example:
-        'gs://klay-dataflow-test-000/results/outputs/1/'
-        """,
+        "--stem",
+        dest="stem",
+        default="source",
+        choices=["source", "bass", "drums", "other", "vocals"],
+        help="The stem to extract"
     )
 
     return parser.parse_known_args(None)
@@ -118,15 +113,11 @@ def run():
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
-    def to_wav(element):
-        key, numpy_audio, sr = element
-        return key, numpy_to_wav(numpy_audio, sr)
-
     # Pattern to recursively find mp3s inside source_audio_path
-    match_pattern = os.path.join(known_args.input, "**.source.wav")
+    match_pattern = os.path.join(known_args.input, f"**.{known_args.stem}.wav")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
-        (
+        audio_files = (
             p
             # MatchFiles produces a PCollection of FileMetadata objects
             | beam_io.MatchFiles(match_pattern)
@@ -134,35 +125,33 @@ def run():
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
 
-            # SkipCompleted goes here
+            # SkipCompleted should go here. Waiting for official klay_data path library
 
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
-            | "Resample: 44.1k"
+        )
+
+        audio_sr = 48_000
+
+        (
+            audio_files
+
+            | "Resample: 48k"
             >> beam.ParDo(
                 ResampleAudio(
-                    target_sr=44_100,
-                    source_sr_hint=48_000,
+                    target_sr=audio_sr,
                 )
             )
-            | "SourceSeparate"
+
+            | "Extract Features"
             >> beam.ParDo(
-                SeparateSources(
-                    source_dir=known_args.input,
-                    target_dir=known_args.output,
-                    model_name="htdemucs_ft",
+                ExtractChromaFeatures(
+                    input_audio_sr=audio_sr,
                 )
             )
-            | "Resample: 48K"
-            >> beam.ParDo(
-                ResampleAudio(
-                    target_sr=48_000,
-                    source_sr_hint=44_100,
-                    output_numpy=True,
-                )
-            )
-            | "CreateWavFile" >> beam.Map(to_wav)
+
+            | "CreateNpyFile" >> beam.Map(lambda x: (x[0], numpy_to_file(x[1])))
             | "PersistFile" >> beam.Map(write_file)
         )
 
