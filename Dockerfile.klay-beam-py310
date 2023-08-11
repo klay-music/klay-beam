@@ -87,7 +87,7 @@ RUN . /env/bin/activate
 ENV PATH="/env/bin:$PATH"
 
 # Install submodules and klay_beam
-COPY submodules ./submodules
+COPY submodules/klay-data ./submodules/klay-data
 COPY klay_beam ./klay_beam
 
 # If you change submodules below, you also may need to change the conda environment.yaml
