@@ -148,7 +148,7 @@ def run():
             | "ExtractChroma"
             >> beam.ParDo(
                 ExtractChromaFeatures(
-                    input_audio_sr=chroma_audio_sr,
+                    audio_sr=chroma_audio_sr,
                     n_chroma=12,
                     n_fft=2048,
                     win_length=1280,

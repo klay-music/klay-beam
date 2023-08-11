@@ -11,6 +11,7 @@ import soundfile as sf
 import numpy as np
 import logging
 
+from klay_data.transform import convert_audio
 from .extractors.spectral import ChromaExtractor
 
 
@@ -383,7 +384,7 @@ class ExtractChromaFeatures(beam.DoFn):
     """
 
     def __init__(self,
-            input_audio_sr: int,
+            audio_sr: int,
             # The default values below are just copied from the ChromaExtractor
             # on August 10, 2023. If the defaults change in the future, should
             # we change them in both places? It would be nice to find a way not
@@ -395,7 +396,7 @@ class ExtractChromaFeatures(beam.DoFn):
             norm: float = torch.inf,
             device: Union[torch.device, str] = "cpu",
         ):
-        self._input_audio_sr = input_audio_sr
+        self._audio_sr = audio_sr
         self._n_chroma = n_chroma
         self._n_fft = n_fft
         self._win_length = win_length
@@ -405,8 +406,8 @@ class ExtractChromaFeatures(beam.DoFn):
 
 
     def setup(self):
-        self.model = ChromaExtractor(
-            sample_rate=self._input_audio_sr,
+        self._chroma_model = ChromaExtractor(
+            sample_rate=self._audio_sr,
             n_chroma=self._n_chroma,
             n_fft=self._n_fft,
             win_length=self._win_length,
@@ -418,14 +419,14 @@ class ExtractChromaFeatures(beam.DoFn):
     def process(self, element: Tuple[str, torch.Tensor, int]):
         key, audio, sr = element
 
-        assert sr == self._input_audio_sr, (
-            f"Received audio with invalid sample rate. Received {sr} but this modules is configured for {self._input_audio_sr}"
+        # Ensure correct sample rate, and convert to mono
+        audio = convert_audio(audio, sr, self._audio_sr, 1)
+
+        features = self._chroma_model(audio)
+        output_path = f"{key.rstrip('.wav')}{self._chroma_model.feat_suffix}"
+
+        logging.info(
+            f"Extracted chroma ({features.shape}) from audio ({audio.shape}): {output_path}"
         )
-
-        features = self.model(audio)
-
-        # In lieu of proper klay_data path handling just rename the file
-
-        output_path = f"{key.rstrip('.wav')}{self.model.feat_suffix}"
 
         return [(output_path, features)]
