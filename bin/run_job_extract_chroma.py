@@ -31,12 +31,12 @@ To run, activate a suitable python environment such as
 
 ```
 # CD into the root klay_beam dir to the launch script:
-python bin/run_job_extract_features.py \
+python bin/run_job_extract_chroma.py \
     --source_audio_path '/absolute/path/to/source.wav/files/' \
     --runner Direct
 
 # Run remote job with autoscaling
-python bin/run_job_extract_features.py \
+python bin/run_job_extract_chroma.py \
     --runner DataflowRunner \
     --machine_type n1-standard-2 \
     --max_num_workers=256 \
@@ -47,13 +47,11 @@ python bin/run_job_extract_features.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.5.0-demucs \
     --sdk_location=container \
     --setup_file ./klay_beam/setup.py \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract_features/ \
+    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --experiments=no_use_multiple_sdk_containers \
-    --number_of_worker_harness_threads=1 \
-    --job_name 'extract_features-001'
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/01' \
+    --job_name 'extract_chroma-001'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
