@@ -441,17 +441,23 @@ class ExtractChromaFeatures(beam.DoFn):
             device=self._device,
         )
 
+
     def process(self, element: Tuple[str, torch.Tensor, int]):
         key, audio, sr = element
 
-        # Ensure correct sample rate, and convert to mono
-        audio = convert_audio(audio, sr, self._audio_sr, 1)
+        try:
+            # Ensure correct sample rate, and convert to mono
+            audio = convert_audio(audio, sr, self._audio_sr, 1)
 
-        features = self._chroma_model(audio)
-        output_path = f"{key.rstrip('.wav')}{self._chroma_model.feat_suffix}"
+            features = self._chroma_model(audio)
+            output_path = f"{key.rstrip('.wav')}{self._chroma_model.feat_suffix}"
 
-        logging.info(
-            f"Extracted chroma ({features.shape}) from audio ({audio.shape}): {output_path}"
-        )
+            logging.info(
+                f"Extracted chroma ({features.shape}) from audio ({audio.shape}): {output_path}"
+            )
 
-        return [(output_path, features)]
+            return [(output_path, features)]
+
+        except Exception as e:
+            logging.error(f"Failed to extract chroma features for {key}: {e}")
+            return []
