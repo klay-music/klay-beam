@@ -11,6 +11,9 @@ import soundfile as sf
 import numpy as np
 import logging
 
+from apache_beam.io.filesystem import FileMetadata
+from apache_beam.io.filesystems import FileSystems
+
 from klay_data.transform import convert_audio
 from .extractors.spectral import ChromaExtractor
 
@@ -370,6 +373,28 @@ class ResampleAudio(beam.DoFn):
             resampled_audio = resampled_audio.numpy()
 
         return [(key, resampled_audio, self._target_sr)]
+
+
+class SkipCompleted(beam.DoFn):
+    def __init__(self, rstrip: str, new_suffix: str):
+        self._new_suffix = new_suffix
+        self._rstrip = rstrip
+
+    def process(self, file_metadata: FileMetadata):
+        check = file_metadata.path.rstrip(self._rstrip)
+        check = check + self._new_suffix
+
+        results = FileSystems.match([check], limits=[1])
+        assert len(results) > 0, "Unexpected empty results. This should never happen."
+
+        for result in results:
+            num_matches = len(result.metadata_list)
+            logging.info(f"Found {num_matches} of: {result.pattern}")
+            if num_matches == 0:
+                return [file_metadata]
+
+        logging.info(f"Targets already exist. Skipping: {file_metadata.path}")
+        return []
 
 
 class ExtractChromaFeatures(beam.DoFn):

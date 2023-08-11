@@ -11,6 +11,7 @@ from klay_beam.transforms import (
     LoadWithTorchaudio,
     ResampleAudio,
     ExtractChromaFeatures,
+    SkipCompleted,
     write_file,
     numpy_to_file
 )
@@ -125,7 +126,14 @@ def run():
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
 
-            # SkipCompleted should go here. Waiting for official klay_data path library
+            | "SkipCompleted"
+            >> beam.ParDo(
+                SkipCompleted(
+                    rstrip=".wav",
+                    # CAUTION! This if we change the chroma parameters, we need to change this too
+                    new_suffix=".chroma_50hz.npy"
+                )
+            )
 
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
