@@ -26,7 +26,7 @@ Job for extracting EnCodec and Chroma features:
 1. Write the results to an .npy file adjacent to the source audio file
 
 To run, activate a suitable python environment such as
-``../environments/osx-64-demucs.yml`.
+``../environments/osx-64-klay-beam.yml`.
 
 ```
 # CD into the root klay_beam dir to the launch script:
@@ -132,22 +132,28 @@ def run():
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
         )
 
-        audio_sr = 48_000
+        chroma_audio_sr = 16_000
 
         (
             audio_files
 
-            | "Resample: 48k"
+            | "Resample: 16k"
             >> beam.ParDo(
                 ResampleAudio(
-                    target_sr=audio_sr,
+                    source_sr_hint=48_000,
+                    target_sr=chroma_audio_sr,
                 )
             )
 
-            | "Extract Features"
+            | "ExtractChroma"
             >> beam.ParDo(
                 ExtractChromaFeatures(
-                    input_audio_sr=audio_sr,
+                    input_audio_sr=chroma_audio_sr,
+                    n_chroma=12,
+                    n_fft=2048,
+                    win_length=1280,
+                    hop_length=320,
+                    norm=1,
                 )
             )
 

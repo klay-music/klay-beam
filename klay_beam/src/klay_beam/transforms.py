@@ -382,11 +382,38 @@ class ExtractChromaFeatures(beam.DoFn):
     The return value will also be a `(key, features)` tuple
     """
 
-    def __init__(self, input_audio_sr: int):
+    def __init__(self,
+            input_audio_sr: int,
+            # The default values below are just copied from the ChromaExtractor
+            # on August 10, 2023. If the defaults change in the future, should
+            # we change them in both places? It would be nice to find a way not
+            # to maintain two copies of the same default values.
+            n_chroma: int = 12,
+            n_fft: int = 2048,
+            win_length: int = 2048,
+            hop_length: Union[int, None] = None,
+            norm: float = torch.inf,
+            device: Union[torch.device, str] = "cpu",
+        ):
         self._input_audio_sr = input_audio_sr
+        self._n_chroma = n_chroma
+        self._n_fft = n_fft
+        self._win_length = win_length
+        self._hop_length = hop_length
+        self._norm = norm
+        self._device = device
+
 
     def setup(self):
-        self.model = ChromaExtractor(sample_rate=self._input_audio_sr)
+        self.model = ChromaExtractor(
+            sample_rate=self._input_audio_sr,
+            n_chroma=self._n_chroma,
+            n_fft=self._n_fft,
+            win_length=self._win_length,
+            hop_length=self._hop_length,
+            norm=self._norm,
+            device=self._device,
+        )
 
     def process(self, element: Tuple[str, torch.Tensor, int]):
         key, audio, sr = element
@@ -398,6 +425,7 @@ class ExtractChromaFeatures(beam.DoFn):
         features = self.model(audio)
 
         # In lieu of proper klay_data path handling just rename the file
-        output_path = f"{key}.chroma.npy"
+
+        output_path = f"{key.rstrip('.wav')}{self.model.feat_suffix}"
 
         return [(output_path, features)]
