@@ -408,19 +408,20 @@ class ExtractChromaFeatures(beam.DoFn):
     The return value will also be a `(key, features)` tuple
     """
 
-    def __init__(self,
-            audio_sr: int,
-            # The default values below are just copied from the ChromaExtractor
-            # on August 10, 2023. If the defaults change in the future, should
-            # we change them in both places? It would be nice to find a way not
-            # to maintain two copies of the same default values.
-            n_chroma: int = 12,
-            n_fft: int = 2048,
-            win_length: int = 2048,
-            hop_length: Union[int, None] = None,
-            norm: float = torch.inf,
-            device: Union[torch.device, str] = "cpu",
-        ):
+    def __init__(
+        self,
+        audio_sr: int,
+        # The default values below are just copied from the ChromaExtractor
+        # on August 10, 2023. If the defaults change in the future, should
+        # we change them in both places? It would be nice to find a way not
+        # to maintain two copies of the same default values.
+        n_chroma: int = 12,
+        n_fft: int = 2048,
+        win_length: int = 2048,
+        hop_length: Union[int, None] = None,
+        norm: float = torch.inf,
+        device: Union[torch.device, str] = "cpu",
+    ):
         self._audio_sr = audio_sr
         self._n_chroma = n_chroma
         self._n_fft = n_fft
@@ -428,7 +429,6 @@ class ExtractChromaFeatures(beam.DoFn):
         self._hop_length = hop_length
         self._norm = norm
         self._device = device
-
 
     def setup(self):
         self._chroma_model = ChromaExtractor(
@@ -440,7 +440,6 @@ class ExtractChromaFeatures(beam.DoFn):
             norm=self._norm,
             device=self._device,
         )
-
 
     def process(self, element: Tuple[str, torch.Tensor, int]):
         key, audio, sr = element

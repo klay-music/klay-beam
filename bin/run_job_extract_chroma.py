@@ -155,6 +155,8 @@ def run():
             | "ExtractChroma"
             >> beam.ParDo(
                 ExtractChromaFeatures(
+                    # CAUTION! This if we change the chroma parameters, we need
+                    # to also update the SkipCompleted transform.
                     audio_sr=chroma_audio_sr,
                     n_chroma=12,
                     n_fft=2048,
