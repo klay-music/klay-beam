@@ -379,7 +379,7 @@ class ExtractChromaFeatures(beam.DoFn):
     - `a` is a 2D torch.Tensor or numpy.ndarray with audio in the last dimension
     - `sr` is an int
 
-    The return value will also be a `(key, features, sr)` tuple
+    The return value will also be a `(key, features)` tuple
     """
 
     def __init__(self, input_audio_sr: int):
