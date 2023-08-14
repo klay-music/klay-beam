@@ -24,10 +24,12 @@ dependencies:
   - torchaudio
   - pip:
     # IMPORTANT: In the local environment, the local packages below are
-    # installed via conda (this file). The remove workers get these packages in
+    # installed via conda (this file). The remote workers get these packages in
     # the Docker image.
     #
     # TLDR: The local packages below should be the same as the ones installed by
-    # the py310 Dockerfile.
+    # the py310 Dockerfile. When running remotely, you may use --setup_file to
+    # install at most one of the packages below.
     - -e '../klay_beam[code-style, tests, type-check]'
+    - -e '../job_encodec[code-style, tests, type-check]'
     - -e '../submodules/klay-data[torch, type-check]'
