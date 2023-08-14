@@ -3,7 +3,6 @@ import io
 import torch
 from typing import Optional, Type, Union, Tuple
 from packaging import version as packaging_version
-
 import apache_beam as beam
 from apache_beam.io import filesystems
 import torchaudio
@@ -11,6 +10,12 @@ import pydub
 import soundfile as sf
 import numpy as np
 import logging
+
+from apache_beam.io.filesystem import FileMetadata
+from apache_beam.io.filesystems import FileSystems
+
+from klay_data.transform import convert_audio
+from .extractors.spectral import ChromaExtractor
 
 
 def numpy_to_pydub_audio_segment(
@@ -172,6 +177,13 @@ def numpy_to_wav(audio_data: np.ndarray, sr: int, bit_depth=16):
 
     in_memory_file_buffer = io.BytesIO()
     sf.write(in_memory_file_buffer, audio_data.T, sr, format="WAV", subtype=subtype)
+    in_memory_file_buffer.seek(0)
+    return in_memory_file_buffer
+
+
+def numpy_to_file(numpy_data: np.ndarray):
+    in_memory_file_buffer = io.BytesIO()
+    np.save(in_memory_file_buffer, numpy_data)
     in_memory_file_buffer.seek(0)
     return in_memory_file_buffer
 
@@ -361,3 +373,90 @@ class ResampleAudio(beam.DoFn):
             resampled_audio = resampled_audio.numpy()
 
         return [(key, resampled_audio, self._target_sr)]
+
+
+class SkipCompleted(beam.DoFn):
+    def __init__(self, rstrip: str, new_suffix: str):
+        self._new_suffix = new_suffix
+        self._rstrip = rstrip
+
+    def process(self, file_metadata: FileMetadata):
+        check = file_metadata.path.rstrip(self._rstrip)
+        check = check + self._new_suffix
+
+        results = FileSystems.match([check], limits=[1])
+        assert len(results) > 0, "Unexpected empty results. This should never happen."
+
+        for result in results:
+            num_matches = len(result.metadata_list)
+            logging.info(f"Found {num_matches} of: {result.pattern}")
+            if num_matches == 0:
+                return [file_metadata]
+
+        logging.info(f"Targets already exist. Skipping: {file_metadata.path}")
+        return []
+
+
+class ExtractChromaFeatures(beam.DoFn):
+    """Extract features from an audio tensor. Accepts a `(key, a, sr)` tuple
+    were:
+
+    - `key` is a string
+    - `a` is a 2D torch.Tensor or numpy.ndarray with audio in the last dimension
+    - `sr` is an int
+
+    The return value will also be a `(key, features)` tuple
+    """
+
+    def __init__(
+        self,
+        audio_sr: int,
+        # The default values below are just copied from the ChromaExtractor
+        # on August 10, 2023. If the defaults change in the future, should
+        # we change them in both places? It would be nice to find a way not
+        # to maintain two copies of the same default values.
+        n_chroma: int = 12,
+        n_fft: int = 2048,
+        win_length: int = 2048,
+        hop_length: Union[int, None] = None,
+        norm: float = torch.inf,
+        device: Union[torch.device, str] = "cpu",
+    ):
+        self._audio_sr = audio_sr
+        self._n_chroma = n_chroma
+        self._n_fft = n_fft
+        self._win_length = win_length
+        self._hop_length = hop_length
+        self._norm = norm
+        self._device = device
+
+    def setup(self):
+        self._chroma_model = ChromaExtractor(
+            sample_rate=self._audio_sr,
+            n_chroma=self._n_chroma,
+            n_fft=self._n_fft,
+            win_length=self._win_length,
+            hop_length=self._hop_length,
+            norm=self._norm,
+            device=self._device,
+        )
+
+    def process(self, element: Tuple[str, torch.Tensor, int]):
+        key, audio, sr = element
+
+        try:
+            # Ensure correct sample rate, and convert to mono
+            audio = convert_audio(audio, sr, self._audio_sr, 1)
+
+            features = self._chroma_model(audio)
+            output_path = f"{key.rstrip('.wav')}{self._chroma_model.feat_suffix}"
+
+            logging.info(
+                f"Extracted chroma ({features.shape}) from audio ({audio.shape}): {output_path}"
+            )
+
+            return [(output_path, features)]
+
+        except Exception as e:
+            logging.error(f"Failed to extract chroma features for {key}: {e}")
+            return []

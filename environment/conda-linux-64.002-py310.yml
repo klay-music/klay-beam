@@ -10,6 +10,9 @@ channels:
 dependencies:
   - pip
   - python=3.10
+  # If we install numpy 1.25, pip replaces it later on. Just start with the one
+  # that we want.
+  - numpy=1.23
   # ffmpeg 4.4 is required for torchaudio
   - conda-forge::ffmpeg=4.4
   # libiconv and xorg-libxau are required for ffmpeg

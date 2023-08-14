@@ -12,3 +12,5 @@ test_audio
 .mypy_cache
 .pytest_cache
 .vscode
+
+tag-klay-beam*
