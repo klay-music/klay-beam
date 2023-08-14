@@ -33,15 +33,15 @@ class ExtractEncodec(beam.DoFn):
         audio_batch = audio[None, :, :]
 
         with torch.no_grad():
-            encoded = self.encodec.encode(audio_batch)
+            frames = self.encodec.encode(audio_batch)
 
         # From the docstring: "Each frame is a tuple `(codebook, scale)`, with
         # `codebook` of shape `[B, K, T]`, with `K` the number of codebooks."
-        frame = encoded[0]
+        frame = frames[0]
         # If we initialize model with normalize=False (the default), I believe
         # we can discard the scale.
         codebook, _ = frame # `codebook` has shape `[B, K, T]`
-        unbatched  = codebook.squeeze(0) # `unbatched` has shape `[K, T]`
+        unbatched = codebook.squeeze(0) # `unbatched` has shape `[K, T]`
 
         logging.info(f"Encoded with Encodec ({unbatched.shape}): {output_filename}")
 

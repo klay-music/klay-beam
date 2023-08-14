@@ -19,7 +19,7 @@ from job_encodec.transforms import ExtractEncodec
 
 
 """
-Job for extracting EnCodec and Chroma features:
+Job for extracting EnCodec features:
 
 1. Recursively search a path for `.wav` files
 1. For each audio file, extract EnCodec
@@ -40,8 +40,8 @@ python bin/run_job_extract_encodec.py \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --machine_type n1-standard-2 \
-    --region us-east1 \
-    --max_num_workers=128 \
+    --region us-central1 \
+    --max_num_workers=512 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments=use_runner_v2 \
     --sdk_location=container \
@@ -49,7 +49,7 @@ python bin/run_job_extract_encodec.py \
     --setup_file ./job_encodec/setup.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.6.0-py310 \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00' \
     --job_name 'extract-encodec-001'
 
 # Possible test values for --source_audio_path
@@ -134,7 +134,7 @@ def run():
         (
             audio_files
 
-            | "Resample: 16k"
+            | f"Resample: {chroma_audio_sr}"
             >> beam.ParDo(
                 ResampleAudio(
                     source_sr_hint=48_000,
@@ -142,7 +142,7 @@ def run():
                 )
             )
 
-            | "ExtractChroma" >> beam.ParDo(ExtractEncodec())
+            | "ExtractEncodec" >> beam.ParDo(ExtractEncodec())
             | "CreateNpyFile" >> beam.Map(lambda x: (x[0], numpy_to_file(x[1])))
             | "PersistFile" >> beam.Map(write_file)
         )
