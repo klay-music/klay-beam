@@ -35,10 +35,10 @@ python bin/run_job_get_jamendo.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments=use_runner_v2 \
     --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
+    --temp_location gs://klay-dataflow-test-000/tmp/get-jamendo/ \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.6.0-py310 \
     --disk_size_gb 50 \
-    --job_name 'get-jamendo-000'
+    --job_name 'get-jamendo-002'
 
 # Options for --autoscaling-algorithm
     THROUGHPUT_BASED, NONE
@@ -63,23 +63,10 @@ class GetPaths(beam.PTransform):
         ]
         return pcoll.pipeline | beam.Create(urls)
 
-
-class UploadFileToGCS(beam.DoFn):
+class HandleTar(beam.DoFn):
     def __init__(self, bucket_name):
         self.bucket_name = bucket_name
 
-    def process(self, element):
-        # element should be a tuple of (local_path, gcs_path)
-        local_path, gcs_path = element
-        logging.info(f"Uploading {local_path} to gs://{self.bucket_name}/{gcs_path}")
-
-        client = storage.Client()
-        bucket = client.get_bucket(self.bucket_name)
-        blob = bucket.blob(gcs_path)
-        blob.upload_from_filename(local_path)
-
-
-class HandleTar(beam.DoFn):
     def process(self, url: str):
         logging.info(f"Received: {url}")
 
@@ -102,10 +89,21 @@ class HandleTar(beam.DoFn):
         extract_tar(local_tar_path, local_extract_path)
         logging.info("Done extracting tar file")
 
+        # we have to upload in this DoFn because we depend on the local filesystem
         for file_path in list_files_recursive(local_extract_path):
             relative_path = pathlib.Path(file_path).relative_to(local_extract_path)
             gcs_path = f"mtg-jamendo/{relative_path}"
-            yield (str(file_path), gcs_path)
+
+            local_path = str(file_path)
+            full_gcs_path = f"gs://{self.bucket_name}/{gcs_path}"
+            logging.info(f"Uploading {local_path} to {full_gcs_path}")
+
+            client = storage.Client()
+            bucket = client.get_bucket(self.bucket_name)
+            blob = bucket.blob(gcs_path)
+            blob.upload_from_filename(local_path)
+            logging.info(f"Uploaded: {full_gcs_path}")
+            yield full_gcs_path
 
 
 def run():
@@ -124,8 +122,8 @@ def run():
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
-            | beam.ParDo(HandleTar())
-            | beam.ParDo(UploadFileToGCS("klay-datasets-001"))
+            | beam.ParDo(HandleTar(bucket_name="klay-datasets-001"))
+            | beam.Map(lambda x: logging.info(f"Uploaded: {x}"))
         )
 
 
