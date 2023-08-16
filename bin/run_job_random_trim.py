@@ -36,7 +36,7 @@ python bin/run_job_random_trim.py \
 python bin/run_job_random_trim.py \
     --runner DataflowRunner \
     --max_num_workers=256 \
-    --region us-east1 \
+    --region us-central1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
@@ -46,11 +46,11 @@ python bin/run_job_random_trim.py \
     --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/00/' \
+        'gs://klay-datasets-001/mtg-jamendo/' \
     --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --machine_type n1-standard-2 \
-    --job_name 'jamendo-copy-009'
+    --job_name 'jamendo-copy-010-full'
 
     # Possible values for --source_audio_path
         'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
