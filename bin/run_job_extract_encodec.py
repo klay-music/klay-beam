@@ -47,7 +47,7 @@ python bin/run_job_extract_encodec.py \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/extract_encodec/ \
     --setup_file ./job_encodec/setup.py \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.7.0-py310 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.0-py310 \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/00' \
     --job_name 'extract-encodec-001'
@@ -120,7 +120,8 @@ def run():
                 SkipCompleted(
                     old_suffix=".wav",
                     # CAUTION! This if we change the chroma parameters, we need to change this too
-                    new_suffix=".encodec_24khz.npy"
+                    new_suffix=".encodec_24khz.npy",
+                    check_timestamp=True,
                 )
             )
 
