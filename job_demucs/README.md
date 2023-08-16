@@ -34,7 +34,7 @@ python bin/run_job_demucs.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.5.0-demucs \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.7.0-demucs \
     --sdk_location=container \
     --setup_file ./job_demucs/setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \

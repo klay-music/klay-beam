@@ -4,6 +4,7 @@ from apache_beam.io.filesystem import FileMetadata
 from apache_beam.io.filesystems import FileSystems
 import torchaudio
 
+from klay_beam.transforms import remove_suffix
 from klay_beam.path import move
 from job_demucs.demucs import DemucsSeparator
 
@@ -51,8 +52,8 @@ class SeparateSources(beam.DoFn):
         assert sr == 44_100, f"Expected 44.1k audio. Found {sr}. ({key})"
 
         out_filename = move(key, self.source_dir, self.target_dir)
-        out_filename = out_filename.rstrip(".wav")
-        out_filename = out_filename.rstrip(".source")
+        out_filename = remove_suffix(out_filename, ".wav")
+        out_filename = remove_suffix(out_filename, ".source")
 
         logging.info(f"Separating: {key}")
         try:
@@ -85,7 +86,7 @@ class SkipCompleted(beam.DoFn):
         if not out_filename.endswith(".source.wav"):
             logging.warn(f"Expected `.source.wav` extension: {file_metadata.path}")
 
-        base_file_prefix = out_filename.rstrip(".source.wav")
+        base_file_prefix = remove_suffix(out_filename, ".source.wav")
 
         derived_files = [
             f"{base_file_prefix}.drums.wav",

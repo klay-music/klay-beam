@@ -214,6 +214,12 @@ def write_file(output_path_and_buffer):
         file_handle.write(buffer.read())
 
 
+def remove_suffix(path: str, suffix: str):
+    if path.endswith(suffix):
+        return path[: -len(suffix)]
+    return path
+
+
 class LoadWithTorchaudio(beam.DoFn):
     """Use torchaudio to load audio files to tensors
 
@@ -379,7 +385,7 @@ class ResampleAudio(beam.DoFn):
 class SkipCompleted(beam.DoFn):
     def __init__(
             self,
-            rstrip: str,
+            old_suffix: str,
             new_suffix: Union[str, List[str]],
             source_dir: Optional[str] = None,
             target_dir: Optional[str] = None,
@@ -387,7 +393,7 @@ class SkipCompleted(beam.DoFn):
         if isinstance(new_suffix, str):
             new_suffix = [new_suffix]
         self._new_suffixes = new_suffix
-        self._rstrip = rstrip
+        self._old_suffix = old_suffix
 
         assert (
             (source_dir is None) == (target_dir is None)
@@ -397,7 +403,7 @@ class SkipCompleted(beam.DoFn):
         self._target_dir = target_dir
 
     def process(self, file_metadata: FileMetadata):
-        check = file_metadata.path.rstrip(self._rstrip)
+        check = remove_suffix(file_metadata.path, self._old_suffix)
         if self._source_dir is not None:
             check = move(check, self._source_dir, self._target_dir)
         checks = [check + suffix for suffix in self._new_suffixes]
@@ -468,7 +474,7 @@ class ExtractChromaFeatures(beam.DoFn):
             audio = convert_audio(audio, sr, self._audio_sr, 1)
 
             features = self._chroma_model(audio)
-            output_path = f"{key.rstrip('.wav')}{self._chroma_model.feat_suffix}"
+            output_path = remove_suffix(key, ".wav") + self._chroma_model.feat_suffix
 
             logging.info(
                 f"Extracted chroma ({features.shape}) from audio ({audio.shape}): {output_path}"

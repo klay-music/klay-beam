@@ -10,6 +10,7 @@ from apache_beam.options.pipeline_options import SetupOptions
 from klay_beam.transforms import (
     LoadWithTorchaudio,
     write_file,
+    SkipCompleted,
 )
 from job_random_trim.transforms import Trim
 
@@ -40,7 +41,7 @@ python bin/run_job_random_trim.py \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --disk_size_gb=50 \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.2.0 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.7.0-py310 \
     --sdk_location=container \
     --setup_file ./job_random_trim/setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
@@ -111,6 +112,17 @@ def run():
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | "Reshuffle" >> beam.Reshuffle()
+
+            | "SkipCompleted"
+            >> beam.ParDo(
+                SkipCompleted(
+                    old_suffix=".mp3",
+                    new_suffix=".source.wav",
+                    source_dir=known_args.input,
+                    target_dir=known_args.output,
+                )
+            )
+
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "Load Audio" >> beam.ParDo(LoadWithTorchaudio())

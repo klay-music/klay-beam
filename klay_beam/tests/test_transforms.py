@@ -9,7 +9,7 @@ def test_skip_completed():
 
 
     skips = SkipCompleted(
-        rstrip=".wav",
+        old_suffix=".wav",
         new_suffix=".01.txt",
     )
     metadata_01 = FileMetadata(
@@ -25,7 +25,7 @@ def test_skip_completed():
         size_in_bytes=16,
     )
     skips = SkipCompleted(
-        rstrip=".wav",
+        old_suffix=".wav",
         new_suffix=[".01.txt", ".02.txt", ".03.txt"],
         source_dir="/dummy/dir",
         target_dir=data_dir,
@@ -36,7 +36,7 @@ def test_skip_completed():
 
 
     does_not_skip = SkipCompleted(
-        rstrip=".wav",
+        old_suffix=".wav",
         new_suffix=[".01.txt", ".02.txt", ".03.txt", ".04.txt"],
         source_dir="/dummy/dir",
         target_dir=data_dir,

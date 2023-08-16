@@ -127,7 +127,7 @@ def run():
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
-                    rstrip=".wav",
+                    old_suffix=".wav",
                     # CAUTION! This if we change the chroma parameters, we need to change this too
                     new_suffix=".chroma_50hz.npy"
                 )

@@ -3,7 +3,7 @@ from typing import Tuple
 import apache_beam as beam
 
 from encodec import EncodecModel
-from klay_data.transform import convert_audio
+from klay_data.transform import convert_audio, remove_suffix
 import torch
 
 
@@ -20,7 +20,7 @@ class ExtractEncodec(beam.DoFn):
 
         # Ensure that we are naming the file correctly.
         assert self.encodec.sample_rate == 24_000
-        output_filename = key.rstrip(".wav") + ".encodec_24khz.npy"
+        output_filename = remove_suffix(key, ".wav") + ".encodec_24khz.npy"
 
         x = x.to(self._device)
 

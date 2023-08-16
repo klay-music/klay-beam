@@ -32,4 +32,5 @@ dependencies:
     # install at most one of the packages below.
     - -e '../klay_beam[code-style, tests, type-check]'
     - -e '../job_encodec[code-style, tests, type-check]'
+    - -e '../job_random_trim[code-style, tests, type-check]'
     - -e '../submodules/klay-data[torch, type-check]'

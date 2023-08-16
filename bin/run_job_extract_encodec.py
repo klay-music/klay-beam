@@ -45,9 +45,9 @@ python bin/run_job_extract_encodec.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments=use_runner_v2 \
     --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
+    --temp_location gs://klay-dataflow-test-000/tmp/extract_encodec/ \
     --setup_file ./job_encodec/setup.py \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.6.0-py310 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.7.0-py310 \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/00' \
     --job_name 'extract-encodec-001'
@@ -118,7 +118,7 @@ def run():
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
-                    rstrip=".wav",
+                    old_suffix=".wav",
                     # CAUTION! This if we change the chroma parameters, we need to change this too
                     new_suffix=".encodec_24khz.npy"
                 )
