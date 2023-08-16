@@ -1,7 +1,7 @@
 import pathlib
 import io
 import torch
-from typing import Optional, Type, Union, Tuple
+from typing import Optional, Type, Union, Tuple, List
 from packaging import version as packaging_version
 import apache_beam as beam
 from apache_beam.io import filesystems
@@ -16,6 +16,7 @@ from apache_beam.io.filesystems import FileSystems
 
 from klay_data.transform import convert_audio
 from .extractors.spectral import ChromaExtractor
+from .path import move
 
 
 def numpy_to_pydub_audio_segment(
@@ -376,15 +377,33 @@ class ResampleAudio(beam.DoFn):
 
 
 class SkipCompleted(beam.DoFn):
-    def __init__(self, rstrip: str, new_suffix: str):
-        self._new_suffix = new_suffix
+    def __init__(
+            self,
+            rstrip: str,
+            new_suffix: Union[str, List[str]],
+            source_dir: Optional[str] = None,
+            target_dir: Optional[str] = None,
+        ):
+        if isinstance(new_suffix, str):
+            new_suffix = [new_suffix]
+        self._new_suffixes = new_suffix
         self._rstrip = rstrip
+
+        assert (
+            (source_dir is None) == (target_dir is None)
+        ), "source_dir and target_dir must both be None or strings"
+
+        self._source_dir = source_dir
+        self._target_dir = target_dir
 
     def process(self, file_metadata: FileMetadata):
         check = file_metadata.path.rstrip(self._rstrip)
-        check = check + self._new_suffix
+        if self._source_dir is not None:
+            check = move(check, self._source_dir, self._target_dir)
+        checks = [check + suffix for suffix in self._new_suffixes]
+        limits = [1 for _ in checks]
 
-        results = FileSystems.match([check], limits=[1])
+        results = FileSystems.match(checks, limits=limits)
         assert len(results) > 0, "Unexpected empty results. This should never happen."
 
         for result in results:
