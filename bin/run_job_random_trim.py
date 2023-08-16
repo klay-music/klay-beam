@@ -34,27 +34,25 @@ python bin/run_job_random_trim.py \
 
 
 python bin/run_job_random_trim.py \
-    --max_num_workers=32 \
+    --runner DataflowRunner \
+    --max_num_workers=256 \
     --region us-east1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
-    --runner DataflowRunner \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --disk_size_gb=50 \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.7.0-py310 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.7.0-py310-rc.1 \
     --sdk_location=container \
     --setup_file ./job_random_trim/setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets/mtg_jamendo_autotagging/audios/' \
+        'gs://klay-datasets-001/mtg-jamendo/00/' \
     --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00' \
     --machine_type n1-standard-2 \
-    --job_name 'jamendo-copy-008'
+    --job_name 'jamendo-copy-009'
 
     # Possible values for --source_audio_path
-        'gs://klay-datasets/mtg_jamendo_autotagging/audios' \
         'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
 """
 
