@@ -40,12 +40,12 @@ python bin/run_job_demucs.py \
     --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/01/' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/01/' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --experiments=no_use_multiple_sdk_containers \
     --number_of_worker_harness_threads=1 \
-    --job_name 'demucs-027-on-01-jamendo-worker-harness-thread-1'
+    --job_name 'demucs-028-on-full-jamendo-worker-harness-thread-1'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
