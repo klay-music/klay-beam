@@ -93,6 +93,7 @@ def run():
                     new_suffix=[".bass.wav", ".drums.wav", ".other.wav", ".vocals.wav"],
                     source_dir=known_args.input,
                     target_dir=known_args.output,
+                    check_timestamp=True,
                 )
             )
             # ReadMatches produces a PCollection of ReadableFile objects

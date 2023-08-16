@@ -2,7 +2,7 @@
 set -e
 set -x
 
-VERSION=0.7.0-demucs-rc.3
+VERSION=0.8.0-demucs
 docker tag klay-beam:demucs us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$VERSION
 docker tag klay-beam:demucs us-docker.pkg.dev/klay-home/klay-docker/klay-beam:latest
 

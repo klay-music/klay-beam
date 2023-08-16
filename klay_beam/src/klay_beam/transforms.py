@@ -384,23 +384,25 @@ class ResampleAudio(beam.DoFn):
 
 class SkipCompleted(beam.DoFn):
     def __init__(
-            self,
-            old_suffix: str,
-            new_suffix: Union[str, List[str]],
-            source_dir: Optional[str] = None,
-            target_dir: Optional[str] = None,
-        ):
+        self,
+        old_suffix: str,
+        new_suffix: Union[str, List[str]],
+        source_dir: Optional[str] = None,
+        target_dir: Optional[str] = None,
+        check_timestamp: bool = False,
+    ):
         if isinstance(new_suffix, str):
             new_suffix = [new_suffix]
         self._new_suffixes = new_suffix
         self._old_suffix = old_suffix
 
-        assert (
-            (source_dir is None) == (target_dir is None)
+        assert (source_dir is None) == (
+            target_dir is None
         ), "source_dir and target_dir must both be None or strings"
 
         self._source_dir = source_dir
         self._target_dir = target_dir
+        self._check_timestamp = check_timestamp
 
     def process(self, file_metadata: FileMetadata):
         check = remove_suffix(file_metadata.path, self._old_suffix)
@@ -415,7 +417,17 @@ class SkipCompleted(beam.DoFn):
         for result in results:
             num_matches = len(result.metadata_list)
             logging.info(f"Found {num_matches} of: {result.pattern}")
-            if num_matches == 0:
+            if num_matches != 0 and self._check_timestamp:
+                for metadata in result.metadata_list:
+                    if (
+                        metadata.last_updated_in_seconds
+                        < file_metadata.last_updated_in_seconds
+                    ):
+                        logging.info(
+                            f"Do not skip, because a target was found ({file_metadata.path}), but it is older than source file ({metadata.path})"
+                        )
+                        return [file_metadata]
+            elif num_matches == 0:
                 return [file_metadata]
 
         logging.info(f"Targets already exist. Skipping: {file_metadata.path}")
