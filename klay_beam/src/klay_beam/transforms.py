@@ -1,7 +1,7 @@
 import pathlib
 import io
 import torch
-from typing import Optional, Type, Union, Tuple
+from typing import Optional, Type, Union, Tuple, List
 from packaging import version as packaging_version
 import apache_beam as beam
 from apache_beam.io import filesystems
@@ -16,6 +16,7 @@ from apache_beam.io.filesystems import FileSystems
 
 from klay_data.transform import convert_audio
 from .extractors.spectral import ChromaExtractor
+from .path import move
 
 
 def numpy_to_pydub_audio_segment(
@@ -213,6 +214,12 @@ def write_file(output_path_and_buffer):
         file_handle.write(buffer.read())
 
 
+def remove_suffix(path: str, suffix: str):
+    if path.endswith(suffix):
+        return path[: -len(suffix)]
+    return path
+
+
 class LoadWithTorchaudio(beam.DoFn):
     """Use torchaudio to load audio files to tensors
 
@@ -376,21 +383,51 @@ class ResampleAudio(beam.DoFn):
 
 
 class SkipCompleted(beam.DoFn):
-    def __init__(self, rstrip: str, new_suffix: str):
-        self._new_suffix = new_suffix
-        self._rstrip = rstrip
+    def __init__(
+        self,
+        old_suffix: str,
+        new_suffix: Union[str, List[str]],
+        source_dir: Optional[str] = None,
+        target_dir: Optional[str] = None,
+        check_timestamp: bool = False,
+    ):
+        if isinstance(new_suffix, str):
+            new_suffix = [new_suffix]
+        self._new_suffixes = new_suffix
+        self._old_suffix = old_suffix
+
+        assert (source_dir is None) == (
+            target_dir is None
+        ), "source_dir and target_dir must both be None or strings"
+
+        self._source_dir = source_dir
+        self._target_dir = target_dir
+        self._check_timestamp = check_timestamp
 
     def process(self, file_metadata: FileMetadata):
-        check = file_metadata.path.rstrip(self._rstrip)
-        check = check + self._new_suffix
+        check = remove_suffix(file_metadata.path, self._old_suffix)
+        if self._source_dir is not None:
+            check = move(check, self._source_dir, self._target_dir)
+        checks = [check + suffix for suffix in self._new_suffixes]
+        limits = [1 for _ in checks]
 
-        results = FileSystems.match([check], limits=[1])
+        results = FileSystems.match(checks, limits=limits)
         assert len(results) > 0, "Unexpected empty results. This should never happen."
 
         for result in results:
             num_matches = len(result.metadata_list)
             logging.info(f"Found {num_matches} of: {result.pattern}")
-            if num_matches == 0:
+            if num_matches != 0 and self._check_timestamp:
+                for metadata in result.metadata_list:
+                    if (
+                        metadata.last_updated_in_seconds
+                        < file_metadata.last_updated_in_seconds
+                    ):
+                        logging.info(
+                            f"Do not skip, because a target was found ({file_metadata.path}), but it is older than source file ({metadata.path})"
+                        )
+                        return [file_metadata]
+            elif num_matches == 0:
                 return [file_metadata]
 
         logging.info(f"Targets already exist. Skipping: {file_metadata.path}")
@@ -449,7 +486,7 @@ class ExtractChromaFeatures(beam.DoFn):
             audio = convert_audio(audio, sr, self._audio_sr, 1)
 
             features = self._chroma_model(audio)
-            output_path = f"{key.rstrip('.wav')}{self._chroma_model.feat_suffix}"
+            output_path = remove_suffix(key, ".wav") + self._chroma_model.feat_suffix
 
             logging.info(
                 f"Extracted chroma ({features.shape}) from audio ({audio.shape}): {output_path}"

@@ -1,8 +1,8 @@
-# job_demucs
+# job_encodec
 
-Initial job for copying+triming an audio dataset. This job will:
+Beam job for extracting encodec tokens.
 
-1. Recursively search a path for `.source.wav` files (`--source_audio_path`)
+1. Recursively search a path for `.wav` files (`--source_audio_path`)
 1. For each audio file, if the targets already exist skip it. For example for
    `${SOURCE_PATH}/00/001.source.wav`, if the following all exist, do not
    proceed with subsequent steps:
@@ -16,28 +16,28 @@ Initial job for copying+triming an audio dataset. This job will:
 1. Save results to (`--target_audio_path`) preserving the directory structure.
 
 To run, activate a suitable python environment such as
-``../environments/osx-64-job-random-trim.yml`.
+``../environments/osx-64-klay-beam-py310.yml`.
 
 ```
 # CD into the parent dir (one level up from this package) and run the launch script
-python bin/run_job_demucs.py \
+python bin/run_job_encodec.py \
     --source_audio_path '/absolute/path/to/source.wav/files/' \
     --target_audio_path '/absolute/path/to/job_output/' \
     --runner Direct
 
 # Run remote job with autoscaling
-python bin/run_job_demucs.py \
+python bin/run_job_encodec.py \
     --runner DataflowRunner \
     --machine_type n1-standard-2 \
-    --num_workers=600 \
-    --region us-central1 \
-    --autoscaling_algorithm NONE \
+    --max_num_workers=256 \
+    --region us-east1 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.0-demucs \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.6.0-py310 \
     --sdk_location=container \
-    --setup_file ./job_demucs/setup.py \
-    --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
+    --setup_file ./job_encodec/setup.py \
+    --temp_location gs://klay-dataflow-test-000/tmp/encodec/ \
     --project klay-training \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
@@ -45,7 +45,7 @@ python bin/run_job_demucs.py \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --experiments=no_use_multiple_sdk_containers \
     --number_of_worker_harness_threads=1 \
-    --job_name 'demucs-028-on-full-jamendo-worker-harness-thread-1'
+    --job_name 'encodec-001'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \

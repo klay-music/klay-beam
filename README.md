@@ -1,6 +1,13 @@
 # klay-beam
 
-Base repo for running Apache Beam jobs locally or on GCP via Dataflow.
+Base repo for running Apache Beam jobs locally or on GCP via Dataflow. This is
+how we run massively parallel jobs with tens-of-thousands of input audio files,
+for example:
+
+- Source separation
+- Feature extraction
+- Cropping
+- Resampling
 
 Most Beam jobs will require three ingredients which must be engineered for
 compatibility:
@@ -19,7 +26,7 @@ images, and local environments (1, 2, and 3 respectively).
 ## Example Job
 
 The example job uses the following ingredients:
-1. `bin/run_example.py` pipeline script
+1. `bin/run_job_example.py` pipeline script
 1. `klay-beam:0.2.0` docker container
 1. `environment/osx-64-klay-beam.yml` local environment
 
@@ -27,12 +34,12 @@ To run the example job:
 1. Talk to Charles or Max for GCP IAP permissions
 1. Activate a `klay-beam` conda environment locally, (for example
    `environment/osx-64-klay-beam.yml`)
-1. Run `bin/run_example.py` (see example below for arguments)
+1. Run `bin/run_job_example.py` (see example below for arguments)
 
 ```bash
 # Run Locally in the klay-beam conda environment. Running locally allows you to
 # use --input and --output paths on your local filesystem OR in object storage.
-python bin/run_example.py \
+python bin/run_job_example.py \
     --input 'gs://klay-dataflow-test-000/test-audio/fma_large/005/00500*.mp3' \
     --output 'test_audio/job_output/{}.wav' \
     --runner Direct
@@ -42,14 +49,14 @@ python bin/run_example.py \
 # Run remotely via GCP Dataflow. Should be executed in the `klay-beam` conda
 # environment to ensure Beam SDK, python, and dependency parity between the
 # local environment and Worker environments.
-python bin/run_example.py \
+python bin/run_job_example.py \
     --region us-east1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --runner DataflowRunner \
     --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
-    --disk_size_gb=50 \
+    --disk_size_gb 50 \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.2.0 \
+    --sdk_container_image us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.2.0 \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/ \
     --project klay-beam-tests \
@@ -63,7 +70,7 @@ Notes:
 - When running remotely you can use the `--setup_file` option to upload a local
   package to the workers. For example `--setup_file=./klay_beam/setup.py` would
   cause `klay_beam` to be bundled as an `sdist` (when you execute
-  `bin/run_example.py`) and installed on the worker nodes replacing any existing
+  `bin/run_job_example.py`) and installed on the worker nodes replacing any existing
   installation of `klay_beam` that may be in the docker container. Any missing
   pip dependencies specified in `pyproject.toml` will also be installed at
   runtime.

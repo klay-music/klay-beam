@@ -12,9 +12,10 @@ from klay_beam.transforms import (
     ResampleAudio,
     write_file,
     numpy_to_wav,
+    SkipCompleted,
 )
 
-from job_demucs.transforms import SeparateSources, SkipCompleted
+from job_demucs.transforms import SeparateSources
 
 
 """
@@ -88,8 +89,11 @@ def run():
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
+                    old_suffix=".source.wav",
+                    new_suffix=[".bass.wav", ".drums.wav", ".other.wav", ".vocals.wav"],
                     source_dir=known_args.input,
                     target_dir=known_args.output,
+                    check_timestamp=True,
                 )
             )
             # ReadMatches produces a PCollection of ReadableFile objects
@@ -113,8 +117,8 @@ def run():
             | "Resample: 48K"
             >> beam.ParDo(
                 ResampleAudio(
-                    target_sr=48_000,
                     source_sr_hint=44_100,
+                    target_sr=48_000,
                     output_numpy=True,
                 )
             )

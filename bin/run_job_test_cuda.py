@@ -11,11 +11,11 @@ import os.path
 
 """
 # To run locally
-python bin/test_cuda.py \
+python bin/run_job_test_cuda.py \
     --runner Direct
 
 # To run on Dataflow
-python bin/test_cuda.py \
+python bin/run_job_test_cuda.py \
     --region us-east4 \
     --autoscaling_algorithm NONE \
     --runner DataflowRunner \

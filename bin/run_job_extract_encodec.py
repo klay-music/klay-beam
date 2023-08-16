@@ -10,20 +10,19 @@ from apache_beam.options.pipeline_options import SetupOptions
 from klay_beam.transforms import (
     LoadWithTorchaudio,
     ResampleAudio,
-    ExtractChromaFeatures,
     SkipCompleted,
     write_file,
     numpy_to_file
 )
 
+from job_encodec.transforms import ExtractEncodec
+
 
 """
-Job for extracting EnCodec and Chroma features:
+Job for extracting EnCodec features:
 
-1. Recursively search a path for `.<something>.wav` files
-   (`--source_audio_path`) where `<something>` is one of `source`, `bass`,
-   `vocals`, `drums`, or `other` as specified by `--stem`
-1. For each audio file, extract features
+1. Recursively search a path for `.wav` files
+1. For each audio file, extract EnCodec
 1. Write the results to an .npy file adjacent to the source audio file
 
 To run, activate a suitable python environment such as
@@ -31,27 +30,27 @@ To run, activate a suitable python environment such as
 
 ```
 # CD into the root klay_beam dir to the launch script:
-python bin/run_job_extract_chroma.py \
-    --source_audio_path '/absolute/path/to/source.wav/files/' \
-    --runner Direct
+python bin/run_job_extract_encodec.py \
+    --runner Direct \
+    --source_audio_path '/absolute/path/to/source.wav/files/'
 
 # Run remote job with autoscaling
-python bin/run_job_extract_chroma.py \
+python bin/run_job_extract_encodec.py \
+    --runner DataflowRunner \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --machine_type n1-standard-2 \
-    --region us-east1 \
-    --max_num_workers=128 \
+    --region us-central1 \
+    --max_num_workers=512 \
     --autoscaling_algorithm THROUGHPUT_BASED \
-    --runner DataflowRunner \
     --experiments=use_runner_v2 \
     --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
+    --temp_location gs://klay-dataflow-test-000/tmp/extract_encodec/ \
+    --setup_file ./job_encodec/setup.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.0-py310 \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --stem 'vocals' \
-    --job_name 'extract-vocals-chroma-005'
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00' \
+    --job_name 'extract-encodec-001'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
@@ -92,14 +91,6 @@ def parse_args():
         """,
     )
 
-    parser.add_argument(
-        "--stem",
-        dest="stem",
-        default="source",
-        choices=["source", "bass", "drums", "other", "vocals"],
-        help="The stem to extract"
-    )
-
     return parser.parse_known_args(None)
 
 
@@ -113,7 +104,7 @@ def run():
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     # Pattern to recursively find mp3s inside source_audio_path
-    match_pattern = os.path.join(known_args.input, f"**.{known_args.stem}.wav")
+    match_pattern = os.path.join(known_args.input, f"**.wav")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
@@ -129,7 +120,7 @@ def run():
                 SkipCompleted(
                     old_suffix=".wav",
                     # CAUTION! This if we change the chroma parameters, we need to change this too
-                    new_suffix=".chroma_50hz.npy",
+                    new_suffix=".encodec_24khz.npy",
                     check_timestamp=True,
                 )
             )
@@ -139,12 +130,12 @@ def run():
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
         )
 
-        chroma_audio_sr = 16_000
+        chroma_audio_sr = 24_000
 
         (
             audio_files
 
-            | "Resample: 16k"
+            | f"Resample: {chroma_audio_sr}"
             >> beam.ParDo(
                 ResampleAudio(
                     source_sr_hint=48_000,
@@ -152,20 +143,7 @@ def run():
                 )
             )
 
-            | "ExtractChroma"
-            >> beam.ParDo(
-                ExtractChromaFeatures(
-                    # CAUTION! This if we change the chroma parameters, we need
-                    # to also update the SkipCompleted transform.
-                    audio_sr=chroma_audio_sr,
-                    n_chroma=12,
-                    n_fft=2048,
-                    win_length=1280,
-                    hop_length=320,
-                    norm=1,
-                )
-            )
-
+            | "ExtractEncodec" >> beam.ParDo(ExtractEncodec())
             | "CreateNpyFile" >> beam.Map(lambda x: (x[0], numpy_to_file(x[1])))
             | "PersistFile" >> beam.Map(write_file)
         )

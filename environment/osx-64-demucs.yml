@@ -37,4 +37,5 @@ dependencies:
     # specify it here, we use a slightly different syntax:
     # - git+https://github.com/facebookresearch/demucs.git@2e79e6e#egg=demucs
     - -e '../klay_beam[code-style, tests, type-check]'
+    - -e '../submodules/klay-data[torch, type-check]'
     - -e '../job_demucs[coda-style, tests, type-check]'
