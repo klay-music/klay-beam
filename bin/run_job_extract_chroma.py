@@ -48,7 +48,7 @@ python bin/run_job_extract_chroma.py \
     --experiments=use_runner_v2 \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.0-py310 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.1-py310 \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --job_name 'extract-chroma-006'
