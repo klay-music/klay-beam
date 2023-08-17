@@ -404,8 +404,8 @@ class SkipCompleted(beam.DoFn):
         self._target_dir = target_dir
         self._check_timestamp = check_timestamp
 
-    def process(self, file_metadata: FileMetadata):
-        check = remove_suffix(file_metadata.path, self._old_suffix)
+    def process(self, source_metadata: FileMetadata):
+        check = remove_suffix(source_metadata.path, self._old_suffix)
         if self._source_dir is not None:
             check = move(check, self._source_dir, self._target_dir)
         checks = [check + suffix for suffix in self._new_suffixes]
@@ -418,19 +418,19 @@ class SkipCompleted(beam.DoFn):
             num_matches = len(result.metadata_list)
             logging.info(f"Found {num_matches} of: {result.pattern}")
             if num_matches != 0 and self._check_timestamp:
-                for metadata in result.metadata_list:
+                for target_metadata in result.metadata_list:
                     if (
-                        metadata.last_updated_in_seconds
-                        < file_metadata.last_updated_in_seconds
+                        target_metadata.last_updated_in_seconds
+                        < source_metadata.last_updated_in_seconds
                     ):
                         logging.info(
-                            f"Do not skip, because a target was found ({file_metadata.path}), but it is older than source file ({metadata.path})"
+                            f"Do not skip! A target was found ({target_metadata.path}), but it is older than source file ({source_metadata.path})"
                         )
-                        return [file_metadata]
+                        return [source_metadata]
             elif num_matches == 0:
-                return [file_metadata]
+                return [source_metadata]
 
-        logging.info(f"Targets already exist. Skipping: {file_metadata.path}")
+        logging.info(f"Targets already exist. Skipping: {source_metadata.path}")
         return []
 
 

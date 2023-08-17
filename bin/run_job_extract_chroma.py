@@ -22,7 +22,8 @@ Job for extracting EnCodec and Chroma features:
 
 1. Recursively search a path for `.<something>.wav` files
    (`--source_audio_path`) where `<something>` is one of `source`, `bass`,
-   `vocals`, `drums`, or `other` as specified by `--stem`
+   `vocals`, `drums`, or `other` as specified by `--stem`. If no stem is given,
+    all .wav files will be extracted.
 1. For each audio file, extract features
 1. Write the results to an .npy file adjacent to the source audio file
 
@@ -32,16 +33,16 @@ To run, activate a suitable python environment such as
 ```
 # CD into the root klay_beam dir to the launch script:
 python bin/run_job_extract_chroma.py \
-    --source_audio_path '/absolute/path/to/source.wav/files/' \
-    --runner Direct
+    --runner Direct \
+    --source_audio_path '/absolute/path/to/source.wav/files/'
 
 # Run remote job with autoscaling
 python bin/run_job_extract_chroma.py \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --machine_type n1-standard-2 \
-    --region us-east1 \
-    --max_num_workers=128 \
+    --region us-central1 \
+    --max_num_workers=550 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --runner DataflowRunner \
     --experiments=use_runner_v2 \
@@ -50,8 +51,7 @@ python bin/run_job_extract_chroma.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.0-py310 \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --stem 'vocals' \
-    --job_name 'extract-vocals-chroma-005'
+    --job_name 'extract-chroma-006'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
@@ -95,7 +95,8 @@ def parse_args():
     parser.add_argument(
         "--stem",
         dest="stem",
-        default="source",
+        required=False,
+        default=None,
         choices=["source", "bass", "drums", "other", "vocals"],
         help="The stem to extract"
     )
@@ -113,7 +114,10 @@ def run():
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     # Pattern to recursively find mp3s inside source_audio_path
-    match_pattern = os.path.join(known_args.input, f"**.{known_args.stem}.wav")
+
+    match_pattern = os.path.join(known_args.input, f"**.wav")
+    if known_args.stem is not None:
+        match_pattern = os.path.join(known_args.input, f"**.{known_args.stem}.wav")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
