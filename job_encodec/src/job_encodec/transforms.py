@@ -1,10 +1,11 @@
 import logging
 from typing import Tuple
+import torch
 import apache_beam as beam
 
 from encodec import EncodecModel
-from klay_data.transform import convert_audio, remove_suffix
-import torch
+from klay_data.transform import convert_audio
+from klay_beam.transforms import remove_suffix
 
 
 class ExtractEncodec(beam.DoFn):
