@@ -22,7 +22,7 @@ from job_encodec.transforms import ExtractEncodec
 Job for extracting EnCodec features:
 
 1. Recursively search a path for `.wav` files
-1. For each audio file, extract EnCodec
+1. For each audio file, extract EnCodec tokens
 1. Write the results to an .npy file adjacent to the source audio file
 
 To run, activate a suitable python environment such as
@@ -41,16 +41,16 @@ python bin/run_job_extract_encodec.py \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --machine_type n1-standard-2 \
     --region us-central1 \
-    --max_num_workers=512 \
+    --max_num_workers 560 \
     --autoscaling_algorithm THROUGHPUT_BASED \
-    --experiments=use_runner_v2 \
-    --sdk_location=container \
+    --experiments use_runner_v2 \
+    --sdk_location container \
     --temp_location gs://klay-dataflow-test-000/tmp/extract_encodec/ \
     --setup_file ./job_encodec/setup.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.0-py310 \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00' \
-    --job_name 'extract-encodec-001'
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --job_name 'extract-encodec-003-full'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
