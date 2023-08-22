@@ -15,7 +15,7 @@ dependencies = [
   # Feature extraction deps from semantic-model@f388e4:
   "librosa>=0.9",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 
 [project.optional-dependencies]
 code-style = ["black>=22.9.0", "flake8>=5"]
