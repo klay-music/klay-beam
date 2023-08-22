@@ -3,7 +3,6 @@ name: klay-beam-py310
 channels:
   - defaults
   - conda-forge
-  - pytorch
 
 # IMPORTANT: THERE ARE MULTIPLE ENVIRONMENT FILES IN THIS REPO!!
 #
@@ -20,8 +19,9 @@ dependencies:
   # libsndfile 1.2.0 is required for the soundfile pip package
   - libsndfile>=1.2.0
   # pytorch deps initially copied from klay-music/audiolm
-  - pytorch>=2.0
-  - torchaudio
+  - pytorch::pytorch>=2.0
+  - pytorch::torchaudio
+
   - pip:
     # IMPORTANT: In the local environment, the local packages below are
     # installed via conda (this file). The remote workers get these packages in
