@@ -1,0 +1,13 @@
+name: adt
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.7
+  - ffmpeg>=4.2,<5
+  - pip
+
+  - pip:
+    - magenta==2.1.4
