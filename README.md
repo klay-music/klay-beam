@@ -26,15 +26,15 @@ images, and local environments (1, 2, and 3 respectively).
 ## Example Job
 
 The example job uses the following ingredients:
-1. `bin/run_job_example.py` pipeline script
-1. `klay-beam:0.2.0` docker container
-1. `environment/osx-64-klay-beam.yml` local environment
+- `bin/run_job_example.py` pipeline script
+- `klay-beam:0.2.0` docker container
+- `environment/osx-64-klay-beam.yml` local environment
 
 To run the example job:
 1. Talk to Charles or Max for GCP IAP permissions
-1. Activate a `klay-beam` conda environment locally, (for example
+2. Activate a `klay-beam` conda environment locally, (for example
    `environment/osx-64-klay-beam.yml`)
-1. Run `bin/run_job_example.py` (see example below for arguments)
+3. Run `bin/run_job_example.py` (see example below for arguments)
 
 ```bash
 # Run Locally in the klay-beam conda environment. Running locally allows you to
