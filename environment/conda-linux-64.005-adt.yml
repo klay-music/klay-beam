@@ -5,9 +5,10 @@ channels:
   - conda-forge
 
 dependencies:
-  - python=3.7
+  - python=3.8
   - ffmpeg>=4.2,<5
   - pip
 
   - pip:
-    - magenta
+    - -e '../klay_beam[code-style, tests, type-check]'
+    - -e '../job_adt[code-style, tests, type-check]'
