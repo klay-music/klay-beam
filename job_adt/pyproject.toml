@@ -8,13 +8,10 @@ description = "Job for extracting MIDI data from drums stems using ADT"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
-  "numpy",
   "klay_beam~=0.5",
-  # If at some point, we want to use klay_data.transform.convert_audio, then we
-  # may no longer need to explicitly list torch and torchaudio as dependencies.
   "magenta",
 ]
-requires-python = "==3.7"
+requires-python = "<3.9"
 
 [project.optional-dependencies]
 code-style = ["black>=22.9.0", "flake8>=5"]
