@@ -10,4 +10,4 @@ dependencies:
   - pip
 
   - pip:
-    - magenta==2.1.4
+    - magenta
