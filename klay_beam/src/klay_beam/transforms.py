@@ -7,6 +7,7 @@ import apache_beam as beam
 from apache_beam.io import filesystems
 import torchaudio
 import pydub
+import scipy
 import soundfile as sf
 import numpy as np
 import logging
@@ -218,6 +219,17 @@ def remove_suffix(path: str, suffix: str):
     if path.endswith(suffix):
         return path[: -len(suffix)]
     return path
+
+
+def add_suffix(path: str, suffix: str):
+    assert suffix.startswith(".")
+    while path.endswith("."):
+        path = path[:-1]
+
+    if path.endswith(suffix):
+        return path
+    else:
+        return path + suffix
 
 
 class LoadWithTorchaudio(beam.DoFn):
@@ -497,3 +509,18 @@ class ExtractChromaFeatures(beam.DoFn):
         except Exception as e:
             logging.error(f"Failed to extract chroma features for {key}: {e}")
             return []
+
+
+def tensor_to_bytes(
+    audio_tuple: Tuple[str, Union[torch.Tensor, np.ndarray], int]
+) -> List[Tuple[str, bytes, int]]:
+    fname, audio, sr = audio_tuple
+    if isinstance(audio, torch.Tensor):
+        audio = audio.detach().cpu().numpy()
+
+    buf = io.BytesIO()
+    scipy.io.wavfile.write(buf, sr, audio)
+    buf.seek(0)
+    wav_data = buf.read()
+
+    return [(fname, wav_data, sr)]

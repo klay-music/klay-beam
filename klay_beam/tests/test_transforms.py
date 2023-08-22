@@ -1,6 +1,8 @@
-from pathlib import Path
 from apache_beam.io.filesystem import FileMetadata
-from klay_beam.transforms import SkipCompleted
+from pathlib import Path
+import torch
+
+from klay_beam.transforms import SkipCompleted, add_suffix, tensor_to_bytes
 
 
 def test_skip_completed():
@@ -59,7 +61,10 @@ def test_skip_completed_with_timestamp():
     )
     assert does_not_skip.process(source1) == [
         source1
-    ], "SkipCompleted with `check_timestamp=True`should return the input file when the target file is present but older than the source file"
+    ], (
+        "SkipCompleted with `check_timestamp=True`should return the input file when the target file"
+        " is present but older than the source file"
+    )
 
     source2 = FileMetadata(
         path=str(Path(data_dir) / "exists.wav"),
@@ -68,4 +73,28 @@ def test_skip_completed_with_timestamp():
     )
     assert (
         does_not_skip.process(source2) == []
-    ), "SkipCompleted with `check_timestamp=True`should return an empty list when the target file is present and newer than the source file"
+    ), (
+            "SkipCompleted with `check_timestamp=True`should return an empty list when the "
+            "target file is present and newer than the source file"
+        )
+
+
+def test_add_suffix():
+    for fp, suffix, exp in [
+        ("a/b/c.wav", ".txt", "a/b/c.wav.txt"),
+        ("a/b/c", ".txt", "a/b/c.txt"),
+        ("a/b/c.", ".txt", "a/b/c.txt"),
+        ("a/b/c.wav.txt", ".txt", "a/b/c.wav.txt"),
+    ]:
+        assert add_suffix(fp, suffix) == exp
+
+
+def test_tensor_to_bytes():
+    name = "test"
+    tensor = torch.randn(1, 10)
+    sr = 10
+    got = tensor_to_bytes((name, tensor, sr))
+    got_name, got_bytes, got_sr = got[0]
+    assert got_name == name
+    assert got_sr == sr
+    assert isinstance(got_bytes, bytes)
