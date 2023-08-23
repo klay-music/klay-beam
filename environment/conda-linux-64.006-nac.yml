@@ -1,0 +1,20 @@
+name: nac
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.9
+  # If we install numpy 1.25, pip replaces it later on. Just start with the one
+  # that we want.
+  - numpy=1.23
+  - ffmpeg>=4.2,<5
+  - pytorch::pytorch>=1.12
+  - pytorch::torchaudio>=0.8
+  - tqdm>=4.36
+  - pip
+  # demucs is listed as a dependency in the job_demucs package's pyproject.toml.
+  # However, it is specified as a git dependency, so the the conda environment
+  # needs to have git installed locally
+  - git
