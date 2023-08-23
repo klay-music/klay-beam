@@ -1,9 +1,6 @@
 #!/bin/bash
 set -e
 
-curl -LO https://storage.googleapis.com/magentadata/models/onsets_frames_transcription/maestro_checkpoint.zip
-unzip maestro_checkpoint.zip; rm maestro_checkpoint.zip
-
-rm -rf assets
-mkdir assets
-mv train/ assets/e-gmd_checkpoint
+rm -rf assets; mkdir -p assets/e-gmd_checkpoint; cd assets/e-gmd_checkpoint
+curl -LO https://storage.googleapis.com/magentadata/models/onsets_frames_transcription/e-gmd_checkpoint.zip
+unzip e-gmd_checkpoint.zip; rm e-gmd_checkpoint.zip
