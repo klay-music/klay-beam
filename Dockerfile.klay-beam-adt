@@ -1,0 +1,97 @@
+# Example usage:
+# docker build -f Dockerfile.klay-beam-adt -t klay-beam:adt .
+
+# Conda + Apache Beam
+#
+# We need two prelimiary images for our multistage build: Apache Beam SDK and
+# Conda
+#
+# 1. Apache Beam SDK
+#
+# We'll use the Beam container to get beam sdk artifacts, which are needed for
+# for the beam "worker harness" (the process that connects the execution to the
+# job). Note that we still need to pip install the beam SDK in the final image.
+#
+# Some resources with clues for how to use Beam in a custom container:
+# https://cloud.google.com/dataflow/docs/guides/using-custom-containers#use_a_custom_base_image_or_multi-stage_builds
+# https://github.com/apache/beam/issues/22349
+#
+# 2. Conda
+#
+# We're managing some dependencies conda. We'll build these in a preliminary
+# container and copy the resulting artifacts to our runtime container.
+#
+# A reference for how to do this:
+# https://github.com/klay-music/analysis-service/blob/main/Dockerfile
+
+
+# When launching a Beam job, we must use the same python version to launch the
+# job as is used in the we use in the final image. This means that the beam
+# invocation (which we'll probably run locally from a command line) must match
+# this python version, which also must match the final image.
+#
+# TLDR:
+# PY_VERSION must match the python version specified in environment.yml
+# BEAM_VERSION must match the version specified in pyproject.toml
+ARG PY_VERSION=3.7
+ARG BEAM_VERSION=2.46.0
+ARG CONDA_LOCK_NAME=005-adt
+
+FROM apache/beam_python${PY_VERSION}_sdk:${BEAM_VERSION} as beam
+ARG PY_VERSION
+ARG BEAM_VERSION
+ARG CONDA_LOCK_NAME
+
+# Build the conda environment
+FROM condaforge/mambaforge:latest as conda
+ARG PY_VERSION
+ARG BEAM_VERSION
+ARG CONDA_LOCK_NAME
+
+WORKDIR /klay/build
+
+# create the conda environment in /env (intalling packages by copying)
+COPY ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock
+RUN mamba create --copy -p /env --file environment/conda-linux-64.${CONDA_LOCK_NAME}.lock && conda clean -afy
+
+# python:3.7-slim comes uses debian
+FROM python:${PY_VERSION}-slim
+ARG PY_VERSION
+ARG BEAM_VERSION
+
+# Copy files from official SDK image, including script/dependencies.
+COPY --from=beam /opt/apache/beam /opt/apache/beam
+
+WORKDIR /klay/app
+
+# Copy the conda environment from the conda build stage
+COPY --from=conda /env /env
+RUN python3 -m venv /env
+RUN . /env/bin/activate
+ENV PATH="/env/bin:$PATH"
+
+# Install submodules and klay_beam
+COPY job_adt ./job_adt
+
+# Download O&F Drums model
+RUN apt-get update && apt-get install -y cmake curl gcc g++ libasound2-dev libjack-dev ffmpeg pkg-config unzip
+RUN mkdir -p tmp/e-gmd_checkpoint && cd tmp/e-gmd_checkpoint && \
+  curl -LO https://storage.googleapis.com/magentadata/models/onsets_frames_transcription/e-gmd_checkpoint.zip && \
+  unzip e-gmd_checkpoint.zip && rm e-gmd_checkpoint.zip
+RUN mv tmp/e-gmd_checkpoint job_adt/assets/
+
+# If you change submodules below, you also may want to also change the local
+# conda environment.
+RUN python3 -m pip install --pre python-rtmidi
+RUN python3 -m pip install './job_adt'
+
+# Verify that the image does not have conflicting dependencies.
+RUN pip check
+
+# In some situations, Beam will create a new python virtual environment to run
+# the job. Suppress this behavior by setting this environment variable. See:
+# https://github.com/apache/beam/blob/65ef48888fa8ee5e4c61cf3eeaf5900f1e8be65b/sdks/python/container/boot.go#L160-L178
+ENV RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1
+
+# Set the entrypoint to Apache Beam SDK launcher.
+ENTRYPOINT ["/opt/apache/beam/boot"]
