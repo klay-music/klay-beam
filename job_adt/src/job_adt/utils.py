@@ -45,5 +45,3 @@ def add_suffix(path: str, suffix: str):
         return path
     else:
         return path + suffix
-
-
