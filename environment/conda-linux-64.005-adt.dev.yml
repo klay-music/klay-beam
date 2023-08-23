@@ -1,0 +1,12 @@
+name: adt
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.7
+  - pip
+
+  - pip:
+    - -e '../job_adt[code-style, tests, type-check]'
