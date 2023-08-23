@@ -12,10 +12,11 @@ from klay_beam.transforms import (
     ResampleAudio,
     SkipCompleted,
     write_file,
-    numpy_to_file
+    numpy_to_file,
 )
+from klay_beam.utils import get_device
 
-from job_encodec.transforms import ExtractEncodec
+from job_encodec.transforms import ExtractNAC
 
 
 """
@@ -33,6 +34,9 @@ To run, activate a suitable python environment such as
 python bin/run_job_extract_encodec.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
+    --nac-name dac \
+    --sample-rate 44100 \
+    --audio-suffix .wav \
 
 # Run remote job with autoscaling
 python bin/run_job_extract_encodec.py \
@@ -50,6 +54,9 @@ python bin/run_job_extract_encodec.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.1-py310 \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --nac-name dac \
+    --sample-rate 44100 \
+    --audio-suffix .wav \
     --job_name 'extract-encodec-003-full'
 
 # Possible test values for --source_audio_path
@@ -91,6 +98,34 @@ def parse_args():
         """,
     )
 
+    parser.add_argument(
+        "--nac-name",
+        required=True,
+        choices=["dac", "encodec"],
+        help="""
+        Which neural audio codec should we use? Options are ['nac' or 'encodec']
+        """,
+    )
+
+    parser.add_argument(
+        "--sample-rate",
+        required=True,
+        type=int,
+        choices=[16000, 24000, 44100, 48000],
+        help="""
+        Which audio sample rate should we extract from?
+        """,
+    )
+
+    parser.add_argument(
+        "--audio-suffix",
+        required=True,
+        choices=[".mp3", ".wav"],
+        help="""
+        Which format are candidate audio files saved with?
+        """,
+    )
+
     return parser.parse_known_args(None)
 
 
@@ -103,8 +138,13 @@ def run():
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
-    # Pattern to recursively find mp3s inside source_audio_path
-    match_pattern = os.path.join(known_args.input, f"**.wav")
+    # Pattern to recursively find audio files inside source_audio_path
+    match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
+
+    # instantiate NAC extractor here so we can use computed variables
+    extract_nac = ExtractNAC(
+        known_args.nac_name, known_args.sample_rate, device=get_device()
+    )
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
@@ -114,36 +154,29 @@ def run():
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
-
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
                     old_suffix=".wav",
-                    # CAUTION! This if we change the chroma parameters, we need to change this too
-                    new_suffix=".encodec_24khz.npy",
+                    new_suffix=extract_nac.suffix,
                     check_timestamp=True,
                 )
             )
-
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
         )
 
-        chroma_audio_sr = 24_000
-
         (
             audio_files
-
-            | f"Resample: {chroma_audio_sr}"
+            | f"Resample: {extract_nac.sample_rate}Hz"
             >> beam.ParDo(
                 ResampleAudio(
                     source_sr_hint=48_000,
-                    target_sr=chroma_audio_sr,
+                    target_sr=extract_nac.sample_rate,
                 )
             )
-
-            | "ExtractEncodec" >> beam.ParDo(ExtractEncodec())
+            | "ExtractNAC" >> beam.ParDo(extract_nac)
             | "CreateNpyFile" >> beam.Map(lambda x: (x[0], numpy_to_file(x[1])))
             | "PersistFile" >> beam.Map(write_file)
         )
