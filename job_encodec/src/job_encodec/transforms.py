@@ -91,7 +91,7 @@ class ExtractNAC(beam.DoFn):
             if self.nac_name == "encodec":
                 # From the docstring: "Each frame is a tuple `(codebook, scale)`, with
                 # `codebook` of shape `[B, K, T]`, with `K` the number of codebooks."
-                codes = self.codec.encode(audio_batch)[0][0].numpy()
+                codes = self.codec.encode(audio_batch)[0][0].detach().cpu().numpy()
             elif self.nac_name == "dac":
                 audio_signal = AudioSignal(
                     audio_batch, self.sample_rate, device=self._device
