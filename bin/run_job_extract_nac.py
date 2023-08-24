@@ -34,9 +34,9 @@ To run, activate a suitable python environment such as
 python bin/run_job_extract_nac.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
-    --nac-name dac \
-    --sample-rate 44100 \
-    --audio-suffix .wav \
+    --nac_name dac \
+    --nac_input_sr 44100 \
+    --audio_suffix .wav \
 
 # Run remote job with autoscaling
 python bin/run_job_extract_nac.py \
@@ -54,9 +54,9 @@ python bin/run_job_extract_nac.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.1-py310 \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --nac-name dac \
-    --sample-rate 44100 \
-    --audio-suffix .wav \
+    --nac_name dac \
+    --nac_input_sr 44100 \
+    --audio_suffix .wav \
     --job_name 'extract-dac-003-full'
 
 # Possible test values for --source_audio_path
@@ -99,7 +99,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--nac-name",
+        "--nac_name",
         required=True,
         choices=["dac", "encodec"],
         help="""
@@ -108,7 +108,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--sample-rate",
+        "--nac_input_sr",
         required=True,
         type=int,
         choices=[16000, 24000, 44100, 48000],
@@ -118,7 +118,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--audio-suffix",
+        "--audio_suffix",
         required=True,
         choices=[".mp3", ".wav"],
         help="""
@@ -143,7 +143,7 @@ def run():
 
     # instantiate NAC extractor here so we can use computed variables
     extract_nac = ExtractNAC(
-        known_args.nac_name, known_args.sample_rate, device=get_device()
+        known_args.nac_name, known_args.nac_input_sr, device=get_device()
     )
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
