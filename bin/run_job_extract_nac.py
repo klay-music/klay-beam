@@ -46,7 +46,7 @@ python bin/run_job_extract_nac.py \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --machine_type n1-standard-4 \
     --region us-central1 \
-    --max_num_workers 560 \
+    --max_num_workers 575 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
@@ -54,11 +54,11 @@ python bin/run_job_extract_nac.py \
     --setup_file ./job_nac/setup.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.9.0-nac \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00' \
     --nac_name dac \
     --nac_input_sr 44100 \
     --audio_suffix .wav \
-    --job_name 'extract-nac-002' \
+    --job_name 'extract-nac-002-on-jamendo-00' \
     --number_of_worker_harness_threads 1 \
     --experiments no_use_multiple_sdk_containers
 
