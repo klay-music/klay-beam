@@ -1,6 +1,7 @@
 import argparse
 import os.path
 import logging
+from typing import Union
 
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
@@ -16,7 +17,7 @@ from klay_beam.transforms import (
 )
 from klay_beam.utils import get_device
 
-from job_nac.transforms import ExtractNAC
+from job_nac.transforms import ExtractDAC, ExtractEncodec
 
 
 """
@@ -142,9 +143,11 @@ def run():
     match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
 
     # instantiate NAC extractor here so we can use computed variables
-    extract_nac = ExtractNAC(
-        known_args.nac_name, known_args.nac_input_sr, device=get_device()
-    )
+    extract_fn: Union[ExtractDAC, ExtractEncodec]
+    if known_args.nac_name == "dac":
+        extract_fn = ExtractDAC(known_args.nac_input_sr, device=get_device())
+    elif known_args.nac_name == "encodec":
+        extract_fn = ExtractEncodec(known_args.nac_input_sr, device=get_device())
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
@@ -158,7 +161,7 @@ def run():
             >> beam.ParDo(
                 SkipCompleted(
                     old_suffix=".wav",
-                    new_suffix=extract_nac.suffix,
+                    new_suffix=extract_fn.suffix,
                     check_timestamp=True,
                 )
             )
@@ -169,14 +172,14 @@ def run():
 
         (
             audio_files
-            | f"Resample: {extract_nac.sample_rate}Hz"
+            | f"Resample: {extract_fn.sample_rate}Hz"
             >> beam.ParDo(
                 ResampleAudio(
                     source_sr_hint=48_000,
-                    target_sr=extract_nac.sample_rate,
+                    target_sr=extract_fn.sample_rate,
                 )
             )
-            | "ExtractNAC" >> beam.ParDo(extract_nac)
+            | "ExtractNAC" >> beam.ParDo(extract_fn)
             | "CreateNpyFile" >> beam.Map(lambda x: (x[0], numpy_to_file(x[1])))
             | "PersistFile" >> beam.Map(write_file)
         )
