@@ -1,5 +1,5 @@
 # Example usage:
-# docker build -f Dockerfile.klay-beam-demucs-cuda -t klay-beam:demucs-cuda .
+# docker build -f Dockerfile.klay-beam-nac -t klay-beam:nac .
 
 # Conda + Apache Beam
 #

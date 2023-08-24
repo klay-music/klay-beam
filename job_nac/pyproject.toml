@@ -9,7 +9,7 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
   "numpy",
-  "klay_beam>=0.6",
+  "klay_beam>=0.9",
   "torch",
   "torchaudio",
   "encodec",
