@@ -52,7 +52,7 @@ python bin/run_job_extract_nac.py \
     --sdk_location container \
     --temp_location gs://klay-dataflow-test-000/tmp/extract_nac/ \
     --setup_file ./job_nac/setup.py \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.1-py310 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.9.0-nac \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --nac_name dac \
