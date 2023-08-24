@@ -3,8 +3,8 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "job_encodec"
-description = "Beam job for extracting encodec tokens"
+name = "job_nac"
+description = "Beam job for extracting neural audio codec (NAC) tokens"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
@@ -23,7 +23,7 @@ tests = ["pytest"]
 type-check = ["mypy>=0.990", "pydantic>=1.10"]
 
 [tool.setuptools.dynamic]
-version = {attr = "job_encodec.__version__"}
+version = {attr = "job_nac.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

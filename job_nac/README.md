@@ -1,4 +1,4 @@
-# job_encodec
+# job_nac
 
 Beam job for extracting EnCodec features:
 
@@ -11,11 +11,11 @@ To run, activate a suitable python environment such as
 
 ```bash
 # CD into the parent dir (one level up from this package) and run the launch script
-python bin/run_job_extract_encodec.py \
+python bin/run_job_extract_nac.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
 
-# See the docstring in `./bin/run_job_extract_encodec.py` for an example of
+# See the docstring in `./bin/run_job_extract_nac.py` for an example of
 # running the job on Dataflow
 ```
 
