@@ -18,4 +18,4 @@ dependencies:
   - pip:
     - -e '../submodules/klay-data[code-style, tests, type-check]'
     - -e '../job_nac[code-style, tests, type-check]'
-    - -e '../klay-beam[code-style, tests, type-check]'
+    - -e '../klay_beam[code-style, tests, type-check]'
