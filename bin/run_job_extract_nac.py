@@ -44,7 +44,7 @@ python bin/run_job_extract_nac.py \
     --runner DataflowRunner \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --machine_type n1-standard-2 \
+    --machine_type n1-standard-4 \
     --region us-central1 \
     --max_num_workers 560 \
     --autoscaling_algorithm THROUGHPUT_BASED \
@@ -58,7 +58,9 @@ python bin/run_job_extract_nac.py \
     --nac_name dac \
     --nac_input_sr 44100 \
     --audio_suffix .wav \
-    --job_name 'extract-dac-003-full'
+    --job_name 'extract-nac-002' \
+    --number_of_worker_harness_threads 1 \
+    --experiments no_use_multiple_sdk_containers
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
