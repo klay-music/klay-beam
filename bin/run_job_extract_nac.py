@@ -16,7 +16,7 @@ from klay_beam.transforms import (
 )
 from klay_beam.utils import get_device
 
-from job_encodec.transforms import ExtractNAC
+from job_nac.transforms import ExtractNAC
 
 
 """
@@ -31,7 +31,7 @@ To run, activate a suitable python environment such as
 
 ```
 # CD into the root klay_beam dir to the launch script:
-python bin/run_job_extract_encodec.py \
+python bin/run_job_extract_nac.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
     --nac-name dac \
@@ -39,7 +39,7 @@ python bin/run_job_extract_encodec.py \
     --audio-suffix .wav \
 
 # Run remote job with autoscaling
-python bin/run_job_extract_encodec.py \
+python bin/run_job_extract_nac.py \
     --runner DataflowRunner \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
@@ -49,15 +49,15 @@ python bin/run_job_extract_encodec.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract_encodec/ \
-    --setup_file ./job_encodec/setup.py \
+    --temp_location gs://klay-dataflow-test-000/tmp/extract_nac/ \
+    --setup_file ./job_nac/setup.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.1-py310 \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --nac-name dac \
     --sample-rate 44100 \
     --audio-suffix .wav \
-    --job_name 'extract-encodec-003-full'
+    --job_name 'extract-dac-003-full'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
@@ -103,7 +103,7 @@ def parse_args():
         required=True,
         choices=["dac", "encodec"],
         help="""
-        Which neural audio codec should we use? Options are ['nac' or 'encodec']
+        Which neural audio codec should we use? Options are ['dac' or 'encodec']
         """,
     )
 
