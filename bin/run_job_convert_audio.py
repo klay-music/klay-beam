@@ -40,7 +40,7 @@ python bin/run_job_convert_audio.py \
 
 python bin/run_job_convert_audio.py \
     --runner DataflowRunner \
-    --max_num_workers=256 \
+    --max_num_workers=128 \
     --region us-central1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
@@ -54,8 +54,8 @@ python bin/run_job_convert_audio.py \
         'gs://klay-datasets-001/mtg-jamendo/' \
     --target_audio_path \
         'gs://klay-datasets-001/mtg-jamendo/' \
-    --machine_type n1-standard-2 \
-    --job_name 'convert-jamendo-full-to-source-wav-48k-003'
+    --machine_type n1-standard-8 \
+    --job_name 'convert-jamendo-full-to-source-wav-48k-004'
 
     # Possible values for --source_audio_path
         'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
