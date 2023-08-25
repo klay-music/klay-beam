@@ -4,8 +4,7 @@ from apache_beam.io.filesystem import FileMetadata
 from apache_beam.io.filesystems import FileSystems
 import torchaudio
 
-from klay_beam.transforms import remove_suffix
-from klay_beam.path import move
+from klay_beam.path import move, remove_suffix
 from job_demucs.demucs import DemucsSeparator
 
 
