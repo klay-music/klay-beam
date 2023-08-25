@@ -29,9 +29,9 @@ python bin/run_job_demucs.py \
 python bin/run_job_demucs.py \
     --runner DataflowRunner \
     --machine_type n1-standard-4 \
-    --num_workers=572 \
+    --max_num_workers=572 \
     --region us-central1 \
-    --autoscaling_algorithm NONE \
+    --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-demucs \
@@ -40,11 +40,11 @@ python bin/run_job_demucs.py \
     --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/00/' \
+        'gs://klay-datasets-001/mtg-jamendo/' \
     --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/00/' \
+        'gs://klay-datasets-001/mtg-jamendo/' \
     --number_of_worker_harness_threads=1 \
-    --job_name 'demucs-030-on-full-length-jamendo-00'
+    --job_name 'demucs-031-on-full-length-jamendo'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
