@@ -1,0 +1,21 @@
+name: nac
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.9
+  # If we install numpy 1.25, pip replaces it later on. Just start with the one
+  # that we want.
+  - numpy=1.23
+  - ffmpeg>=4.2,<5
+  - pytorch::pytorch>=1.12
+  - pytorch::torchaudio>=0.8
+  - tqdm>=4.36
+  - pip
+
+  - pip:
+    - -e '../submodules/klay-data[code-style, tests, type-check]'
+    - -e '../job_nac[code-style, tests, type-check]'
+    - -e '../klay_beam[code-style, tests, type-check]'

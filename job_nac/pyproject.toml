@@ -3,16 +3,17 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "job_encodec"
-description = "Beam job for extracting encodec tokens"
+name = "job_nac"
+description = "Beam job for extracting neural audio codec (NAC) tokens"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
   "numpy",
-  "klay_beam>=0.6",
+  "klay_beam>=0.9",
   "torch",
   "torchaudio",
   "encodec",
+  "descript-audio-codec@git+https://github.com/klay-music/descript-audio-codec.git",
 ]
 requires-python = ">=3.9"
 
@@ -22,7 +23,7 @@ tests = ["pytest"]
 type-check = ["mypy>=0.990", "pydantic>=1.10"]
 
 [tool.setuptools.dynamic]
-version = {attr = "job_encodec.__version__"}
+version = {attr = "job_nac.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
