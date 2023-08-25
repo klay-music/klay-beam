@@ -16,7 +16,7 @@ from apache_beam.io.filesystems import FileSystems
 
 from klay_data.transform import convert_audio
 from .extractors.spectral import ChromaExtractor
-from .path import move
+from .path import move, remove_suffix
 
 
 def numpy_to_pydub_audio_segment(
@@ -212,12 +212,6 @@ def write_file(output_path_and_buffer):
     logging.info("Writing to: {}".format(output_path))
     with filesystems.FileSystems.create(output_path) as file_handle:
         file_handle.write(buffer.read())
-
-
-def remove_suffix(path: str, suffix: str):
-    if path.endswith(suffix):
-        return path[: -len(suffix)]
-    return path
 
 
 class LoadWithTorchaudio(beam.DoFn):

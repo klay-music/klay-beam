@@ -12,7 +12,7 @@ channels:
 dependencies:
   - pip
   - python=3.10
-  # ffmpeg 4.4 is required for torchaudio
+  # ffmpeg 4 is required for torchaudio
   - ffmpeg<5
   # libiconv and xorg-libxau are required for ffmpeg
   - libiconv
@@ -33,4 +33,3 @@ dependencies:
     - -e '../klay_beam[code-style, tests, type-check]'
     - -e '../job_nac[code-style, tests, type-check]'
     - -e '../job_random_trim[code-style, tests, type-check]'
-    - -e '../submodules/klay-data[torch, type-check]'
