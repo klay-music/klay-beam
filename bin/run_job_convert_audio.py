@@ -45,17 +45,17 @@ python bin/run_job_convert_audio.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-py310-rc.1 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-py310 \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/convert-audio/ \
     --project klay-training \
     --source_audio_suffix .mp3 \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/00/' \
+        'gs://klay-datasets-001/mtg-jamendo/' \
     --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/00/' \
+        'gs://klay-datasets-001/mtg-jamendo/' \
     --machine_type n1-standard-2 \
-    --job_name 'convert-jamendo-00-to-source-wav-48k-001'
+    --job_name 'convert-jamendo-full-to-source-wav-48k-003'
 
     # Possible values for --source_audio_path
         'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
@@ -76,7 +76,7 @@ def parse_args():
         '/Users/alice/datasets/fma_large/005/'
 
         To run on the full dataset use:
-        'gs://klay-datasets/mtg_jamendo_autotagging/audios/'
+        'gs://klay-datasets/mtg-jamendo/'
         """,
     )
 
