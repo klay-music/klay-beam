@@ -9,7 +9,7 @@ from typing import Optional, Tuple
 
 import apache_beam as beam
 
-from klay_data.transform import convert_audio
+from klay_beam.transforms import convert_audio
 from klay_beam.path import remove_suffix
 
 

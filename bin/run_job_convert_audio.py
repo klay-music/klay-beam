@@ -47,7 +47,6 @@ python bin/run_job_convert_audio.py \
     --experiments=use_runner_v2 \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-py310-rc.1 \
     --sdk_location=container \
-    --setup_file ./job_convert_audio/setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/convert-audio/ \
     --project klay-training \
     --source_audio_suffix .mp3 \
