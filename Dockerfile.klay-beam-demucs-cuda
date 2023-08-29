@@ -86,14 +86,12 @@ RUN . /env/bin/activate
 ENV PATH="/env/bin:$PATH"
 
 # Install submodules and klay_beam
-COPY submodules/klay-data ./submodules/klay-data
 COPY klay_beam ./klay_beam
 COPY job_demucs ./job_demucs
 
 # If you change submodules below, you also may want to also change the local
 # conda environment.
 RUN python3 -m pip install \
-  './submodules/klay-data[torch, type-check]' \
   './klay_beam[code-style, tests, type-check]' \
   './job_demucs[code-style, tests, type-check]'
 

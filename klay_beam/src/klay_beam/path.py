@@ -39,3 +39,9 @@ def move(filename, source_dir, target_dir):
 
 
 assert os.path.sep == "/", "os.path.join (in get_target_path) breaks on Windows"
+
+
+def remove_suffix(path: str, suffix: str):
+    if path.endswith(suffix):
+        return path[: -len(suffix)]
+    return path

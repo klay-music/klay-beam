@@ -14,10 +14,27 @@ import logging
 from apache_beam.io.filesystem import FileMetadata
 from apache_beam.io.filesystems import FileSystems
 
-from klay_data.transform import convert_audio
 from .extractors.spectral import ChromaExtractor
-from .path import move
+from .path import move, remove_suffix
 
+
+# Copied from klay_data/src/klay_data/transform.py, which copied from encodec
+def convert_audio(
+    wav: torch.Tensor, sr: int, target_sr: int, target_channels: int
+):
+    """Copied from encodec"""
+    if wav.ndim == 1:
+        wav.unsqueeze_(0)
+    assert wav.shape[0] in [1, 2], "Audio must be mono or stereo."
+    if target_channels == 1:
+        wav = wav.mean(0, keepdim=True)
+    elif target_channels == 2:
+        *shape, _, length = wav.shape
+        wav = wav.expand(*shape, target_channels, length)
+    elif wav.shape[0] == 1:
+        wav = wav.expand(target_channels, -1)
+    wav = torchaudio.transforms.Resample(sr, target_sr)(wav)
+    return wav
 
 def numpy_to_pydub_audio_segment(
     audio_data: np.ndarray, sr: int, bit_depth=16
@@ -212,12 +229,6 @@ def write_file(output_path_and_buffer):
     logging.info("Writing to: {}".format(output_path))
     with filesystems.FileSystems.create(output_path) as file_handle:
         file_handle.write(buffer.read())
-
-
-def remove_suffix(path: str, suffix: str):
-    if path.endswith(suffix):
-        return path[: -len(suffix)]
-    return path
 
 
 class LoadWithTorchaudio(beam.DoFn):
