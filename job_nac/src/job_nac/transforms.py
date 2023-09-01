@@ -81,6 +81,7 @@ class ExtractEncodec(beam.DoFn):
                 file_like = io.BytesIO()
                 create_ecdc(self.codec, audio, file_like, use_lm=False)
                 file_like.seek(0)
+                logging.info(f"Encoded ecdc with ENCODEC: {output_filename}")
                 return [beam.pvalue.TaggedOutput('ecdc', (output_filename, file_like))]
 
             # The Encodec format is designed to be decoded live, so the channels
