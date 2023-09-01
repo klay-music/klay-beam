@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "ecdc",
     "encodec",
     "etype",
     "libavcodec",
@@ -11,6 +12,7 @@
     "signedinteger",
     "soundfile",
     "tobytes",
+    "unbatched",
     "vorbis"
   ]
 }
