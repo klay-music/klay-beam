@@ -53,7 +53,7 @@ python bin/run_job_extract_nac.py \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --machine_type n1-standard-2 \
     --region us-central1 \
-    --max_num_workers 572 \
+    --max_num_workers 600 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
@@ -65,7 +65,7 @@ python bin/run_job_extract_nac.py \
     --nac_name encodec \
     --nac_input_sr 48000 \
     --audio_suffix .wav \
-    --job_name 'extract-ecdc-001'
+    --job_name 'extract-ecdc-001-on-00'
 
 
     --number_of_worker_harness_threads 1 \
@@ -132,7 +132,7 @@ def parse_args():
     parser.add_argument(
         "--audio_suffix",
         required=True,
-        choices=[".mp3", ".wav"],
+        choices=[".mp3", ".wav", ".aif", ".aiff"],
         help="""
         Which audio file extension to search for when scanning input dir?
         """,
@@ -171,7 +171,7 @@ def run():
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
-                    old_suffix=".wav",
+                    old_suffix=known_args.audio_suffix,
                     new_suffix=extract_fn.suffix,
                     check_timestamp=True,
                 )
