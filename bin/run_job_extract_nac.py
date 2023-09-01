@@ -39,6 +39,13 @@ python bin/run_job_extract_nac.py \
     --nac_input_sr 44100 \
     --audio_suffix .wav \
 
+python bin/run_job_extract_nac.py \
+    --runner Direct \
+    --source_audio_path '/absolute/path/to/source.wav/files/'
+    --nac_name encodec \
+    --nac_input_sr 48000 \
+    --audio_suffix .wav \
+
 # Run remote job with autoscaling
 python bin/run_job_extract_nac.py \
     --runner DataflowRunner \
@@ -125,7 +132,7 @@ def parse_args():
         required=True,
         choices=[".mp3", ".wav"],
         help="""
-        Which format are candidate audio files saved with?
+        Which audio file extension to search for when scanning input dir?
         """,
     )
 
@@ -172,7 +179,7 @@ def run():
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
         )
 
-        (
+        npy, ecdc = (
             audio_files
             | f"Resample: {extract_fn.sample_rate}Hz"
             >> beam.ParDo(
@@ -181,9 +188,18 @@ def run():
                     target_sr=extract_fn.sample_rate,
                 )
             )
-            | "ExtractNAC" >> beam.ParDo(extract_fn)
+            | "ExtractNAC"
+            >> beam.ParDo(extract_fn).with_outputs("ecdc", main="npy")
+        )
+
+        (   npy
             | "CreateNpyFile" >> beam.Map(lambda x: (x[0], numpy_to_file(x[1])))
             | "PersistFile" >> beam.Map(write_file)
+        )
+
+        (
+            ecdc
+            | "PersistEcdcFile" >> beam.Map(write_file)
         )
 
 

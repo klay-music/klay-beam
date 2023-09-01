@@ -3,9 +3,11 @@ from dac.utils import load_model
 from dac.model import DAC
 from dac.utils.encode import process as encode
 from encodec import EncodecModel
+from encodec.compress import compress_to_file as create_ecdc
 import logging
 import torch
-from typing import Optional, Tuple
+import io
+from typing import Tuple
 
 import apache_beam as beam
 
@@ -42,8 +44,15 @@ class ExtractEncodec(beam.DoFn):
         self.codec.to(self._device)
 
     @property
+    def output_file_format(self) -> str:
+        if self.sample_rate == 24000:
+            return "npy"
+        elif self.sample_rate == 48000:
+            return "ecdc"
+
+    @property
     def suffix(self) -> str:
-        return f".encodec_{SAMPLE_RATE_MAP[self.sample_rate]}.npy"
+        return f".encodec_{SAMPLE_RATE_MAP[self.sample_rate]}.{self.output_file_format}"
 
     @property
     def num_channels(self) -> int:
@@ -53,7 +62,9 @@ class ExtractEncodec(beam.DoFn):
         key, x, source_sr = element
 
         # Ensure that we are naming the file correctly.
-        output_filename = remove_suffix(key, ".wav") + self.suffix
+        output_filename = remove_suffix(key, ".wav")
+        output_filename = remove_suffix(output_filename, ".mp3")
+        output_filename += self.suffix
 
         x = x.to(self._device)
 
@@ -66,9 +77,21 @@ class ExtractEncodec(beam.DoFn):
         audio_batch = audio.unsqueeze(0)
 
         with torch.no_grad():
+            if self.output_file_format == "ecdc":
+                file_like = io.BytesIO()
+                create_ecdc(self.codec, audio, file_like, use_lm=False)
+                file_like.seek(0)
+                return [beam.pvalue.TaggedOutput('ecdc', (output_filename, file_like))]
+
+            # The Encodec format is designed to be decoded live, so the channels
+            # must be interleaved. Each "Frame" should be a tuple of (codebook, scale)
+            frames = self.codec.encode(audio_batch)
+
             # From the docstring: "Each frame is a tuple `(codebook, scale)`, with
             # `codebook` of shape `[B, K, T]`, with `K` the number of codebooks."
-            codes = self.codec.encode(audio_batch)[0][0].detach().cpu().numpy()
+            tensors = [t[0] for t in frames] # remove the "scale" from each frame
+            codes = torch.cat(tensors, dim=2) # shape: [B, K, T]
+            codes = codes.detach().cpu().numpy()
 
         unbatched = codes.squeeze(0)  # `unbatched` has shape `[K, T]`
         logging.info(f"Encoded with ENCODEC ({unbatched.shape}): {output_filename}")
@@ -112,7 +135,9 @@ class ExtractDAC(beam.DoFn):
         key, x, source_sr = element
 
         # Ensure that we are naming the file correctly.
-        output_filename = remove_suffix(key, ".wav") + self.suffix
+        output_filename = remove_suffix(key, ".wav")
+        output_filename = remove_suffix(output_filename, ".mp3")
+        output_filename += self.suffix
 
         x = x.to(self._device)
 
