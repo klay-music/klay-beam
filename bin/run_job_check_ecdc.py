@@ -47,7 +47,8 @@ python bin/run_job_check_ecdc.py \
     --sdk_location container \
     --temp_location gs://klay-dataflow-test-000/tmp/check-ecdc/ \
     --setup_file ./job_nac/setup.py \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-nac \
+    --sdk_container_image \
+        us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-nac \
     --source_ecdc_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/00/' \
     --job_name 'check-ecdc-001-on-jamendo-00'

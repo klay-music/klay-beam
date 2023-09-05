@@ -15,7 +15,6 @@ from klay_beam.transforms import (
     write_file,
     numpy_to_file,
 )
-from klay_beam.utils import get_device
 
 from job_nac.transforms import ExtractDAC, ExtractEncodec
 
@@ -28,7 +27,7 @@ Job for extracting EnCodec features:
 1. Write the results to an .npy file adjacent to the source audio file
 
 To run, activate a suitable python environment such as
-``../environments/osx-64-klay-beam-py310.yml`.
+`../environments/osx-64-nac.yml`.
 
 ```
 # CD into the root klay_beam dir to the launch script:
@@ -61,11 +60,11 @@ python bin/run_job_extract_nac.py \
     --setup_file ./job_nac/setup.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-nac \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00/' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --nac_name encodec \
     --nac_input_sr 48000 \
     --audio_suffix .wav \
-    --job_name 'extract-ecdc-001-on-00'
+    --job_name 'extract-ecdc-002'
 
 
     --number_of_worker_harness_threads 1 \
@@ -156,9 +155,9 @@ def run():
     # instantiate NAC extractor here so we can use computed variables
     extract_fn: Union[ExtractDAC, ExtractEncodec]
     if known_args.nac_name == "dac":
-        extract_fn = ExtractDAC(known_args.nac_input_sr, device=get_device())
+        extract_fn = ExtractDAC(known_args.nac_input_sr)
     elif known_args.nac_name == "encodec":
-        extract_fn = ExtractEncodec(known_args.nac_input_sr, device=get_device())
+        extract_fn = ExtractEncodec(known_args.nac_input_sr)
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
