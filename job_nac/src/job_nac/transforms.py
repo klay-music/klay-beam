@@ -8,12 +8,13 @@ from encodec.compress import decompress as decompress_ecdc
 import logging
 import torch
 import io
-from typing import Tuple
+from typing import Tuple, Optional
 
 import apache_beam as beam
 
 from klay_beam.transforms import convert_audio
 from klay_beam.path import remove_suffix
+from klay_beam.utils import get_device
 
 
 SAMPLE_RATE_MAP = {
@@ -25,8 +26,12 @@ SAMPLE_RATE_MAP = {
 
 
 class ReadEncodec(beam.DoFn):
-    def __init__(self, device: torch.device = torch.device("cpu")):
+    def __init__(self, device: Optional[torch.device] = None):
         self._device = device
+
+    def setup(self):
+        if self._device is None:
+            self._device = get_device()
 
     def process(self, element: Tuple[str, bytes]):
         key, file_like = element
@@ -45,7 +50,7 @@ class ReadEncodec(beam.DoFn):
 class ExtractEncodec(beam.DoFn):
     """Beam DoFn for extracting encodec tokens from audio."""
 
-    def __init__(self, sample_rate: int, device: torch.device = torch.device("cpu")):
+    def __init__(self, sample_rate: int, device: Optional[torch.device] = None):
         assert sample_rate in [
             24000,
             48000,
@@ -54,6 +59,8 @@ class ExtractEncodec(beam.DoFn):
         self._device = device
 
     def setup(self):
+        if self._device is None:
+            self._device = get_device()
         if self.sample_rate == 24000:
             self.codec = EncodecModel.encodec_model_24khz()
         elif self.sample_rate == 48000:
@@ -124,7 +131,7 @@ class ExtractDAC(beam.DoFn):
     def __init__(
         self,
         sample_rate: int,
-        device: torch.device = torch.device("cpu"),
+        device: Optional[torch.device] = None,
     ):
         assert sample_rate in [
             16000,
@@ -136,6 +143,9 @@ class ExtractDAC(beam.DoFn):
         self._device = device
 
     def setup(self):
+        if self._device is None:
+            self._device = get_device()
+
         self.codec = DAC()
         self.codec = load_model(
             tag="latest", model_type=SAMPLE_RATE_MAP[self.sample_rate]
