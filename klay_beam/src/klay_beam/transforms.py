@@ -20,9 +20,7 @@ from .path import move, remove_suffix
 
 
 # Copied from klay_data/src/klay_data/transform.py, which copied from encodec
-def convert_audio(
-    wav: torch.Tensor, sr: int, target_sr: int, target_channels: int
-):
+def convert_audio(wav: torch.Tensor, sr: int, target_sr: int, target_channels: int):
     """Copied from encodec"""
     if wav.ndim == 1:
         wav.unsqueeze_(0)
@@ -36,6 +34,7 @@ def convert_audio(
         wav = wav.expand(target_channels, -1)
     wav = torchaudio.transforms.Resample(sr, target_sr)(wav)
     return wav
+
 
 def numpy_to_pydub_audio_segment(
     audio_data: np.ndarray, sr: int, bit_depth=16
@@ -436,7 +435,8 @@ class SkipCompleted(beam.DoFn):
                         < source_metadata.last_updated_in_seconds
                     ):
                         logging.info(
-                            f"Do not skip! A target was found ({target_metadata.path}), but it is older than source file ({source_metadata.path})"
+                            f"Do not skip! A target was found ({target_metadata.path}), but it is "
+                            f"older than source file ({source_metadata.path})"
                         )
                         return [source_metadata]
             elif num_matches == 0:

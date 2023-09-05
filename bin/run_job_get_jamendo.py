@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 
 from google.cloud import storage
 import apache_beam as beam
-import apache_beam.io.fileio as beam_io
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 
@@ -62,6 +61,7 @@ class GetPaths(beam.PTransform):
             for i in range(0, 100)
         ]
         return pcoll.pipeline | beam.Create(urls)
+
 
 class HandleTar(beam.DoFn):
     def __init__(self, bucket_name):
