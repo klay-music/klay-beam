@@ -4,6 +4,7 @@ from dac.model import DAC
 from dac.utils.encode import process as encode
 from encodec import EncodecModel
 from encodec.compress import compress_to_file as create_ecdc
+from encodec.compress import decompress as decompress_ecdc
 import logging
 import torch
 import io
@@ -21,6 +22,24 @@ SAMPLE_RATE_MAP = {
     44100: "44khz",
     48000: "48khz",
 }
+
+
+class ReadEncodec(beam.DoFn):
+    def __init__(self, device: torch.device = torch.device("cpu")):
+        self._device = device
+
+    def process(self, element: Tuple[str, bytes]):
+        key, file_like = element
+        logging.info(f"Decoding ENCODEC: {key}")
+
+        try:
+            audio, sr = decompress_ecdc(file_like, self._device)
+        except Exception as e:
+            logging.error(f"Failed to decode ENCODEC: {key}")
+            logging.error(e)
+            return [beam.pvalue.TaggedOutput('failed', (key, e))]
+
+        return [(key, audio, sr)]
 
 
 class ExtractEncodec(beam.DoFn):
