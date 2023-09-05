@@ -129,10 +129,10 @@ def run():
         (
             failed
             | "Log Failed"
-            >> beam.Map(lambda x: logging.warn(f"Failed to decode .ecdc: {x}"))
+            >> beam.Map(lambda x: logging.warning(f"Failed to decode .ecdc: {x}"))
             | "Count Failed" >> beam.combiners.Count.Globally()
             | "Log Failed Count"
-            >> beam.Map(lambda x: logging.warn(f"Failed to decode {x} files"))
+            >> beam.Map(lambda x: logging.warning(f"Failed to decode {x} files"))
         )
 
 
