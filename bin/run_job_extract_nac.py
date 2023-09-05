@@ -52,7 +52,7 @@ python bin/run_job_extract_nac.py \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --machine_type n1-standard-2 \
     --region us-central1 \
-    --max_num_workers 600 \
+    --max_num_workers 1000 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
