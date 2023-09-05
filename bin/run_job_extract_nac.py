@@ -189,19 +189,16 @@ def run():
                     target_sr=extract_fn.sample_rate,
                 )
             )
-            | "ExtractNAC"
-            >> beam.ParDo(extract_fn).with_outputs("ecdc", main="npy")
+            | "ExtractNAC" >> beam.ParDo(extract_fn).with_outputs("ecdc", main="npy")
         )
 
-        (   npy
+        (
+            npy
             | "CreateNpyFile" >> beam.Map(lambda x: (x[0], numpy_to_file(x[1])))
             | "PersistFile" >> beam.Map(write_file)
         )
 
-        (
-            ecdc
-            | "PersistEcdcFile" >> beam.Map(write_file)
-        )
+        (ecdc | "PersistEcdcFile" >> beam.Map(write_file))
 
 
 if __name__ == "__main__":

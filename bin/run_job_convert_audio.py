@@ -12,7 +12,7 @@ from klay_beam.transforms import (
     write_file,
     numpy_to_wav,
     SkipCompleted,
-    ResampleAudio
+    ResampleAudio,
 )
 
 from klay_beam.path import move, remove_suffix
@@ -27,7 +27,7 @@ python bin/run_job_convert_audio.py \
     --source_audio_path \
         '/Users/charles/projects/klay/python/klay-beam/test_audio/abbey_road/mp3/' \
     --target_audio_path \
-        '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/wav/' 
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/wav/'
 
 python bin/run_job_convert_audio.py \
     --runner Direct \
@@ -35,7 +35,7 @@ python bin/run_job_convert_audio.py \
     --source_audio_path \
         'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3' \
     --target_audio_path \
-        '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/jamendo_copy' 
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/jamendo_copy'
 
 
 python bin/run_job_convert_audio.py \
@@ -114,14 +114,18 @@ def run():
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     # Pattern to recursively find mp3s inside source_audio_path
-    match_pattern = os.path.join(known_args.input, f"**{known_args.source_audio_suffix}")
+    match_pattern = os.path.join(
+        known_args.input, f"**{known_args.source_audio_suffix}"
+    )
     NEW_SAMPLE_RATE = 48_000
 
     def rename_file(element):
         original_filename, audio_tensor, sr = element
         moved_filename = move(original_filename, known_args.input, known_args.output)
         moved_no_suffix = remove_suffix(moved_filename, known_args.source_audio_suffix)
-        new_filename = f"{moved_no_suffix}.source.wav" # Caution: must resemble SkipCompleted
+        new_filename = (
+            f"{moved_no_suffix}.source.wav"  # Caution: must resemble SkipCompleted
+        )
         logging.info(f"Renaming: {original_filename} -> {new_filename}")
         return (new_filename, audio_tensor, sr)
 
@@ -133,17 +137,15 @@ def run():
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | "Reshuffle" >> beam.Reshuffle()
-
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
                     old_suffix=known_args.source_audio_suffix,
-                    new_suffix=".source.wav", # Caution: must resemble rename_file
+                    new_suffix=".source.wav",  # Caution: must resemble rename_file
                     source_dir=known_args.input,
                     target_dir=known_args.output,
                 )
             )
-
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "Load Audio" >> beam.ParDo(LoadWithTorchaudio())
@@ -155,7 +157,6 @@ def run():
                     output_numpy=True,
                 )
             )
-
             | "Rename File" >> beam.Map(rename_file)
             | "Convert to Wav" >> beam.Map(lambda x: (x[0], numpy_to_wav(x[1], x[2])))
             | "Write Audio" >> beam.Map(write_file)

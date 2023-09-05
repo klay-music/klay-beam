@@ -1,20 +1,12 @@
 import argparse
 import os.path
 import logging
-from typing import Union, Tuple
-import io
+from typing import Tuple
 
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
-
-from klay_beam.transforms import (
-    LoadWithTorchaudio,
-    ResampleAudio,
-    write_file,
-    numpy_to_file,
-)
 
 from job_nac.transforms import ReadEncodec
 
@@ -103,7 +95,7 @@ def run():
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
     # Pattern to recursively find audio files inside source_audio_path
-    match_pattern = os.path.join(known_args.input, f"**.ecdc")
+    match_pattern = os.path.join(known_args.input, "**.ecdc")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         ecdc_files = (

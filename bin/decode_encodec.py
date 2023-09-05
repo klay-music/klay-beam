@@ -10,10 +10,7 @@ Currently we only support loading files from disk.
 from argparse import ArgumentParser
 import numpy as np
 from pathlib import Path
-import scipy
 import torch
-from tqdm import trange
-
 
 from encodec import EncodecModel
 import torchaudio
@@ -29,7 +26,9 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument("--source-dir", type=Path)
     parser.add_argument("--chunk-length", type=int, default=CHUNK_LENGTH)
-    parser.add_argument("--model-sample-rate", type=int, default=48000, choices=[24000, 48000])
+    parser.add_argument(
+        "--model-sample-rate", type=int, default=48000, choices=[24000, 48000]
+    )
     return parser.parse_args()
 
 
@@ -63,18 +62,20 @@ if __name__ == "__main__":
 
         # load codes from file
         codes = np.load(fp).astype(np.int64)
-        codes = torch.from_numpy(codes).to(torch.int64) # [K, T]
+        codes = torch.from_numpy(codes).to(torch.int64)  # [K, T]
 
         print(f"Loaded codes from: {fp} shape: {codes.shape}")
 
-        batched_codes = codes.unsqueeze(0) # [1, K, T]
+        batched_codes = codes.unsqueeze(0)  # [1, K, T]
         frames = [(batched_codes, None)]
 
         # batched_codes = codes.unsqueeze(0)
         # frames = [(batched_codes, None)]
         batched_audio = encodec.decode(frames).detach()
 
-        audio = batched_audio[0] # (-1, 1)
+        audio = batched_audio[0]  # (-1, 1)
         torchaudio.save(save_path, audio, args.model_sample_rate)
 
-        print(f"Decoded audio with shape: {audio.shape} min: {audio.min()} max: {audio.max()}")
+        print(
+            f"Decoded audio with shape: {audio.shape} min: {audio.min()} max: {audio.max()}"
+        )

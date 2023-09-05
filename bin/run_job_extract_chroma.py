@@ -13,7 +13,7 @@ from klay_beam.transforms import (
     ExtractChromaFeatures,
     SkipCompleted,
     write_file,
-    numpy_to_file
+    numpy_to_file,
 )
 
 
@@ -98,7 +98,7 @@ def parse_args():
         required=False,
         default=None,
         choices=["source", "bass", "drums", "other", "vocals"],
-        help="The stem to extract"
+        help="The stem to extract",
     )
 
     return parser.parse_known_args(None)
@@ -115,7 +115,7 @@ def run():
 
     # Pattern to recursively find mp3s inside source_audio_path
 
-    match_pattern = os.path.join(known_args.input, f"**.wav")
+    match_pattern = os.path.join(known_args.input, "**.wav")
     if known_args.stem is not None:
         match_pattern = os.path.join(known_args.input, f"**.{known_args.stem}.wav")
 
@@ -127,7 +127,6 @@ def run():
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
-
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
@@ -137,7 +136,6 @@ def run():
                     check_timestamp=True,
                 )
             )
-
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
@@ -147,7 +145,6 @@ def run():
 
         (
             audio_files
-
             | "Resample: 16k"
             >> beam.ParDo(
                 ResampleAudio(
@@ -155,7 +152,6 @@ def run():
                     target_sr=chroma_audio_sr,
                 )
             )
-
             | "ExtractChroma"
             >> beam.ParDo(
                 ExtractChromaFeatures(
@@ -169,7 +165,6 @@ def run():
                     norm=1,
                 )
             )
-
             | "CreateNpyFile" >> beam.Map(lambda x: (x[0], numpy_to_file(x[1])))
             | "PersistFile" >> beam.Map(write_file)
         )
