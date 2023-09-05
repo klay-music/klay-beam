@@ -57,15 +57,17 @@ def test_skip_completed_with_timestamp():
         size_in_bytes=16,
         last_updated_in_seconds=float("inf"),
     )
-    assert does_not_skip.process(source1) == [
-        source1
-    ], "SkipCompleted with `check_timestamp=True`should return the input file when the target file is present but older than the source file"
+    assert does_not_skip.process(source1) == [source1], (
+        "SkipCompleted with `check_timestamp=True`should return the input file when the target "
+        "file is present but older than the source file"
+    )
 
     source2 = FileMetadata(
         path=str(Path(data_dir) / "exists.wav"),
         size_in_bytes=16,
         last_updated_in_seconds=1,
     )
-    assert (
-        does_not_skip.process(source2) == []
-    ), "SkipCompleted with `check_timestamp=True`should return an empty list when the target file is present and newer than the source file"
+    assert does_not_skip.process(source2) == [], (
+        "SkipCompleted with `check_timestamp=True`should return an empty list when the target "
+        "file  is present and newer than the source file"
+    )
