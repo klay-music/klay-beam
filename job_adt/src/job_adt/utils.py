@@ -8,7 +8,7 @@ from typing import Optional, Tuple, List
 from apache_beam.io.filesystems import FileSystems
 
 
-def note_sequence_to_midi(note_sequence_tuple) -> None:
+def note_sequence_to_midi(note_sequence_tuple):
     fname, note_sequence = note_sequence_tuple
     if note_sequence is None:
         logging.error(f"Note sequence is None for {fname}. Skipping.")
