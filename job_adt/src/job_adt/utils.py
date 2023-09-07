@@ -12,7 +12,7 @@ def note_sequence_to_midi(note_sequence_tuple):
     fname, note_sequence = note_sequence_tuple
     if note_sequence is None:
         logging.error(f"Note sequence is None for {fname}. Skipping.")
-        return []
+        return
 
     out_filename = add_suffix(fname, ".mid")
 
@@ -23,7 +23,7 @@ def note_sequence_to_midi(note_sequence_tuple):
     pretty_midi_object.write(file_like)
     file_like.seek(0)
 
-    return [(out_filename, file_like)]
+    return (out_filename, file_like)
 
 
 # Copied from klay_beam
