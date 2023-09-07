@@ -24,3 +24,4 @@ __pycache__
 .DS_Store
 output/
 job_adt/assets/e-gmd_checkpoint
+data/
