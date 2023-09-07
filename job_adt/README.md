@@ -14,13 +14,26 @@ This job will:
 1. Save results to (`--target_midi_path`) preserving the directory structure.
 
 To run, activate a suitable python environment such as
-``../environments/linux-64-job-adt.yml`.
+``../environments/linux-64.005-adt.yml`.
+
+This job cannot be launched from OSX. As a result, there is no dedicated launch
+environment. When launching, use the same environment that is used for the
+docker container.
+
+```
+conda env create -f ../environments/linux-64.005-adt.yml
+conda activate adt
+# Manually install this package
+pip install -e '.[code-style, tests, type-check]'
+```
+
 
 ```
 # CD into the parent dir (one level up from this package) and run the launch script
 python bin/run_job_adt.py \
-    --source_audio_path '/absolute/path/to/drums.wav/files/' \
-    --target_midi_path '/absolute/path/to/job_output/' \
+    --source_audio_path \
+        '/path/to/klay-beam/test_audio/abbey_road_48k' \
+    --checkpoint_dir job_adt/assets/e-gmd_checkpoint \
     --runner Direct
 
 # Run remote job with autoscaling
@@ -38,8 +51,6 @@ python bin/run_job_adt.py \
     --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --target_midi_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --experiments=no_use_multiple_sdk_containers \
     --number_of_worker_harness_threads=1 \

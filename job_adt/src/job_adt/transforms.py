@@ -21,7 +21,7 @@ import scipy
 import tensorflow.compat.v1 as tf
 from typing import Optional, Tuple, Union, List
 
-from job_adt.utils import add_suffix, remove_suffix
+from job_adt.utils import add_suffix, remove_suffix, write_file
 from job_adt.path import move
 
 

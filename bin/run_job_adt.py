@@ -15,7 +15,7 @@ from job_adt.transforms import (
     LoadWithLibrosa,
     SkipCompleted,
 )
-from job_adt.utils import array_to_bytes, write_midi_file
+from job_adt.utils import array_to_bytes, note_sequence_to_midi, write_file
 
 
 """
@@ -112,7 +112,8 @@ def run():
                     checkpoint_dir=known_args.checkpoint_dir,
                 )
             )
-            | "WriteMidiFile" >> beam.Map(write_midi_file)
+            | "WriteMidiFile" >> beam.Map(note_sequence_to_midi)
+            | "PersistMidiFile" >> beam.Map(write_file)
         )
 
 
