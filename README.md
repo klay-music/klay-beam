@@ -1,8 +1,8 @@
 # klay-beam
 
 Base repo for running Apache Beam jobs locally or on GCP via Dataflow. This is
-how we run massively parallel jobs with tens-of-thousands of input audio files,
-for example:
+how we run massively parallel jobs with hundreds-of-thousands of input audio
+files, for example:
 
 - Source separation
 - Feature extraction
