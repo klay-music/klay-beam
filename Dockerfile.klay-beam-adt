@@ -82,7 +82,7 @@ RUN mv tmp/e-gmd_checkpoint job_adt/assets/
 
 # If you change submodules below, you also may want to also change the local
 # conda environment.
-RUN python3 -m pip install --pre python-rtmidi
+RUN python3 -m pip install python-rtmidi==1.1.2
 RUN python3 -m pip install './job_adt'
 
 # Verify that the image does not have conflicting dependencies.
