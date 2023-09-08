@@ -1,5 +1,5 @@
 # Example usage:
-# docker build -f Dockerfile.klay-beam-adt -t klay-beam:adt .
+# docker build -f Dockerfile.klay-beam-adt -t klay-beam-adt .
 
 # Conda + Apache Beam
 #
@@ -74,11 +74,11 @@ ENV PATH="/env/bin:$PATH"
 COPY job_adt ./job_adt
 
 # Download O&F Drums model
-RUN apt-get update && apt-get install -y cmake curl gcc g++ libasound2-dev libjack-dev ffmpeg pkg-config unzip
+RUN apt-get update && apt-get install -y cmake curl gcc g++ libasound2-dev libjack-dev ffmpeg pkg-config unzip sox
 RUN mkdir -p tmp/e-gmd_checkpoint && cd tmp/e-gmd_checkpoint && \
   curl -LO https://storage.googleapis.com/magentadata/models/onsets_frames_transcription/e-gmd_checkpoint.zip && \
   unzip e-gmd_checkpoint.zip && rm e-gmd_checkpoint.zip
-RUN mv tmp/e-gmd_checkpoint job_adt/assets/
+RUN mv tmp/ job_adt/assets/ && rm -rf tmp
 
 # If you change submodules below, you also may want to also change the local
 # conda environment.

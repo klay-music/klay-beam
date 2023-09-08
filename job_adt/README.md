@@ -13,14 +13,32 @@ This job will:
 1. Run ADT
 1. Save results to (`--target_midi_path`) preserving the directory structure.
 
-To run, activate a suitable python environment such as
-``../environments/linux-64.005-adt.yml`.
 
 This job cannot be launched from OSX. As a result, there is no dedicated launch
 environment. When launching, use the same environment that is used for the
-docker container.
+docker container. `../environments/linux-64.005-adt.yml`.
 
+
+```bash
+# Get some deps:
+apt-get update && apt-get install -y cmake curl gcc g++ libasound2-dev libjack-dev ffmpeg pkg-config unzip sox
+
+# Get the model checkpoint
+mkdir -p tmp/e-gmd_checkpoint && cd tmp/e-gmd_checkpoint && \
+  curl -LO https://storage.googleapis.com/magentadata/models/onsets_frames_transcription/e-gmd_checkpoint.zip && \
+  unzip e-gmd_checkpoint.zip && rm e-gmd_checkpoint.zip
+
+cd ../..
+
+mv tmp/ job_adt/assets/ && rm -rf tmp
+# `job_adt/assets/e-gmd_checkpoint` should contain the following files:
+#   checkpoint
+#   model.ckpt-569400.data-00000-of-00001
+#   model.ckpt-569400.index
+#   model.ckpt-569400.meta
 ```
+
+```bash
 conda env create -f ../environments/linux-64.005-adt.yml
 conda activate adt
 # Manually install this package
@@ -40,21 +58,21 @@ python bin/run_job_adt.py \
 python bin/run_job_adt.py \
     --runner DataflowRunner \
     --machine_type n1-standard-2 \
-    --num_workers=600 \
+    --max_num_workers=1100 \
     --region us-central1 \
-    --autoscaling_algorithm NONE \
+    --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.0-demucs \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.2.0 \
     --sdk_location=container \
-    --setup_file ./job_demucs/setup.py \
-    --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
+    --setup_file ./job_adt/setup.py \
+    --temp_location gs://klay-dataflow-test-000/tmp/adt/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00' \
     --experiments=no_use_multiple_sdk_containers \
     --number_of_worker_harness_threads=1 \
-    --job_name 'adt-028-on-full-jamendo-worker-harness-thread-1'
+    --job_name 'adt-000-on-jamendo-00'
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
