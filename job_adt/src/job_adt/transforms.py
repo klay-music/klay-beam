@@ -4,6 +4,11 @@ from apache_beam.io.filesystems import FileSystems
 from io import BytesIO
 import librosa
 import logging
+
+# For reasons that escape me, we have to import distutils.version or
+# tf_utils will raise an exception on import.
+import distutils.version
+logging.warning(f"Top Level distutils.version: {str(distutils.version)}")
 from magenta.common import tf_utils
 from magenta.models.onsets_frames_transcription import (
     audio_label_data_utils,
@@ -29,7 +34,7 @@ tf.disable_v2_behavior()
 
 
 class TranscribeDrumsAudio(beam.DoFn):
-    def __init__(self, source_dir: str, checkpoint_dir: str):
+    def __init__(self, source_dir: str, checkpoint_dir: str, hack=None):
         """
         Args:
             source_dir: str
@@ -38,6 +43,9 @@ class TranscribeDrumsAudio(beam.DoFn):
             checkpoint_dir : str
                 The directory where the model checkpoint is stored.
         """
+        logging.warning(f"TranscribeDrumsAudio.__init__ distutils.version: {str(distutils.version)}")
+        if hack is not None:
+            logging.warning(f"hack: {str(hack)} AND {hack.__file__}")
         self.source_dir = source_dir
         self.checkpoint_dir = checkpoint_dir
 
@@ -46,7 +54,9 @@ class TranscribeDrumsAudio(beam.DoFn):
         self.hparams.batch_size = 1
         self.hparams.truncated_length_secs = 0
 
+
     def setup(self):
+        logging.warning(f"TranscribeDrumsAudio.__init__ distutils.version: {str(distutils.version)}")
         # This will be executed only once when the pipeline starts.
         logging.info(
             f"Loading Onsets & Frames model for ADT from: {self.checkpoint_dir}"

@@ -11,7 +11,7 @@ This job will:
   - `${TARGET_PATH}/00/001.drums.mid`
 1. Load the audio file, resample to 44.1kHz
 1. Run ADT
-1. Save results to (`--target_midi_path`) preserving the directory structure.
+1. Save results as `*.drums.mid` files adjacent to the `.drums.wav` files
 
 
 This job cannot be launched from OSX. As a result, there is no dedicated launch
@@ -23,7 +23,7 @@ docker container. `../environments/linux-64.005-adt.yml`.
 # Get some deps:
 apt-get update && apt-get install -y cmake curl gcc g++ libasound2-dev libjack-dev ffmpeg pkg-config unzip sox
 
-# Get the model checkpoint
+# Get the model checkpoint from within the ./ dir:
 mkdir -p tmp/e-gmd_checkpoint && cd tmp/e-gmd_checkpoint && \
   curl -LO https://storage.googleapis.com/magentadata/models/onsets_frames_transcription/e-gmd_checkpoint.zip && \
   unzip e-gmd_checkpoint.zip && rm e-gmd_checkpoint.zip
@@ -63,7 +63,7 @@ python bin/run_job_adt.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.2.0 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.3.0 \
     --sdk_location=container \
     --setup_file ./job_adt/setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/adt/ \
@@ -92,6 +92,25 @@ data from being replicated multiple times for each Apache Beam SDK process. See:
 https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#one-sdk
     --experiments=no_use_multiple_sdk_containers
 ```
+
+
+# Handling Tensorflow
+
+**The Problem**
+
+- We need [at least apache-beam 2.48](https://github.com/apache/beam/blob/master/CHANGES.md#breaking-changes-6) for `RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1` support
+- Only newer versions of tensorflow (starting with 2.12.0) support protobuf versions that are acceptable to `apache_beam@2.48.0`.
+- Tensorflow 2.12.0 requires python 3.8
+- Magenta requires python 3.7
+- apache-beam[gcp] 2.48.0 depends on protobuf<4.24.0 and >=3.20.3
+
+**The solution**
+
+- Regress to apache beam 2.46
+- Do not use CONDA.
+- This allows us to use the default python installation eliminating the need for `RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1`
+- Use default python installation from Apache Beam docker image
+
 
 # Development
 ## Quick Start
