@@ -58,14 +58,13 @@ python bin/run_job_adt.py \
 python bin/run_job_adt.py \
     --runner DataflowRunner \
     --machine_type n1-standard-2 \
-    --max_num_workers=1100 \
+    --max_num_workers=1000 \
     --region us-central1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.3.0 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.3.5 \
     --sdk_location=container \
-    --setup_file ./job_adt/setup.py \
     --temp_location gs://klay-dataflow-test-000/tmp/adt/ \
     --project klay-training \
     --source_audio_path \
@@ -73,6 +72,9 @@ python bin/run_job_adt.py \
     --experiments=no_use_multiple_sdk_containers \
     --number_of_worker_harness_threads=1 \
     --job_name 'adt-000-on-jamendo-00'
+
+# If you edit the job_adt package, but do not want to create a new docker file:
+    --setup_file ./job_adt/setup.py \
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \

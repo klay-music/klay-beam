@@ -1,3 +1,9 @@
+# This is a patched version of tensorflow_probability file that was causing
+# compatibility issues. The original file is here:
+# https://github.com/tensorflow/probability/blob/558b6181122361b725e63b6110d1f67b66eb7e5f/tensorflow_probability/python/__init__.py
+
+import distutils.version
+import logging
 # Copyright 2018 The TensorFlow Probability Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +60,10 @@ def _validate_tf_environment(package):
   required_tensorflow_version = '2.9'
 #   required_tensorflow_version = '1.15'  # Needed internally -- DisableOnExport
 
-  if (distutils.version.LooseVersion(tf.__version__) <
+  version_imported = hasattr(distutils, 'version')
+  if not version_imported:
+    logging.error('Failed to import distutils.version')
+  elif (distutils.version.LooseVersion(tf.__version__) <
       distutils.version.LooseVersion(required_tensorflow_version)):
     raise ImportError(
         'This version of TensorFlow Probability requires TensorFlow '
@@ -135,6 +144,7 @@ for pkg_name in _lazy_load + _maybe_nonlazy_load:
 if _tf_loaded():
   # Non-lazy load of packages that register with tensorflow or keras.
   for pkg_name in _maybe_nonlazy_load:
+    logging.warning(f"Lazy load: {pkg_name} from {globals()[pkg_name]}")
     dir(globals()[pkg_name])  # Forces loading the package from its lazy loader.
 
 

@@ -24,9 +24,23 @@ RUN python3 -m pip install python-rtmidi==1.1.2
 RUN python3 -m pip install tensorflow==2.9.1
 COPY job_adt ./job_adt
 RUN python3 -m pip install './job_adt'
-
 # Now that we have installed job_adt, we can copy over the checkpoints
 RUN mv tmp/ job_adt/assets/ && rm -rf tmp
+
+# A utility method in the tensorflow_probability package dynamically imports
+# distutils.version as shown here:
+# https://github.com/tensorflow/probability/blob/558b6181122361b725e63b6110d1f67b66eb7e5f/tensorflow_probability/python/__init__.py#L49C27-L49C27
+#
+# This file has been causing a crash on line 57. `disturils` has no attribute
+# "version". Despite being just imported on the preceeding line. I tried several
+# ways of patching the file including using a static import at the top of file
+# to import distutils.version, but this did not prevent the crash.
+#
+# prepend "import distutils.version" to the top of the file.
+# RUN sed '-i.old' '1 i\import distutils.version' '/usr/local/lib/python3.7/site-packages/tensorflow_probability/python/__init__.py'
+#
+# I found this workaround that prevents the crash, but it's not clear why.
+COPY ./tfp_python__init__.py /usr/local/lib/python3.7/site-packages/tensorflow_probability/python/__init__.py
 
 # Verify that the image does not have conflicting dependencies.
 RUN pip check

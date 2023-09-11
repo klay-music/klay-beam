@@ -10,6 +10,12 @@ dynamic = ["version"]
 dependencies = [
   "apache-beam[gcp]==2.46.0",
   "magenta~=2.1",
+  # Myseriously, tensor2tensor is not automatically installed in the docker
+  # build workflow, so we add it explicitly here.
+  "tensor2tensor",
+  # Pin orbax to a known working version. By default, pip tried to install 0.1.8
+  # which would crash during the install.
+  "orbax==0.1.0",
 ]
 requires-python = "<3.9"
 
