@@ -5,9 +5,6 @@ import os.path
 from pathlib import Path
 import tensorflow.compat.v1 as tf
 
-import distutils.version
-logging.warning(f"run_job_adt.py: distutils.version: {str(distutils.version)}")
-
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
 from apache_beam.options.pipeline_options import PipelineOptions
@@ -113,7 +110,6 @@ def run():
                 TranscribeDrumsAudio(
                     source_dir=known_args.input,
                     checkpoint_dir=known_args.checkpoint_dir,
-                    hack=distutils.version
                 )
             )
             | "WriteMidiFile" >> beam.Map(note_sequence_to_midi)
