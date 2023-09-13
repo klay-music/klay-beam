@@ -130,7 +130,7 @@ def run():
         return (new_filename, audio_tensor, sr)
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
-        (
+        audio, failed, durations = (
             p
             # MatchFiles produces a PCollection of FileMetadata objects
             | beam_io.MatchFiles(match_pattern)
@@ -148,7 +148,14 @@ def run():
             )
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
-            | "Load Audio" >> beam.ParDo(LoadWithTorchaudio())
+            | "Load Audio"
+            >> beam.ParDo(LoadWithTorchaudio()).with_outputs(
+                "failed", "duration_seconds", main="audio"
+            )
+        )
+
+        (
+            audio
             | f"Resample: {NEW_SAMPLE_RATE}Hz"
             >> beam.ParDo(
                 ResampleAudio(
@@ -160,6 +167,28 @@ def run():
             | "Rename File" >> beam.Map(rename_file)
             | "Convert to Wav" >> beam.Map(lambda x: (x[0], numpy_to_wav(x[1], x[2])))
             | "Write Audio" >> beam.Map(write_file)
+        )
+
+        (
+            durations
+            | "SumLengths" >> beam.CombineGlobally(sum)
+            | "LogDuration"
+            >> beam.Map(
+                lambda x: logging.info(
+                    "Total duration of loaded audio: "
+                    f"~= {x:.3f} seconds "
+                    f"~= {x / 60:.3f} minutes "
+                    f"~= {x / 60 / 60:.3f} hours"
+                )
+            )
+        )
+
+        (
+            failed
+            | "Log Failed" >> beam.Map(lambda x: logging.warning(x))
+            | "Count" >> beam.combiners.Count.Globally()
+            | "Log Failed Count"
+            >> beam.Map(lambda x: logging.warning(f"Failed to decode {x} files"))
         )
 
 

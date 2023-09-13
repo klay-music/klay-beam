@@ -1,0 +1,46 @@
+# When launching a Beam job, we must use the same python version to launch the
+# job as is used in the we use in the final image. This means that the beam
+# invocation (which we'll probably run locally from a command line) must match
+# this python version, which also must match the final image.
+#
+# TLDR:
+# PY_VERSION must match the python version specified in environment.yml
+# BEAM_VERSION must match the version specified in pyproject.toml
+ARG PY_VERSION=3.7
+ARG BEAM_VERSION=2.46.0
+
+FROM apache/beam_python${PY_VERSION}_sdk:${BEAM_VERSION} as beam
+
+WORKDIR /klay/app
+
+# Download O&F Drums model
+RUN apt-get update && apt-get install -y cmake curl gcc g++ libasound2-dev libjack-dev ffmpeg pkg-config unzip sox
+RUN mkdir -p tmp/e-gmd_checkpoint && cd tmp/e-gmd_checkpoint && \
+  curl -LO https://storage.googleapis.com/magentadata/models/onsets_frames_transcription/e-gmd_checkpoint.zip && \
+  unzip e-gmd_checkpoint.zip && rm e-gmd_checkpoint.zip
+
+# Install local deps
+RUN python3 -m pip install python-rtmidi==1.1.2
+RUN python3 -m pip install tensorflow==2.9.1
+COPY job_adt ./job_adt
+RUN python3 -m pip install './job_adt'
+# Now that we have installed job_adt, we can copy over the checkpoints
+RUN mv tmp/ job_adt/assets/ && rm -rf tmp
+
+# A utility method in the tensorflow_probability package dynamically imports
+# distutils.version as shown here:
+# https://github.com/tensorflow/probability/blob/558b6181122361b725e63b6110d1f67b66eb7e5f/tensorflow_probability/python/__init__.py#L49C27-L49C27
+#
+# This file has been causing a crash on line 57. `disturils` has no attribute
+# "version". Despite being just imported on the preceeding line. I tried several
+# ways of patching the file including using a static import at the top of file
+# to import distutils.version, but this did not prevent the crash.
+#
+# prepend "import distutils.version" to the top of the file.
+# RUN sed '-i.old' '1 i\import distutils.version' '/usr/local/lib/python3.7/site-packages/tensorflow_probability/python/__init__.py'
+#
+# I found this workaround that prevents the crash, but it's not clear why.
+COPY ./job_adt/tfp_python__init__.py /usr/local/lib/python3.7/site-packages/tensorflow_probability/python/__init__.py
+
+# Verify that the image does not have conflicting dependencies.
+RUN pip check

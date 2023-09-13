@@ -5,8 +5,10 @@ from typing import Optional, Type, Union, Tuple, List
 from packaging import version as packaging_version
 import apache_beam as beam
 from apache_beam.io import filesystems
+import apache_beam.io.fileio as beam_io
 import torchaudio
 import pydub
+import scipy
 import soundfile as sf
 import numpy as np
 import logging
@@ -259,7 +261,7 @@ class LoadWithTorchaudio(beam.DoFn):
         # where you would create a lock or queue for global resources.
         pass
 
-    def process(self, readable_file):
+    def process(self, readable_file: beam_io.ReadableFile):
         """
         Given an Apache Beam ReadableFile, return a `(input_filename, a, sr)` tuple where
             - `input_filename` is a string
@@ -295,31 +297,34 @@ class LoadWithTorchaudio(beam.DoFn):
         ext_without_dot = path.suffix.lstrip(".")
         ext_without_dot = None if ext_without_dot == "" else ext_without_dot
 
-        file_like = readable_file.open(mime_type="application/octet-stream")
-        audio_tensor, sr = None, None
+        audio_tensor: torch.Tensor
+        sr: int
 
         # try loading the audio file with torchaudio, but catch RuntimeError,
         # which are thrown when torchaudio can't load the file.
         logging.info("Loading: {}".format(path))
         try:
-            audio_tensor, sr = torchaudio.load(file_like, format=ext_without_dot)
-        except RuntimeError:
+            with readable_file.open(mime_type="application/octet-stream") as file_like:
+                audio_tensor, sr = torchaudio.load(file_like, format=ext_without_dot)
+        except (RuntimeError, OSError) as e:
             # We don't want to log the stacktrace, but for debugging, here's how
-            # we could access it we can access it:
+            # we could access it:
             #
             # import traceback
             # tb_str = traceback.format_exception(
             #     etype=type(e), value=e, tb=e.__traceback__
             # )
             logging.warning(f"Error loading audio: {path}")
-            return []
+            return [beam.pvalue.TaggedOutput("failed", (str(path), e))]
 
         C, T = audio_tensor.shape
-        logging.info(
-            "Loaded {:.3f} second {}-channel audio: {}".format(T / sr, C, path)
-        )
+        duration_seconds = T / sr
+        logging.info(f"Loaded {duration_seconds:.3f} second {C}-channel audio: {path}")
 
-        return [(readable_file.metadata.path, audio_tensor, sr)]
+        return [
+            (readable_file.metadata.path, audio_tensor, sr),
+            beam.pvalue.TaggedOutput("duration_seconds", duration_seconds),
+        ]
 
 
 class ResampleAudio(beam.DoFn):
@@ -372,7 +377,7 @@ class ResampleAudio(beam.DoFn):
         if source_sr == self._target_sr:
             resampled_audio = audio
             logging.info(
-                f"Skipping resample because source was already ${self._target_sr}: {key}"
+                f"Skipping resample because source was already {self._target_sr}: {key}"
             )
         elif self.resample is not None and source_sr == self._source_sr_hint:
             resampled_audio = self.resample(audio)
@@ -508,3 +513,18 @@ class ExtractChromaFeatures(beam.DoFn):
         except Exception as e:
             logging.error(f"Failed to extract chroma features for {key}: {e}")
             return []
+
+
+def tensor_to_bytes(
+    audio_tuple: Tuple[str, Union[torch.Tensor, np.ndarray], int]
+) -> List[Tuple[str, bytes, int]]:
+    fname, audio, sr = audio_tuple
+    if isinstance(audio, torch.Tensor):
+        audio = audio.detach().cpu().numpy()
+
+    buf = io.BytesIO()
+    scipy.io.wavfile.write(buf, sr, audio)
+    buf.seek(0)
+    wav_data = buf.read()
+
+    return [(fname, wav_data, sr)]

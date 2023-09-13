@@ -1,6 +1,8 @@
-from pathlib import Path
 from apache_beam.io.filesystem import FileMetadata
-from klay_beam.transforms import SkipCompleted
+from pathlib import Path
+import torch
+
+from klay_beam.transforms import SkipCompleted, add_suffix, tensor_to_bytes
 
 
 def test_skip_completed():

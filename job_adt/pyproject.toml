@@ -3,19 +3,21 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "klay_beam"
-description = ""
+name = "job_adt"
+description = "Job for extracting MIDI data from drums stems using ADT"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
-  "apache-beam[gcp]==2.49.0",
-  "pydub==0.25.1",
-  "soundfile>=0.12.1",
-  "torchaudio",
-  # Feature extraction deps from semantic-model@f388e4:
-  "librosa>=0.9",
+  "apache-beam[gcp]==2.46.0",
+  "magenta~=2.1",
+  # Myseriously, tensor2tensor is not automatically installed in the docker
+  # build workflow, so we add it explicitly here.
+  "tensor2tensor",
+  # Pin orbax to a known working version. By default, pip tried to install 0.1.8
+  # which would crash during the install.
+  "orbax==0.1.0",
 ]
-requires-python = ">=3.8"
+requires-python = "<3.9"
 
 [project.optional-dependencies]
 code-style = ["black>=22.9.0", "flake8>=5"]
@@ -23,7 +25,7 @@ tests = ["pytest"]
 type-check = ["mypy>=0.990", "pydantic>=1.10"]
 
 [tool.setuptools.dynamic]
-version = {attr = "klay_beam.__version__"}
+version = {attr = "job_adt.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -40,8 +42,6 @@ plugins = [
 [[tool.mypy.overrides]]
 module = [
   "apache_beam.*",
-  "torchaudio",
-  "pydub",
-  "soundfile"
+  "magenta.*",
 ]
 ignore_missing_imports = true
