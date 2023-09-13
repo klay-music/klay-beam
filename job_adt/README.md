@@ -2,6 +2,12 @@
 
 Job for extracting MIDI data from drums stems using automatic drum transcription (ADT).
 
+**NOTE:** Unlike other jobs, this job does not use the `klay_beam` package. It
+uses tensorflow instead of pytorch. Magenta also has some very specific and old-
+fashioned dependencies, so this requires python 3.7, which we don't want to have
+to support as part of `klay_beam`. As a results, this package is a little
+unconventional in its setup.
+
 This job will:
 
 1. Recursively search a path for `.drums.wav` files (`--drums_audio_path`)
@@ -63,15 +69,15 @@ python bin/run_job_adt.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.3.5 \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.4.0 \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/adt/ \
     --project klay-training \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00' \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --experiments=no_use_multiple_sdk_containers \
     --number_of_worker_harness_threads=1 \
-    --job_name 'adt-000-on-jamendo-00'
+    --job_name 'adt-001'
 
 # If you edit the job_adt package, but do not want to create a new docker file:
     --setup_file ./job_adt/setup.py \

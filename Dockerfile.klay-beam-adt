@@ -40,7 +40,7 @@ RUN mv tmp/ job_adt/assets/ && rm -rf tmp
 # RUN sed '-i.old' '1 i\import distutils.version' '/usr/local/lib/python3.7/site-packages/tensorflow_probability/python/__init__.py'
 #
 # I found this workaround that prevents the crash, but it's not clear why.
-COPY ./tfp_python__init__.py /usr/local/lib/python3.7/site-packages/tensorflow_probability/python/__init__.py
+COPY ./job_adt/tfp_python__init__.py /usr/local/lib/python3.7/site-packages/tensorflow_probability/python/__init__.py
 
 # Verify that the image does not have conflicting dependencies.
 RUN pip check
