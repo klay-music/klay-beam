@@ -35,7 +35,7 @@
 ARG py_version=3.9
 
 # beam_version must match the version specified in pyproject.toml
-ARG beam_version=2.49.0
+ARG beam_version=2.50.0
 
 ARG CONDA_LOCK_NAME=003-demucs
 
