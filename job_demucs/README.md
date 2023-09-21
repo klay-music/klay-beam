@@ -21,8 +21,10 @@ To run, activate a suitable python environment such as
 ```
 # CD into the parent dir (one level up from this package) and run the launch script
 python bin/run_job_demucs.py \
-    --source_audio_path '/absolute/path/to/source.wav/files/' \
-    --target_audio_path '/absolute/path/to/job_output/' \
+    --source_audio_path \
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/abbey_road/source.wav/' \
+    --target_audio_path \
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/split' \
     --runner Direct
 
 # Run remote job with autoscaling
@@ -42,9 +44,10 @@ python bin/run_job_demucs.py \
         'gs://klay-datasets-001/mtg-jamendo/03/' \
     --target_audio_path \
         'gs://klay-datasets-001/mtg-jamendo/03/' \
-    --machine_type n2-highcpu-64 \
-    --number_of_worker_harness_threads=50 \
-    --job_name 'demucs-038-on-full-length-jamendo-03'
+    --machine_type n2-highcpu-16 \
+    --number_of_worker_harness_threads=4 \
+    --disk_size_gb=50 \
+    --job_name 'demucs-039-on-full-length-jamendo-03'
 
 # If you change job_demucs
     --setup_file ./job_demucs/setup.py \

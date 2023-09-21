@@ -81,8 +81,10 @@ class SeparateSources(beam.DoFn):
             elapsed_time =  time.time() - start_time
 
             logging.info(
-                f"Separation complete! Processing time:{elapsed_time:.2f} seconds. "
+                "Separation complete! "
+                f"Speed:{durationSeconds / elapsed_time:.3f}x realtime. "
                 f"Audio Duration:{durationSeconds:.3f} seconds. "
+                f"Processing time:{elapsed_time:.2f} seconds. "
                 f"Current:{current / 10**6:.2f}MB. "
                 f"Peak:{peak / 10**6:.2f}MB. "
                 f"Key:{key}"
