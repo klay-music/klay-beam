@@ -22,7 +22,7 @@ from job_demucs.transforms import SeparateSources
 Example usage:
 python bin/run_job_demucs.py \
     --source_audio_path \
-        '/Users/charles/projects/klay/python/klay-beam/test_audio/abbey_road_48k' \
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/abbey_road/source.wav/' \
     --target_audio_path \
         '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/split' \
     --runner Direct
