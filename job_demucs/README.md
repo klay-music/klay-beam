@@ -28,7 +28,7 @@ python bin/run_job_demucs.py \
 # Run remote job with autoscaling
 python bin/run_job_demucs.py \
     --runner DataflowRunner \
-    --max_num_workers 8 \
+    --max_num_workers 1 \
     --region us-central1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
@@ -39,12 +39,12 @@ python bin/run_job_demucs.py \
     --project klay-training \
     --setup_file job_demucs/setup.py \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/00/' \
+        'gs://klay-datasets-001/mtg-jamendo/01/' \
     --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/00/' \
-    --machine_type c3-standard-4 \
-    --number_of_worker_harness_threads=1 \
-    --job_name 'demucs-035-on-full-length-jamendo-00'
+        'gs://klay-datasets-001/mtg-jamendo/01/' \
+    --machine_type n2-highmem-4 \
+    --number_of_worker_harness_threads=2 \
+    --job_name 'demucs-036-on-full-length-jamendo-01'
 
 # If you change job_demucs
     --setup_file ./job_demucs/setup.py \
