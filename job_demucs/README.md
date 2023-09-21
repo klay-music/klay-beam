@@ -39,12 +39,12 @@ python bin/run_job_demucs.py \
     --project klay-training \
     --setup_file job_demucs/setup.py \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/01/' \
+        'gs://klay-datasets-001/mtg-jamendo/02/' \
     --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/01/' \
-    --machine_type n2-highmem-4 \
-    --number_of_worker_harness_threads=2 \
-    --job_name 'demucs-036-on-full-length-jamendo-01'
+        'gs://klay-datasets-001/mtg-jamendo/02/' \
+    --machine_type n2-standard-8 \
+    --number_of_worker_harness_threads=4 \
+    --job_name 'demucs-037-on-full-length-jamendo-02'
 
 # If you change job_demucs
     --setup_file ./job_demucs/setup.py \

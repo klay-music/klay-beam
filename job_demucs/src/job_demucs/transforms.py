@@ -80,7 +80,13 @@ class SeparateSources(beam.DoFn):
             current, peak = tracemalloc.get_traced_memory()
             elapsed_time =  time.time() - start_time
 
-            logging.info(f"Separation complete! Processing time: {elapsed_time:.2f}(seconds) Audio Duration (seconds):{durationSeconds:.3f} current:{current / 10**6:.2f}MB peak:{peak / 10**6:.2f}MB key:{key}")
+            logging.info(
+                f"Separation complete! Processing time:{elapsed_time:.2f} seconds. "
+                f"Audio Duration:{durationSeconds:.3f} seconds. "
+                f"Current:{current / 10**6:.2f}MB. "
+                f"Peak:{peak / 10**6:.2f}MB. "
+                f"Key:{key}"
+            )
             return triplets
 
         except Exception as e:
