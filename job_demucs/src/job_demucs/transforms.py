@@ -1,7 +1,6 @@
 from typing import Tuple
 import logging
 import time
-import tracemalloc
 import apache_beam as beam
 import torchaudio
 import torch
@@ -39,10 +38,10 @@ class SeparateSources(beam.DoFn):
         self.target_dir = target_dir
         self.model_name = model_name
 
+
     def setup(self):
         # This will be executed only once when the pipeline starts.
         logging.info(f"Setting up DemucsSeparator: {self.model_name}")
-        tracemalloc.start()
         self.separator = DemucsSeparator(
             model_name=self.model_name,
             num_workers=1,
@@ -50,8 +49,6 @@ class SeparateSources(beam.DoFn):
         self.to_48k = torchaudio.transforms.Resample(44_100, 48_000)
         logging.info("DemucsSeparator setup")
 
-    def teardown(self):
-        tracemalloc.stop()
 
     def process(self, loaded_audio_tuple: Tuple[str, torch.Tensor, int]):
         start_time = time.time()
@@ -77,7 +74,6 @@ class SeparateSources(beam.DoFn):
                 for k, v in result_dict.items()
             ]
 
-            current, peak = tracemalloc.get_traced_memory()
             elapsed_time =  time.time() - start_time
 
             logging.info(
@@ -85,8 +81,6 @@ class SeparateSources(beam.DoFn):
                 f"Speed:{durationSeconds / elapsed_time:.3f}x realtime. "
                 f"Audio Duration:{durationSeconds:.3f} seconds. "
                 f"Processing time:{elapsed_time:.2f} seconds. "
-                f"Current:{current / 10**6:.2f}MB. "
-                f"Peak:{peak / 10**6:.2f}MB. "
                 f"Key:{key}"
             )
             return triplets
