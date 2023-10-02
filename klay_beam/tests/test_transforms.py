@@ -2,12 +2,12 @@ from apache_beam.io.filesystem import FileMetadata
 from pathlib import Path
 import torch
 
-from klay_beam.transforms import SkipCompleted, add_suffix, tensor_to_bytes
+from klay_beam.transforms import SkipCompleted, tensor_to_bytes
 
 
 def test_skip_completed():
     this_file = Path(__file__)
-    data_dir = str(this_file.parent / "data")
+    data_dir = str(this_file.parent / "test_data")
 
     skips = SkipCompleted(
         old_suffix=".wav",
@@ -48,7 +48,7 @@ def test_skip_completed():
 
 def test_skip_completed_with_timestamp():
     this_file = Path(__file__)
-    data_dir = str(this_file.parent / "data")
+    data_dir = str(this_file.parent / "test_data")
     does_not_skip = SkipCompleted(
         old_suffix=".wav",
         new_suffix=".01.txt",
