@@ -47,9 +47,9 @@ python bin/run_job_extract_clap.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract-ecdc-48k/ \
+    --temp_location gs://klay-dataflow-test-001/tmp/extract-clap/ \
     --setup_file ./job_clap/setup.py \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-clap \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.2-clap \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --job_name 'extract-clap-001'
