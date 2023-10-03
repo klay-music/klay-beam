@@ -34,6 +34,7 @@ To run, activate a suitable python environment such as
 python bin/run_job_extract_clap.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
+    --audio_suffix .wav
 
 # Run remote job with autoscaling
 python bin/run_job_extract_clap.py \
@@ -54,6 +55,7 @@ python bin/run_job_extract_clap.py \
     --job_name 'extract-clap-001'
     --number_of_worker_harness_threads 1 \
     --experiments no_use_multiple_sdk_containers
+    --audio_suffix .wav
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
@@ -93,6 +95,11 @@ def parse_args():
         'gs://klay-datasets/mtg_jamendo_autotagging/audios/'
         """,
     )
+
+    parser.add_argument(
+        "--audio-suffix",
+        default=".wav",
+    )
     return parser.parse_known_args(None)
 
 
@@ -107,6 +114,7 @@ def run():
 
     # Pattern to recursively find audio files inside source_audio_path
     match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
+    extract_fn = ExtractCLAP(device="cpu")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
@@ -120,7 +128,7 @@ def run():
             >> beam.ParDo(
                 SkipCompleted(
                     old_suffix=known_args.audio_suffix,
-                    new_suffix=ExtractCLAP.suffix,
+                    new_suffix=extract_fn.suffix,
                     check_timestamp=True,
                 )
             )
@@ -131,7 +139,14 @@ def run():
 
         (
             audio_files
-            | "ExtractCLAP" >> beam.ParDo(ExtractCLAP(device="cpu"))
+            | "Resample: 48k"
+            >> beam.ParDo(
+                ResampleAudio(
+                    source_sr_hint=48_000,
+                    target_sr=48_000,
+                )
+            )
+            | "ExtractCLAP" >> beam.ParDo(extract_fn)
             | "CreateNpyFile" >> beam.Map(lambda x: (x[0], numpy_to_file(x[1])))
             | "PersistFile" >> beam.Map(write_file)
         )

@@ -30,7 +30,7 @@ class ExtractCLAP(beam.DoFn):
         else:
             model_path = cached_models[0]
 
-        self.model = laion_clap.CLAP_module(enable_fusion=False, amodel="HTSAT-base")
+        self.model = laion_clap.CLAP_Module(enable_fusion=False, amodel="HTSAT-base")
         self.model.load_ckpt(model_path)
         self.model.to(self._device)
 
@@ -41,7 +41,10 @@ class ExtractCLAP(beam.DoFn):
     def process(self, element: Tuple[str, torch.Tensor, int]):
         key, x, source_sr = element
         assert source_sr == 48000, "CLAP model only supports 48kHz audio"
-        assert x.shape[0] in [1, 2], "Audio is not formatted correctly, channel must be first"
+        assert x.shape[0] in [
+            1,
+            2,
+        ], "Audio is not formatted correctly, channel must be first"
 
         # Ensure that we are naming the file correctly.
         output_filename = remove_suffix(key, ".wav")
@@ -51,4 +54,4 @@ class ExtractCLAP(beam.DoFn):
         # extract embeddings
         x = x.to(self._device)
         embeds = self.model.get_audio_embedding_from_data(x=x, use_tensor=True)
-        return [(output_filename, embeds)]
+        return [(output_filename, embeds.detach().cpu().numpy())]
