@@ -1,0 +1,15 @@
+name: job_clap
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.9
+  - numpy=1.23
+  - ffmpeg>=4.2,<5
+  - pytorch::pytorch>=1.12
+  - pytorch::torchaudio>=0.8
+  - tqdm>=4.36
+  - pip
+  - git
