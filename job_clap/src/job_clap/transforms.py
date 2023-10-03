@@ -1,18 +1,11 @@
-from audiotools import AudioSignal
-from dac.utils import load_model
-from dac.model import DAC
-from dac.utils.encode import process as encode
-from encodec import EncodecModel
-from encodec.compress import compress_to_file as create_ecdc
-from encodec.compress import decompress as decompress_ecdc
-import logging
+from huggingface_hub import hf_hub_download
+import laion_clap
+from pathlib import Path
 import torch
-import io
 from typing import Tuple, Optional
 
 import apache_beam as beam
 
-from klay_beam.transforms import convert_audio
 from klay_beam.path import remove_suffix
 from klay_beam.utils import get_device
 
@@ -28,7 +21,7 @@ class ExtractCLAP(beam.DoFn):
     sample_rate = 48000
 
     def __init__(self, device: Optional[torch.device] = None):
-        self._device = device
+        self._device = device or get_device()
 
     def setup(self):
         cached_models = list(CACHE_DIR.glob(FILENAME))
