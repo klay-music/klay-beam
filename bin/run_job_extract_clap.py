@@ -9,8 +9,8 @@ from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 
 from klay_beam.transforms import (
+    convert_audio,
     LoadWithTorchaudio,
-    ResampleAudio,
     SkipCompleted,
     write_file,
     numpy_to_file,
@@ -139,11 +139,12 @@ def run():
 
         (
             audio_files
-            | "Resample: 48k"
-            >> beam.ParDo(
-                ResampleAudio(
-                    source_sr_hint=48_000,
-                    target_sr=48_000,
+            | "Convert to Mono and Resample to 48k"
+            >> beam.Map(
+                lambda x: (
+                    x[0],
+                    convert_audio(x[1], x[2], 48_000, 1),
+                    48_000,
                 )
             )
             | "ExtractCLAP" >> beam.ParDo(extract_fn)
