@@ -8,10 +8,11 @@ description = "Job for extracting DiscogsEffnet embeddings using essentia"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
-  "apache-beam[gcp]==2.48.0",
-  "essentia",
+  "apache-beam[gcp]>=2.48.0",
+  "essentia-tensorflow",
+  "librosa>=0.9",
 ]
-requires-python = "<3.9"
+requires-python = "<3.10"
 
 [project.optional-dependencies]
 code-style = ["black>=22.9.0", "flake8>=5"]
