@@ -1,7 +1,6 @@
 import argparse
 import os.path
 import logging
-from typing import Union
 
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
@@ -43,16 +42,16 @@ python bin/run_job_extract_clap.py \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --machine_type n1-standard-2 \
     --region us-central1 \
-    --max_num_workers 1000 \
+    --max_num_workers 100 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-001/tmp/extract-clap/ \
+    --temp_location gs://klay-dataflow-test-000/tmp/extract-clap/ \
     --setup_file ./job_clap/setup.py \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.2-clap \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.3-clap \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --job_name 'extract-clap-001'
+        'gs://klay-dataflow-test-001/mtg-jamendo-90s-crop/00' \
+    --job_name 'extract-clap-004'
     --number_of_worker_harness_threads 1 \
     --experiments no_use_multiple_sdk_containers
     --audio_suffix .wav
