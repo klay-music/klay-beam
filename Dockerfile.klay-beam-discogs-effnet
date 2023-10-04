@@ -62,7 +62,7 @@ RUN find -name '*.a' -delete && \
   rm /env/lib/libpython3.9.so.1.0 && \
   find -name '__pycache__' -type d -exec rm -rf '{}' '+' && \
   # find /env/lib/python3.9/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  find /env/lib/python3.9/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  # find /env/lib/python3.9/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' && \
   # find /env/lib/python3.9/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
   find /env/lib/python3.9/site-packages -name '*.pyx' -delete
 
