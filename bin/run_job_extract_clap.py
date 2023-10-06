@@ -53,7 +53,7 @@ python bin/run_job_extract_clap.py \
         'gs://klay-dataflow-test-001/mtg-jamendo-90s-crop/00' \
     --job_name 'extract-clap-004'
     --number_of_worker_harness_threads 1 \
-    --experiments no_use_multiple_sdk_containers
+    --experiments no_use_multiple_sdk_containers \
     --audio_suffix .wav
 
 # Possible test values for --source_audio_path

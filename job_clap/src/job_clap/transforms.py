@@ -22,10 +22,11 @@ class ExtractCLAP(beam.DoFn):
     frame_duration = 5.0
 
     def __init__(self, device: Optional[torch.device] = None):
-        self._device = device or get_device()
         self.num_samples_in_frame = int(self.sample_rate * self.frame_duration)
 
     def setup(self):
+        self._device = get_device()
+
         cached_models = list(CACHE_DIR.glob(FILENAME))
         if not cached_models:
             model_path = hf_hub_download(repo_id=REPO_ID, filename=FILENAME)
