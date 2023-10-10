@@ -21,14 +21,16 @@ To run, activate a suitable python environment such as
 ```
 # CD into the parent dir (one level up from this package) and run the launch script
 python bin/run_job_demucs.py \
-    --source_audio_path '/absolute/path/to/source.wav/files/' \
-    --target_audio_path '/absolute/path/to/job_output/' \
+    --source_audio_path \
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/abbey_road/source.wav/' \
+    --target_audio_path \
+        '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/split' \
     --runner Direct
 
 # Run remote job with autoscaling
 python bin/run_job_demucs.py \
     --runner DataflowRunner \
-    --max_num_workers=1000 \
+    --max_num_workers 100 \
     --region us-central1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
@@ -37,13 +39,14 @@ python bin/run_job_demucs.py \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
     --project klay-training \
+    --setup_file job_demucs/setup.py \
     --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/00/' \
+        'gs://klay-datasets-001/mtg-jamendo/' \
     --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/00/' \
-    --number_of_worker_harness_threads=1 \
-    --dataflow_service_options=enable_prime \
-    --job_name 'demucs-033-on-full-length-jamendo-00'
+        'gs://klay-datasets-001/mtg-jamendo/' \
+    --machine_type n2-standard-48 \
+    --number_of_worker_harness_threads=24 \
+    --job_name 'demucs-046-on-full-length-jamendo-all'
 
 # If you change job_demucs
     --setup_file ./job_demucs/setup.py \

@@ -515,6 +515,26 @@ class ExtractChromaFeatures(beam.DoFn):
             return []
 
 
+class MultiMatchFiles(beam.PTransform):
+    """Like beam.io.fileio.MatchFiles, but takes a list of patterns and returns
+    a single PCollection of FileMetadata objects."""
+
+
+    def __init__(self, patterns: list[str]):
+        self.patterns = patterns
+
+
+    def expand(self, pcoll: beam.PCollection):
+        # Create a list of PCollections by matching each pattern
+        matched_files_list = [
+            pcoll.pipeline | f"MatchFiles {pattern}" >> beam_io.MatchFiles(pattern)
+            for pattern in self.patterns
+        ]
+
+        # Flatten the list of PCollections into a single PCollection
+        return matched_files_list | "Flatten File Results" >> beam.Flatten()
+
+
 def tensor_to_bytes(
     audio_tuple: Tuple[str, Union[torch.Tensor, np.ndarray], int]
 ) -> List[Tuple[str, bytes, int]]:
