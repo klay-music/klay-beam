@@ -3,25 +3,22 @@
 Job for extracting DiscogsEffnet embeddings from audio data using essentia.
 
 **NOTE:** Unlike other jobs, this job does not use the `klay_beam` package. It
-uses tensorflow instead of pytorch. Magenta also has some very specific and old-
-fashioned dependencies, so this requires python 3.7, which we don't want to have
-to support as part of `klay_beam`. As a results, this package is a little
-unconventional in its setup.
+uses tensorflow instead of pytorch.
 
 This job will:
 
 1. Recursively search a path for `.wav` files (`--source_audio_path`)
 1. For each audio file, if the targets already exist skip it. For example for
-   `${SOURCE_PATH}/00/001.drums.wav`, if the following all exist, do not
+   `${SOURCE_PATH}/00/001.wav`, if the following all exist, do not
    proceed with subsequent steps:
-  - `${TARGET_PATH}/00/001.drums.mid`
-1. Load the audio file, resample to 44.1kHz
-1. Run ADT
-1. Save results as `*.drums.mid` files adjacent to the `.drums.wav` files
+  - `${SOURCE_PATH}/00/001.discogs_effnet.npy`
+1. Load the audio file, resample to 16kHz
+1. extract discogs_effnet features
+1. Save results as `*.discogs_effnet.npy` files adjacent to the `.wav` files
 
 
 ```bash
-conda env create -f ../environments/linux-64.008-discogs-effnet.yml
+conda env create -f ../environments/conda-linux-64.008-discogs-effnet.yml
 conda activate discogs_effnet
 
 # manually install this package
@@ -68,32 +65,7 @@ python bin/run_job_discogs_effnet.py \
 Reduce the maximum number of threads that run DoFn instances. See:
 https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#reduce-threads
     --number_of_worker_harness_threads
-
-
-Create one Apache Beam SDK process per worker. Prevents the shared objects and
-data from being replicated multiple times for each Apache Beam SDK process. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#one-sdk
-    --experiments=no_use_multiple_sdk_containers
 ```
-
-
-# Handling Tensorflow
-
-**The Problem**
-
-- We need [at least apache-beam 2.48](https://github.com/apache/beam/blob/master/CHANGES.md#breaking-changes-6) for `RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1` support
-- Only newer versions of tensorflow (starting with 2.12.0) support protobuf versions that are acceptable to `apache_beam@2.48.0`.
-- Tensorflow 2.12.0 requires python 3.8
-- Magenta requires python 3.7
-- apache-beam[gcp] 2.48.0 depends on protobuf<4.24.0 and >=3.20.3
-
-**The solution**
-
-- Regress to apache beam 2.46
-- Do not use CONDA.
-- This allows us to use the default python installation eliminating the need for `RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1`
-- Use default python installation from Apache Beam docker image
-
 
 # Development
 ## Quick Start
