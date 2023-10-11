@@ -112,7 +112,8 @@ These steps build the Docker container and push to our GCP docker registry.
    `environment/conda-linux-64.002-py310.yml` file.**
 2. Run `docker build -f Dockerfile.klay-beam -t klay-beam:latest .`
 3. Edit `tag-klay-beam.sh` to update the version, for example `0.2.0-rc.2`
-4. Run `tag-klay-beam.sh` to tag and push to GCP
+4. Configure docker to authorize it to write to the artifact registry: `gcloud auth configure-docker us-docker.pkg.dev` (only needs to be once)
+5. Run `tag-klay-beam.sh` to tag and push to GCP.
 
 To test the container interactively:
 `docker run --rm -it --entrypoint /bin/sh klay-beam:latest`

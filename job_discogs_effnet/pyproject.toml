@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job_discogs_effnet"
+description = "Job for extracting DiscogsEffnet embeddings using essentia"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+  "apache-beam[gcp]>=2.48.0",
+  "essentia-tensorflow",
+  "librosa>=0.9",
+]
+requires-python = "<3.10"
+
+[project.optional-dependencies]
+code-style = ["black>=22.9.0", "flake8>=5"]
+tests = ["pytest"]
+type-check = ["mypy>=0.990", "pydantic>=1.10"]
+
+[tool.setuptools.dynamic]
+version = {attr = "job_discogs_effnet.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+warn_redundant_casts = true
+check_untyped_defs = true
+allow_redefinition = true
+warn_unreachable = true
+plugins = [
+  "pydantic.mypy",
+]
+
+[[tool.mypy.overrides]]
+module = [
+  "apache_beam.*",
+  "essentia.*",
+]
+ignore_missing_imports = true
