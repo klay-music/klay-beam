@@ -21,7 +21,7 @@ class ExtractCLAP(beam.DoFn):
     sample_rate = 48000
     frame_duration = 5.0
 
-    def __init__(self, device: Optional[torch.device] = None):
+    def __init__(self):
         self.num_samples_in_frame = int(self.sample_rate * self.frame_duration)
 
     def setup(self):
