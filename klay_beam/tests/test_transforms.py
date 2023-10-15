@@ -1,8 +1,7 @@
 from apache_beam.io.filesystem import FileMetadata
 from pathlib import Path
-import torch
-
 from klay_beam.transforms import SkipCompleted
+
 
 def test_skip_completed():
     this_file = Path(__file__)
