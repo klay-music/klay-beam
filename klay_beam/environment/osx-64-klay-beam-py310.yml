@@ -23,6 +23,10 @@ dependencies:
   - pytorch::torchaudio
 
   - pip:
+    # klay_beam includes apache_beam[gcp] as a dependency, but has a loose
+    # version constraint. We want to ensure the version is identical to the
+    # version in the py310 Dockerfile, so we specify it here.
+    - apache_beam[gcp]==2.50.0
     # IMPORTANT: In the local environment, the local packages below are
     # installed via conda (this file). The remote workers get these packages in
     # the Docker image.
