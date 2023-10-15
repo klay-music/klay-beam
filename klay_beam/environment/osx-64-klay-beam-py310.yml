@@ -30,6 +30,6 @@ dependencies:
     # TLDR: The local packages below should be the same as the ones installed by
     # the py310 Dockerfile. When running remotely, you may use --setup_file to
     # install at most one of the packages below.
-    - -e '../klay_beam[code-style, tests, type-check]'
-    - -e '../job_nac[code-style, tests, type-check]'
-    - -e '../job_random_trim[code-style, tests, type-check]'
+    - -e '../.[code-style, tests, type-check]'
+    - -e '../../job_nac[code-style, tests, type-check]'
+    - -e '../../job_random_trim[code-style, tests, type-check]'
