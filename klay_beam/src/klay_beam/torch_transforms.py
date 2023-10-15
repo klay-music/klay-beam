@@ -1,16 +1,39 @@
 from typing import Optional, Union, Tuple, List
+import math
 import logging
 import numpy as np
-import torch
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
-import torchaudio
 import pathlib
 import io
 import scipy
 
 from .extractors.spectral import ChromaExtractor
 from .path import remove_suffix
+
+TORCHAUDIO_AVAILABLE = False
+TORCHAUDIO_IMPORT_ERROR = None
+
+
+try:
+    import torch
+    import torchaudio
+
+    if torchaudio.__version__ < "0.8.0":
+        raise ImportError(
+            "Incompatible version of torchaudio is installed. Install version 0.8.0 or newer."
+        )
+    TORCHAUDIO_AVAILABLE = True
+except ImportError as e:
+    TORCHAUDIO_IMPORT_ERROR = e
+    logging.info(f"torchaudio is not available: {e}")
+
+
+def ensure_torchaudio_available():
+    if not TORCHAUDIO_AVAILABLE:
+        raise ImportError(
+            f"This features requires a compatible torchaudio version. {TORCHAUDIO_IMPORT_ERROR}"
+        )
 
 
 class LoadWithTorchaudio(beam.DoFn):
@@ -40,6 +63,7 @@ class LoadWithTorchaudio(beam.DoFn):
     def setup(self):
         # This will be executed only once when the pipeline starts. This is
         # where you would create a lock or queue for global resources.
+        ensure_torchaudio_available()
         pass
 
     def process(self, readable_file: beam_io.ReadableFile):
@@ -135,12 +159,13 @@ class ResampleTorchaudioTensor(beam.DoFn):
         self.resample = None
 
     def setup(self):
+        ensure_torchaudio_available()
         if self._source_sr_hint is not None:
             self.resample = torchaudio.transforms.Resample(
                 self._source_sr_hint, self._target_sr
             )
 
-    def process(self, audio_tuple: Tuple[str, Union[torch.Tensor, np.ndarray], int]):
+    def process(self, audio_tuple: Tuple[str, Union["torch.Tensor", np.ndarray], int]):
         key, audio, source_sr = audio_tuple
 
         # check if audio_tensor is a numpy array or a torch tensor
@@ -179,8 +204,9 @@ class ResampleTorchaudioTensor(beam.DoFn):
 
 
 # Copied from klay_data/src/klay_data/transform.py, which copied from encodec
-def convert_audio(wav: torch.Tensor, sr: int, target_sr: int, target_channels: int):
+def convert_audio(wav: "torch.Tensor", sr: int, target_sr: int, target_channels: int):
     """Copied from encodec"""
+    ensure_torchaudio_available()
     if wav.ndim == 1:
         wav.unsqueeze_(0)
     assert wav.shape[0] in [1, 2], "Audio must be mono or stereo."
@@ -217,8 +243,8 @@ class ExtractChromaFeatures(beam.DoFn):
         n_fft: int = 2048,
         win_length: int = 2048,
         hop_length: Union[int, None] = None,
-        norm: float = torch.inf,
-        device: Union[torch.device, str] = "cpu",
+        norm: float = math.inf,
+        device: Union["torch.device", str] = "cpu",
     ):
         self._audio_sr = audio_sr
         self._n_chroma = n_chroma
@@ -229,6 +255,7 @@ class ExtractChromaFeatures(beam.DoFn):
         self._device = device
 
     def setup(self):
+        ensure_torchaudio_available()
         self._chroma_model = ChromaExtractor(
             sample_rate=self._audio_sr,
             n_chroma=self._n_chroma,
@@ -239,7 +266,7 @@ class ExtractChromaFeatures(beam.DoFn):
             device=self._device,
         )
 
-    def process(self, element: Tuple[str, torch.Tensor, int]):
+    def process(self, element: Tuple[str, "torch.Tensor", int]):
         key, audio, sr = element
 
         try:
@@ -261,7 +288,7 @@ class ExtractChromaFeatures(beam.DoFn):
 
 
 def tensor_to_bytes(
-    audio_tuple: Tuple[str, Union[torch.Tensor, np.ndarray], int]
+    audio_tuple: Tuple[str, Union["torch.Tensor", np.ndarray], int]
 ) -> List[Tuple[str, bytes, int]]:
     fname, audio, sr = audio_tuple
     if isinstance(audio, torch.Tensor):
