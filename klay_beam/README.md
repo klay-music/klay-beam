@@ -23,12 +23,12 @@ The core transformations include:
 The example job uses the following ingredients:
 - `bin/run_job_example.py` pipeline script
 - `klay-beam:0.2.0` docker container
-- `environment/osx-64-klay-beam.yml` local environment
+- `environment/local-klay-beam.yml` local environment
 
 To run the example job:
 1. Talk to Charles or Max for GCP IAP permissions
 2. Activate a `klay-beam` conda environment locally, (for example
-   `environment/osx-64-klay-beam.yml`)
+   `environment/local-klay-beam.yml`)
 3. Run `bin/run_job_example.py` (see example below for arguments)
 
 ```bash
@@ -76,17 +76,17 @@ Notes:
 # Development
 ## Quick Start
 
-Create `conda` environment. Environments labeled `osx-64` are likely to work on
+Create `conda` environment. Environments labeled `local` are likely to work on
 linux albeit without cuda support:
 
 ```sh
-conda env create -f environments/osx-64-klay-beam.yml
+conda env create -f environments/local-klay-beam.yml
 ```
 
 To create or update an environment:
 
 ```sh
-conda env update -f environment/osx-64-klay-beam.yml
+conda env update -f environment/local-klay-beam.yml
 ```
 
 ## Docker Container
