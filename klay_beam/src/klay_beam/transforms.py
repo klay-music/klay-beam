@@ -1,12 +1,11 @@
 import pathlib
 import io
-from typing import Optional, Type, Union, Tuple, List
+from typing import Optional, Type, Union, List
 from packaging import version as packaging_version
 import apache_beam as beam
 from apache_beam.io import filesystems
 import apache_beam.io.fileio as beam_io
 import pydub
-import scipy
 import soundfile as sf
 import numpy as np
 import logging
@@ -14,7 +13,6 @@ import logging
 from apache_beam.io.filesystem import FileMetadata
 from apache_beam.io.filesystems import FileSystems
 
-from .extractors.spectral import ChromaExtractor
 from .path import move, remove_suffix
 
 
@@ -213,8 +211,6 @@ def write_file(output_path_and_buffer):
         file_handle.write(buffer.read())
 
 
-
-
 class SkipCompleted(beam.DoFn):
     def __init__(
         self,
@@ -272,10 +268,8 @@ class MultiMatchFiles(beam.PTransform):
     """Like beam.io.fileio.MatchFiles, but takes a list of patterns and returns
     a single PCollection of FileMetadata objects."""
 
-
     def __init__(self, patterns: list[str]):
         self.patterns = patterns
-
 
     def expand(self, pcoll: beam.PCollection):
         # Create a list of PCollections by matching each pattern

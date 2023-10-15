@@ -1,7 +1,6 @@
 from pathlib import PurePosixPath
 from urllib.parse import urlparse, urlunparse
 import os.path
-import apache_beam as beam
 
 
 def move(filename, source_dir, target_dir):

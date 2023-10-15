@@ -1,10 +1,17 @@
-from typing import Optional, Type, Union, Tuple, List
+from typing import Optional, Union, Tuple, List
 import logging
 import numpy as np
 import torch
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
 import torchaudio
+import pathlib
+import io
+import scipy
+
+from .extractors.spectral import ChromaExtractor
+from .path import remove_suffix
+
 
 class LoadWithTorchaudio(beam.DoFn):
     """Use torchaudio to load audio files to tensors
@@ -187,6 +194,7 @@ def convert_audio(wav: torch.Tensor, sr: int, target_sr: int, target_channels: i
     wav = torchaudio.transforms.Resample(sr, target_sr)(wav)
     return wav
 
+
 class ExtractChromaFeatures(beam.DoFn):
     """Extract features from an audio tensor. Accepts a `(key, a, sr)` tuple
     were:
@@ -250,6 +258,7 @@ class ExtractChromaFeatures(beam.DoFn):
         except Exception as e:
             logging.error(f"Failed to extract chroma features for {key}: {e}")
             return []
+
 
 def tensor_to_bytes(
     audio_tuple: Tuple[str, Union[torch.Tensor, np.ndarray], int]
