@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from klay_beam.transforms import ResampleAudio
+from klay_beam.torch_transforms import ResampleTorchaudioTensor
 
 
 def test_interleave():
@@ -72,7 +72,7 @@ def test_resample():
     stereo_audio_tensor = ("key1", torch.randn(2, 1000), 1000)
     stereo_audio_numpy = ("key2", stereo_audio_tensor[1].numpy(), 1000)
 
-    resampleDoFn = ResampleAudio(target_sr=10, source_sr_hint=1000)
+    resampleDoFn = ResampleTorchaudioTensor(target_sr=10, source_sr_hint=1000)
 
     _, resampled_stereo_audio_tensor, _ = resampleDoFn.process(stereo_audio_tensor)[0]
     assert resampled_stereo_audio_tensor.shape == (
@@ -98,7 +98,7 @@ def test_resample_to_numpy():
     stereo_audio_tensor = ("key1", torch.randn(2, 1000), 1000)
     stereo_audio_numpy = ("key2", stereo_audio_tensor[1].numpy(), 1000)
 
-    resampleDoFn = ResampleAudio(target_sr=10, output_numpy=True)
+    resampleDoFn = ResampleTorchaudioTensor(target_sr=10, output_numpy=True)
 
     _, resampled_stereo_audio_tensor, _ = resampleDoFn.process(stereo_audio_tensor)[0]
     assert resampled_stereo_audio_tensor.shape == (
