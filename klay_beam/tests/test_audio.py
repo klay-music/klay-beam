@@ -1,6 +1,9 @@
 import numpy as np
-import torch
 from klay_beam.torch_transforms import ResampleTorchaudioTensor
+
+from .utils import skip_if_no_torch, import_torch
+
+torch = import_torch()
 
 
 def test_interleave():
@@ -67,6 +70,7 @@ def test_multichannel_interleave():
     ), f"expected {actual_result} to equal {expected_result}"
 
 
+@skip_if_no_torch
 def test_resample():
     """Verify that we can resample both numpy and torch audio (to a torch.Tensor))"""
     stereo_audio_tensor = ("key1", torch.randn(2, 1000), 1000)
@@ -93,6 +97,7 @@ def test_resample():
     ), "Failed to return a torch.tensor"
 
 
+@skip_if_no_torch
 def test_resample_to_numpy():
     """Verify that we can resample both numpy and torch audio (to a numpy.ndarray)"""
     stereo_audio_tensor = ("key1", torch.randn(2, 1000), 1000)

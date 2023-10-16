@@ -1,13 +1,31 @@
+import logging
+import math
 from librosa import cqt, filters
 import numpy as np
-import torch
-from torch import nn, Tensor
-import torch.nn.functional as F
-from torchaudio.transforms import Spectrogram
 from typing import Union
 
 
-class ChromaExtractor(nn.Module):
+TORCH_AVAILABLE = False
+TORCH_IMPORT_ERROR = None
+
+try:
+    import torch
+    import torchaudio
+    import torch.nn
+    import torch.nn.functional as F
+    from torchaudio.transforms import Spectrogram
+
+    if torchaudio.__version__ < "0.8.0":
+        raise ImportError(
+            "Incompatible version of torchaudio is installed. Install version 0.8.0 or newer."
+        )
+    TORCH_AVAILABLE = True
+except ImportError as e:
+    TORCH_IMPORT_ERROR = e
+    logging.info(f"torchaudio is not available: {e}")
+
+
+class ChromaExtractor(torch.nn.Module):
     name = "chroma"
 
     def __init__(
@@ -17,8 +35,8 @@ class ChromaExtractor(nn.Module):
         n_fft: int = 2048,
         win_length: int = 2048,
         hop_length: Union[int, None] = None,
-        norm: float = torch.inf,
-        device: Union[torch.device, str] = "cpu",
+        norm: float = math.inf,
+        device: Union["torch.device", str] = "cpu",
     ):
         super().__init__()
 
@@ -59,7 +77,7 @@ class ChromaExtractor(nn.Module):
         return f".{self.name}_{self.feat_sr}hz.npy"
 
     @staticmethod
-    def _pad(audio: Tensor, n_fft: int) -> Tensor:
+    def _pad(audio: "torch.Tensor", n_fft: int) -> "torch.Tensor":
         T = audio.shape[-1]
 
         # in case we are getting a audio that was dropped out (nullified)
@@ -73,7 +91,7 @@ class ChromaExtractor(nn.Module):
             ), f"expected len {n_fft} but got {audio.shape[-1]}"
         return audio
 
-    def forward(self, audio: Tensor):
+    def forward(self, audio: "torch.Tensor"):
         audio = self._pad(audio, self.n_fft)
         spec = self.spec(audio).squeeze(1)
         raw_chroma = torch.einsum("cf, ...f t-> ...ct", self.fbanks, spec)
@@ -83,7 +101,7 @@ class ChromaExtractor(nn.Module):
         return norm_chroma.squeeze(0)
 
 
-class CQTExtractor(nn.Module):
+class CQTExtractor(torch.nn.Module):
     name = "cqt"
 
     def __init__(
@@ -110,7 +128,7 @@ class CQTExtractor(nn.Module):
     def feat_sr(self) -> int:
         return self.sr // self.hop_length
 
-    def forward(self, audio: Tensor) -> Tensor:
+    def forward(self, audio: "torch.Tensor") -> "torch.Tensor":
         spec = np.abs(
             cqt(
                 audio.detach().cpu().numpy(),
