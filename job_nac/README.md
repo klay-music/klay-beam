@@ -7,7 +7,7 @@ Beam job for extracting EnCodec features:
 1. Write the results to an .npy file adjacent to the source audio file
 
 To run, activate a suitable python environment such as
-``../environments/osx-64-klay-beam-py310.yml`.
+`../klay_beam/environment/py310-torch.local.yml`.
 
 ```bash
 # CD into the parent dir (one level up from this package) and run the launch script
