@@ -27,8 +27,9 @@ Job for extracting EnCodec and Chroma features:
 1. For each audio file, extract features
 1. Write the results to an .npy file adjacent to the source audio file
 
-To run, activate a suitable python environment such as
-``../environments/osx-64-klay-beam-py310.yml`.
+To run, activate a suitable python environment such as one of
+- `klay_beam/environment/py310-torch.local.yml`
+- `klay_beam/environment/py310-torch.linux-64.yml`
 
 ```
 # CD into the root klay_beam dir to the launch script:
