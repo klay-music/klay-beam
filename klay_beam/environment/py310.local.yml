@@ -1,4 +1,4 @@
-name: klay-beam-py310-torch
+name: klay-beam-py310
 
 channels:
   - defaults
@@ -18,9 +18,6 @@ dependencies:
   - xorg-libxau
   # libsndfile 1.2.0 is required for the soundfile pip package
   - libsndfile>=1.2.0
-  # pytorch deps initially copied from klay-music/audiolm
-  - pytorch::pytorch>=2.0
-  - pytorch::torchaudio
 
   - pip:
     # klay_beam includes apache_beam[gcp] as a dependency, but has a loose
@@ -35,5 +32,3 @@ dependencies:
     # the py310 Dockerfile. When running remotely, you may use --setup_file to
     # install at most one of the packages below.
     - -e '../.[code-style, tests, type-check]'
-    - -e '../../job_nac[code-style, tests, type-check]'
-    - -e '../../job_random_trim[code-style, tests, type-check]'

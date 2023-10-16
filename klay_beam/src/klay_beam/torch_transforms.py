@@ -8,7 +8,6 @@ import pathlib
 import io
 import scipy
 
-from .extractors.spectral import ChromaExtractor
 from .path import remove_suffix
 
 TORCHAUDIO_AVAILABLE = False
@@ -18,6 +17,7 @@ TORCHAUDIO_IMPORT_ERROR = None
 try:
     import torch
     import torchaudio
+    from .extractors.spectral import ChromaExtractor
 
     if torchaudio.__version__ < "0.8.0":
         raise ImportError(
