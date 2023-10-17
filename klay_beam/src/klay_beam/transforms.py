@@ -304,7 +304,7 @@ class LoadWithLibrosa(beam.DoFn):
 
     def process(self, readable_file: beam_io.ReadableFile):
         """
-        Given an Apache Beam ReadableFile, return a `(input_filename, a, sr)` 
+        Given an Apache Beam ReadableFile, return a `(input_filename, a, sr)`
         tuple where:
             - `input_filename` is a string
             - `a` is a numpy array
@@ -350,7 +350,8 @@ class LoadWithLibrosa(beam.DoFn):
         logging.info("Loading: {}".format(path))
         try:
             audio_array, sr = librosa.load(file_like, sr=self.target_sr, mono=self.mono)
-            if self.target_sr is not None: assert sr == self.target_sr
+            if self.target_sr is not None:
+                assert sr == self.target_sr
         except RuntimeError:
             # We don't want to log the stacktrace, but for debugging, here's how
             # we could access it we can access it:
