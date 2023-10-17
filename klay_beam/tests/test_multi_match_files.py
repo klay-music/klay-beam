@@ -1,6 +1,6 @@
 import apache_beam as beam
 from pathlib import Path
-from apache_beam.testing.test_pipeline import TestPipeline
+from apache_beam.testing.test_pipeline import TestPipeline as BeamTestPipeline
 from apache_beam.testing.util import assert_that, equal_to
 
 from klay_beam.transforms import MultiMatchFiles
@@ -14,7 +14,7 @@ def test_MultiMatchFiles():
         str(data_dir / fn) for fn in ["00/a.txt", "00/b.txt", "01/a.txt", "01/b.txt"]
     ]
 
-    with TestPipeline() as p:
+    with BeamTestPipeline() as p:
         # Apply the custom transform
         results = p | MultiMatchFiles(patterns)
 
