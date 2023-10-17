@@ -9,6 +9,7 @@ import pydub
 import soundfile as sf
 import numpy as np
 import logging
+import librosa
 
 from apache_beam.io.filesystem import FileMetadata
 from apache_beam.io.filesystems import FileSystems
@@ -280,3 +281,87 @@ class MultiMatchFiles(beam.PTransform):
 
         # Flatten the list of PCollections into a single PCollection
         return matched_files_list | "Flatten File Results" >> beam.Flatten()
+
+
+class LoadWithLibrosa(beam.DoFn):
+    """Use librosa to load audio files to numpy arrays.
+
+    NOTES:
+
+    Note that generally, custom functions have a few requirements that help them
+    work well in on distributed runners. They are:
+        - The function should be thread-compatible
+        - The function should be serializable
+        - Recommended: the function be idempotent
+
+    For details about these requirements, see the Apache Beam documentation:
+    https://beam.apache.org/documentation/programming-guide/#requirements-for-writing-user-code-for-beam-transforms
+    """
+
+    def __init__(self, target_sr: Optional[int], mono: bool):
+        self.target_sr = target_sr
+        self.mono = mono
+
+    def process(self, readable_file: beam_io.ReadableFile):
+        """
+        Given an Apache Beam ReadableFile, return a `(input_filename, a, sr)` 
+        tuple where:
+            - `input_filename` is a string
+            - `a` is a numpy array
+            - `sr` is an int
+
+        For a stereo audio file named '/path/to.some/file.key.mp3', return
+        ```
+        (
+            '/path/to.some/file.key.mp3',
+            np.array([[0.1, 0.2, 0.3], [0.1, 0.2, 0.3]]),
+            44100
+        )
+        ```
+
+        WARNING! Librosa is inconsistent about the shape of audio array. When
+        mono=True, AND when the audio file is a mono file, librosa.load
+        returns a 1-D numpy array. Librosa ONLY returns a 2-D array when the
+        input audio file has multiple channels AND mono=False.
+        """
+
+        # I could not find good documentation for beam ReadableFile, so I'm
+        # putting the key information below.
+        #
+        # ReadableFile Properties
+        # - readable_file.metadata.path
+        # - readable_file.metadata.size_in_bytes
+        # - readable_file.metadata.last_updated_in_seconds
+        #
+        # ReadableFile Methods
+        # - readable_file.open(mime_type='text/plain', compression_type=None)
+        # - readable_file.read(mime_type='application/octet-stream')
+        # - readable_file.read_utf8()
+
+        path = pathlib.Path(readable_file.metadata.path)
+
+        # get the file extension without a period in a safe way
+        ext_without_dot = path.suffix.lstrip(".")
+        ext_without_dot = None if ext_without_dot == "" else ext_without_dot
+
+        file_like = readable_file.open(mime_type="application/octet-stream")
+        audio_array = None
+
+        logging.info("Loading: {}".format(path))
+        try:
+            audio_array, sr = librosa.load(file_like, sr=self.target_sr, mono=self.mono)
+            if self.target_sr is not None: assert sr == self.target_sr
+        except RuntimeError:
+            # We don't want to log the stacktrace, but for debugging, here's how
+            # we could access it we can access it:
+            #
+            # import traceback
+            # tb_str = traceback.format_exception(
+            #     etype=type(e), value=e, tb=e.__traceback__
+            # )
+            logging.warning(f"Error loading audio: {path}")
+            return (readable_file.metadata.path, np.ndarray([]), sr)
+
+        logging.info(f"Loaded {len(audio_array) / sr:.3f} second mono audio: {path}")
+
+        return [(readable_file.metadata.path, audio_array, sr)]
