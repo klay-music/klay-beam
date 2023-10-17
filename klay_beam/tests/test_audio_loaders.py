@@ -20,7 +20,7 @@ def test_LoadWithLibrosa():
     # bin/create_test_audio_files.py script. Each file is 0.5 seconds at
     # 44.1kHz.
     data = {
-        "test_mono.mp3": (22050,), # Annoyingly, this is what librosa returns for mono
+        "test_mono.mp3": (22050,),  # Annoyingly, this is what librosa returns for mono
         "test_quad.ogg": (4, 22050),
         "test_quad.wav": (4, 22050),
         "test_stereo.mp3": (2, 22050),
@@ -39,11 +39,7 @@ def test_LoadWithLibrosa():
         assert sr == 44100
         assert audio.shape == expected_shape
 
-
-    expected_filenames  = [
-        str(Path(data_dir / datum))
-        for datum in data.keys()
-    ]
+    expected_filenames = [str(Path(data_dir / datum)) for datum in data.keys()]
 
     with BeamTestPipeline() as p:
         # Apply the custom transform
@@ -58,9 +54,9 @@ def test_LoadWithLibrosa():
         assert_that(file_names, equal_to(expected_filenames))
 
         # Load the audio files using librosa
-        audio_data = (
+        (
             readable_files
             | beam_io.ReadMatches()
             | beam.ParDo(LoadWithLibrosa(target_sr=None, mono=False))
             | beam.Map(verify_data)
-        )        
+        )
