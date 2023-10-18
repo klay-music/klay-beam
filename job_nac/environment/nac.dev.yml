@@ -12,9 +12,8 @@ dependencies:
   - ffmpeg>=4.2,<5
   - pytorch::pytorch>=1.12
   - pytorch::torchaudio>=0.8
-  - tqdm>=4.36
   - pip
-  # demucs is listed as a dependency in the job_demucs package's pyproject.toml.
-  # However, it is specified as a git dependency, so the the conda environment
-  # needs to have git installed locally
-  - git
+
+  - pip:
+    - -e '../../klay_beam'
+    - -e '../.[code-style, tests, type-check]'

@@ -1,30 +1,80 @@
 # job_nac
 
-Beam job for extracting EnCodec features:
+Neural audio encoding with EnCodec and Descript Audio Codec.
 
 1. Recursively search a path for `.wav` files
-1. For each audio file, extract EnCodec tokens
-1. Write the results to an .npy file adjacent to the source audio file
+1. For each audio file, extract Neural audio tokens
+1. Write the results as a file adjacent to the source audio file
 
-To run, activate a suitable python environment such as
-`../klay_beam/environment/py310-torch.local.yml`.
+To run, activate a suitable python environment such as:
+
+-`environment/nac.mac.yml`.
+-`environment/nac.dev.yml`
 
 ```bash
-# CD into the parent dir (one level up from this package) and run the launch script
+# Example invocation to run locally
 python bin/run_job_extract_nac.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
+    --nac_name dac \
+    --nac_input_sr 44100 \
+    --audio_suffix .wav \
 
-# See the docstring in `./bin/run_job_extract_nac.py` for an example of
-# running the job on Dataflow
+python bin/run_job_extract_nac.py \
+    --runner Direct \
+    --source_audio_path '/absolute/path/to/source.wav/files/'
+    --nac_name encodec \
+    --nac_input_sr 48000 \
+    --audio_suffix .wav \
+
+# Run remote job with autoscaling
+python bin/run_job_extract_nac.py \
+    --runner DataflowRunner \
+    --project klay-training \
+    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+    --region us-central1 \
+    --max_num_workers 1000 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --experiments use_runner_v2 \
+    --sdk_location container \
+    --temp_location gs://klay-dataflow-test-000/tmp/extract-ecdc-48k/ \
+    --setup_file ./job_nac/setup.py \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-nac \
+    --source_audio_path \
+        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --nac_name encodec \
+    --nac_input_sr 48000 \
+    --audio_suffix .wav \
+    --machine_type n1-standard-2 \
+    --number_of_worker_harness_threads 2 \
+    --job_name 'extract-ecdc-002'
+
+
+# Possible test values for --source_audio_path
+    'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
+
+# Options for --autoscaling-algorithm
+    THROUGHPUT_BASED, NONE
 ```
 
 # Development
 ## Quick Start
 Install dependencies (we highly recommend creating and activating a virtual
 python environment first):
+
 ```sh
 pip install [-e] '.[code-style, type-check, tests]'
+```
+
+## Conda .lock file
+
+The `environment/nac.linux-64.lock` is used for the Docker container. It is
+derived from `environment/nac-linux-64.lock`. If you update the dependencies in
+the `.yml` you must re-generate the lock file:
+
+```bash
+# CD into the parent directory, and run:
+./make-conda-lock-file.sh job_nac/environment/nac.linux-64.yml
 ```
 
 ## Dependencies

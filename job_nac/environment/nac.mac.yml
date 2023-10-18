@@ -13,9 +13,8 @@ dependencies:
   - ffmpeg>=4.2,<5
   - pytorch>=1.12
   - torchaudio>=0.8
-  - tqdm>=4.36
   - pip
 
   - pip:
-    - -e '../klay_beam[code-style, tests, type-check]'
-    - -e '../job_nac[code-style, tests, type-check]'
+    - -e '../../klay_beam'
+    - -e '../.[code-style, tests, type-check]'
