@@ -1,9 +1,6 @@
 # Example usage:
-# docker build -f Dockerfile.klay-beam-py310 -t klay-beam:py310 .
+# docker build -f Dockerfile.klay-beam-nac -t klay-beam:nac .
 
-
-# Conda + Apache Beam
-#
 # Use two prelimiary images for our multistage build: Apache Beam SDK and Conda.
 #
 # 1. Apache Beam SDK
@@ -31,23 +28,23 @@
 # this python version, which also must match the final image.
 #
 # TLDR:
-# py_version must match the python version specified in environment.yml
-ARG py_version=3.10
-# beam_version must match the version specified in pyproject.toml
-ARG beam_version=2.50.0
+# PY_VERSION must match the python version specified in environment.yml
+ARG PY_VERSION=3.9
+# BEAM_VERSION must match the version specified in pyproject.toml
+ARG BEAM_VERSION=2.50.0
 # Path to the conda lock file as seen by the docker build context
-ARG LOCAL_CONDA_LOCK=./environment/conda-linux-64.002-py310.lock
+ARG LOCAL_CONDA_LOCK=./environment/nac.linux-64.lock
 # Path to the conda lock file in the docker image (relative to WORKDIR)
 ARG DOCKER_CONDA_LOCK=${LOCAL_CONDA_LOCK}
 
 
-FROM apache/beam_python${py_version}_sdk:${beam_version} as beam
+FROM apache/beam_python${PY_VERSION}_sdk:${BEAM_VERSION} as beam
 
 
 # Build the conda environment
 FROM condaforge/mambaforge:latest as conda
-ARG py_version
-ARG beam_version
+ARG PY_VERSION
+ARG BEAM_VERSION
 ARG LOCAL_CONDA_LOCK
 ARG DOCKER_CONDA_LOCK
 
@@ -61,18 +58,18 @@ RUN mamba create --copy -p /env --file ${DOCKER_CONDA_LOCK} && conda clean -afy
 RUN find -name '*.a' -delete && \
   rm -rf /env/conda-meta && \
   rm -rf /env/include && \
-  rm /env/lib/libpython3.10.so.1.0 && \
+  rm /env/lib/libpython${PY_VERSION}.so.1.0 && \
   find -name '__pycache__' -type d -exec rm -rf '{}' '+' && \
-  # find /env/lib/python3.10/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  find /env/lib/python3.10/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  # find /env/lib/python3.10/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  find /env/lib/python3.10/site-packages -name '*.pyx' -delete
+  # find /env/lib/python${PY_VERSION}/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  find /env/lib/python${PY_VERSION}/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  # find /env/lib/python${PY_VERSION}/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  find /env/lib/python${PY_VERSION}/site-packages -name '*.pyx' -delete
 
 
 # python:3.10-slim comes from debian-12-slim
-FROM python:${py_version}-slim
-ARG py_version
-ARG beam_version
+FROM python:${PY_VERSION}-slim
+ARG PY_VERSION
+ARG BEAM_VERSION
 
 # By default, Beam will create a new python virtual environment to run the job.
 # Suppress this behavior by setting this environment variable. See:
@@ -101,14 +98,16 @@ RUN . /env/bin/activate
 ENV PATH="/env/bin:$PATH"
 
 # Install submodules and klay_beam
-COPY . ./klay_beam
+COPY klay_beam ./klay_beam
+COPY job_nac ./job_nac
 
 # klay_beam lists apache-beam as a dependency, but has a loose version
 # requirement. Ensure that the version we install is explicit, and matches the
 # source container of our /opt/apache/beam directory.
 RUN python3 -m pip install \
-  apache-beam[gcp]==${beam_version} \
-  './klay_beam[code-style, tests, type-check]'
+  apache-beam[gcp]==${BEAM_VERSION} \
+  './klay_beam[code-style, tests, type-check]' \
+  './job_nac[code-style, tests, type-check]'
 
 # Verify that the image does not have conflicting dependencies.
 RUN pip check
