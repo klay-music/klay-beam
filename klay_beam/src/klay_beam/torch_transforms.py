@@ -9,31 +9,13 @@ import io
 import scipy
 
 from .path import remove_suffix
-
-TORCHAUDIO_AVAILABLE = False
-TORCHAUDIO_IMPORT_ERROR = None
+from .torch_utils import TORCH_AVAILABLE, TORCH_IMPORT_ERROR, ensure_torch_available
 
 
-try:
+if TORCH_AVAILABLE:
     import torch
     import torchaudio
     from .extractors.spectral import ChromaExtractor
-
-    if torchaudio.__version__ < "0.8.0":
-        raise ImportError(
-            "Incompatible version of torchaudio is installed. Install version 0.8.0 or newer."
-        )
-    TORCHAUDIO_AVAILABLE = True
-except ImportError as e:
-    TORCHAUDIO_IMPORT_ERROR = e
-    logging.info(f"torchaudio is not available: {e}")
-
-
-def ensure_torchaudio_available():
-    if not TORCHAUDIO_AVAILABLE:
-        raise ImportError(
-            f"This features requires a compatible torchaudio version. {TORCHAUDIO_IMPORT_ERROR}"
-        )
 
 
 class LoadWithTorchaudio(beam.DoFn):
@@ -63,7 +45,7 @@ class LoadWithTorchaudio(beam.DoFn):
     def setup(self):
         # This will be executed only once when the pipeline starts. This is
         # where you would create a lock or queue for global resources.
-        ensure_torchaudio_available()
+        ensure_torch_available()
         pass
 
     def process(self, readable_file: beam_io.ReadableFile):
@@ -161,7 +143,7 @@ class ResampleTorchaudioTensor(beam.DoFn):
         self.resample = None
 
     def setup(self):
-        ensure_torchaudio_available()
+        ensure_torch_available()
         if self._source_sr_hint is not None:
             self.resample = torchaudio.transforms.Resample(
                 self._source_sr_hint, self._target_sr
@@ -208,7 +190,7 @@ class ResampleTorchaudioTensor(beam.DoFn):
 
 def convert_audio(wav: "torch.Tensor", sr: int, target_sr: int, target_channels: int):
     """Copied from encodec"""
-    ensure_torchaudio_available()
+    ensure_torch_available()
     if wav.ndim == 1:
         wav.unsqueeze_(0)
     assert wav.shape[0] in [1, 2], "Audio must be mono or stereo."
@@ -257,7 +239,7 @@ class ExtractChromaFeatures(beam.DoFn):
         self._device = device
 
     def setup(self):
-        ensure_torchaudio_available()
+        ensure_torch_available()
         self._chroma_model = ChromaExtractor(
             sample_rate=self._audio_sr,
             n_chroma=self._n_chroma,

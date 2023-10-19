@@ -1,11 +1,11 @@
 import librosa
 import numpy as np
 
-from ..utils import skip_if_no_torch, import_torch
+from klay_beam.torch_utils import TORCH_AVAILABLE, TORCH_IMPORT_ERROR
+from ..utils import skip_if_no_torch
 
-torch = import_torch()
-
-if torch:
+if TORCH_AVAILABLE:
+    import torch
     from klay_beam.extractors.spectral import ChromaExtractor, CQTExtractor
 
 
