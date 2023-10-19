@@ -1,9 +1,12 @@
 import numpy as np
 from klay_beam.torch_transforms import ResampleTorchaudioTensor
 
-from .utils import skip_if_no_torch, import_torch
+from .utils import skip_if_no_torch
+from klay_beam.torch_utils import TORCH_AVAILABLE, TORCH_IMPORT_ERROR
 
-torch = import_torch()
+
+if TORCH_AVAILABLE:
+    import torch
 
 
 def test_interleave():

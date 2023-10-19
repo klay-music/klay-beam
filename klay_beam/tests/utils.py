@@ -1,17 +1,7 @@
 import logging
 from functools import wraps
 
-TORCH_AVAILABLE = False
-TORCH_IMPORT_ERROR = None
-
-try:
-    import torch
-
-    TORCH_AVAILABLE = True
-except ImportError as e:
-    TORCH_IMPORT_ERROR = e
-    logging.info(f"torch is not available: {e}")
-
+from klay_beam.torch_utils import TORCH_AVAILABLE, TORCH_IMPORT_ERROR
 
 def skip_if_no_torch(func):
     @wraps(func)
@@ -25,10 +15,3 @@ def skip_if_no_torch(func):
         return func(*args, **kwargs)
 
     return wrapper
-
-
-def import_torch():
-    if TORCH_AVAILABLE:
-        return torch
-    else:
-        return None
