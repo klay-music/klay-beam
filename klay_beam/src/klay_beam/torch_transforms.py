@@ -144,6 +144,8 @@ class ResampleTorchaudioTensor(beam.DoFn):
     torch.Tensor instance.
     """
 
+    MAX_AUDIO_CHANNELS = 128
+
     def __init__(
         self,
         target_sr: int,
@@ -173,9 +175,10 @@ class ResampleTorchaudioTensor(beam.DoFn):
             audio = torch.from_numpy(audio)
 
         channels, _ = audio.shape
-        if channels > 128:
+        if channels > self.MAX_AUDIO_CHANNELS:
             raise ValueError(
-                f"audio_tensor ({key}) must have 128 or fewer channels (found {channels})"
+                f"audio_tensor ({key}) must have {self.MAX_AUDIO_CHANNELS} or "
+                f"fewer channels (found {channels})"
             )
 
         resampled_audio: Optional[torch.Tensor] = None
@@ -203,7 +206,6 @@ class ResampleTorchaudioTensor(beam.DoFn):
         return [(key, resampled_audio, self._target_sr)]
 
 
-# Copied from klay_data/src/klay_data/transform.py, which copied from encodec
 def convert_audio(wav: "torch.Tensor", sr: int, target_sr: int, target_channels: int):
     """Copied from encodec"""
     ensure_torchaudio_available()
