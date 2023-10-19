@@ -59,9 +59,9 @@ RUN find -name '*.a' -delete && \
   rm -rf /env/include && \
   rm /env/lib/libpython${PY_VERSION}.so.1.0 && \
   find -name '__pycache__' -type d -exec rm -rf '{}' '+' && \
-  # find /env/lib/python${PY_VERSION}/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  find /env/lib/python${PY_VERSION}/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  # find /env/lib/python${PY_VERSION}/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
+  find /env/lib/python${PY_VERSION}/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' || : && \
+  find /env/lib/python${PY_VERSION}/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' || : && \
+  find /env/lib/python${PY_VERSION}/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' || : && \
   find /env/lib/python${PY_VERSION}/site-packages -name '*.pyx' -delete
 
 

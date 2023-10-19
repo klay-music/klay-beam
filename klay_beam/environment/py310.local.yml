@@ -30,5 +30,5 @@ dependencies:
     #
     # TLDR: The local packages below should be the same as the ones installed by
     # the py310 Dockerfile. When running remotely, you may use --setup_file to
-    # install at most one of the packages below.
+    # (at most) one additional local python package
     - -e '../.[code-style, tests, type-check]'
