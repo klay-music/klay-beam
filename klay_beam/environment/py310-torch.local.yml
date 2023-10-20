@@ -1,0 +1,39 @@
+name: klay-beam-py310-torch
+
+channels:
+  - defaults
+  - conda-forge
+
+# IMPORTANT: THERE ARE MULTIPLE ENVIRONMENT FILES IN THIS REPO!!
+#
+# Are you making a change??? UPDATE THEM ALL!!!!!!!!!!!!!!!!!!!!
+
+dependencies:
+  - pip
+  - python=3.10
+  # ffmpeg 4 is required for torchaudio
+  - ffmpeg<5
+  # libiconv and xorg-libxau are required for ffmpeg
+  - libiconv
+  - xorg-libxau
+  # libsndfile 1.2.0 is required for the soundfile pip package
+  - libsndfile>=1.2.0
+  # pytorch deps initially copied from klay-music/audiolm
+  - pytorch::pytorch>=2.0
+  - pytorch::torchaudio
+
+  - pip:
+    # klay_beam includes apache_beam[gcp] as a dependency, but has a loose
+    # version constraint. We want to ensure the version is identical to the
+    # version in the py310 Dockerfile, so we specify it here.
+    - apache_beam[gcp]==2.50.0
+    # IMPORTANT: In the local environment, the local packages below are
+    # installed via conda (this file). The remote workers get these packages in
+    # the Docker image.
+    #
+    # TLDR: The local packages below should be the same as the ones installed by
+    # the py310 Dockerfile. When running remotely, you may use --setup_file to
+    # install at most one of the packages below.
+    - -e '../.[code-style, tests, type-check]'
+    - -e '../../job_nac[code-style, tests, type-check]'
+    - -e '../../job_random_trim[code-style, tests, type-check]'

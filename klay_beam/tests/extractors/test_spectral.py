@@ -1,16 +1,22 @@
 import librosa
 import numpy as np
-import torch
 
-from klay_beam.extractors.spectral import ChromaExtractor, CQTExtractor
+from klay_beam.torch_utils import TORCH_AVAILABLE, TORCH_IMPORT_ERROR
+from ..utils import skip_if_no_torch
+
+if TORCH_AVAILABLE:
+    import torch
+    from klay_beam.extractors.spectral import ChromaExtractor, CQTExtractor
 
 
-def get_sine(dur: int, sample_rate: int, freq: float) -> torch.Tensor:
+@skip_if_no_torch
+def get_sine(dur: int, sample_rate: int, freq: float) -> "torch.Tensor":
     return torch.sin(
         freq * 2 * torch.pi * torch.arange(sample_rate * dur) / sample_rate
     ).unsqueeze(0)
 
 
+@skip_if_no_torch
 def test_ChromaExtractor():
     sample_rate = 22050
     n_chroma = 12
@@ -59,6 +65,7 @@ def test_ChromaExtractor():
     assert torch.allclose(max_chroma_bins, torch.tensor(exp_bin))
 
 
+@skip_if_no_torch
 def test_CQTExtractor():
     sample_rate = 22050
     n_bins = 72

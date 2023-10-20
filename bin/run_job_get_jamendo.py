@@ -16,8 +16,9 @@ This is a quick and dirty script for downloading the Jamendo dataset in parallel
 and uploading it to GCS. If this ends up being useful, we should consider
 generalizing, testing, and merging the functionality into `klay_beam`.
 
-To run, activate a suitable python environment such as
-``../environments/osx-64-klay-beam-py310.yml`.
+To run, activate a suitable python environment such as one of
+- `klay_beam/environment/py310-torch.local.yml`
+- `klay_beam/environment/py310-torch.linux-64.yml`
 
 ```
 # CD into the root klay_beam dir to the launch script:

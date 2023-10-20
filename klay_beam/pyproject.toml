@@ -11,7 +11,6 @@ dependencies = [
   "apache-beam[gcp]",
   "pydub==0.25.1",
   "soundfile>=0.12.1",
-  "torchaudio",
   # Feature extraction deps from semantic-model@f388e4:
   "librosa>=0.9",
 ]
@@ -21,6 +20,9 @@ requires-python = ">=3.8"
 code-style = ["black>=22.9.0", "flake8>=5"]
 tests = ["pytest"]
 type-check = ["mypy>=0.990", "pydantic>=1.10"]
+# Pytorch loading of in-memory (file-like) audio  is supported at least since
+# 0.8.0: https://pytorch.org/audio/0.8.0/backend.html#load
+pytorch = ["torchaudio>=0.8.0"]
 
 [tool.setuptools.dynamic]
 version = {attr = "klay_beam.__version__"}
@@ -45,3 +47,13 @@ module = [
   "soundfile"
 ]
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+# Running pytest results in many warnings which are associated with google-cloud
+# apis. These warnings are not relevant to the code we are testing, filter then
+# from the output. See:
+# https://github.com/googleapis/google-cloud-python/issues/11184#issuecomment-1640884088
+filterwarnings = [
+    "ignore:Deprecated call to `pkg_resources\\.declare_namespace\\('.*'\\):DeprecationWarning",
+    "ignore::DeprecationWarning:google.rpc",
+]
