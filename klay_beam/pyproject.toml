@@ -22,7 +22,7 @@ tests = ["pytest"]
 type-check = ["mypy>=0.990", "pydantic>=1.10"]
 # Pytorch loading of in-memory (file-like) audio  is supported at least since
 # 0.8.0: https://pytorch.org/audio/0.8.0/backend.html#load
-pytorch = ["torchaudio>=0.8.0"]
+pytorch = ["torchaudio>=0.8.0", "torch>=1.0.0"]
 
 [tool.setuptools.dynamic]
 version = {attr = "klay_beam.__version__"}

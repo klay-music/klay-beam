@@ -2,7 +2,7 @@ import numpy as np
 from klay_beam.torch_transforms import ResampleTorchaudioTensor
 
 from .utils import skip_if_no_torch
-from klay_beam.torch_utils import TORCH_AVAILABLE, TORCH_IMPORT_ERROR
+from klay_beam.torch_utils import TORCH_AVAILABLE
 
 
 if TORCH_AVAILABLE:
