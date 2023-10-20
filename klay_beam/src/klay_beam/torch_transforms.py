@@ -9,13 +9,14 @@ import io
 import scipy
 
 from .path import remove_suffix
-from .torch_utils import TORCH_AVAILABLE, TORCH_IMPORT_ERROR, ensure_torch_available
+from .torch_utils import TORCH_AVAILABLE, ensure_torch_available
 
-
+INF = math.inf
 if TORCH_AVAILABLE:
     import torch
     import torchaudio
     from .extractors.spectral import ChromaExtractor
+    INF = torch.inf
 
 
 class LoadWithTorchaudio(beam.DoFn):
@@ -64,20 +65,6 @@ class LoadWithTorchaudio(beam.DoFn):
         )
         ```
         """
-
-        # I could not find good documentation for beam ReadableFile, so I'm
-        # putting the key information below.
-        #
-        # ReadableFile Properties
-        # - readable_file.metadata.path
-        # - readable_file.metadata.size_in_bytes
-        # - readable_file.metadata.last_updated_in_seconds
-        #
-        # ReadableFile Methods
-        # - readable_file.open(mime_type='text/plain', compression_type=None)
-        # - readable_file.read(mime_type='application/octet-stream')
-        # - readable_file.read_utf8()
-
         path = pathlib.Path(readable_file.metadata.path)
 
         # get the file extension without a period in a safe way
@@ -227,7 +214,7 @@ class ExtractChromaFeatures(beam.DoFn):
         n_fft: int = 2048,
         win_length: int = 2048,
         hop_length: Union[int, None] = None,
-        norm: float = math.inf,
+        norm: float = INF,
         device: Union["torch.device", str] = "cpu",
     ):
         self._audio_sr = audio_sr

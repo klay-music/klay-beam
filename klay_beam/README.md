@@ -107,7 +107,7 @@ These steps build the Docker container and push to our GCP docker registry.
    `klay_beam/environment/py310-torch.linux-64.yml` file.**
 2. Run `docker build -f Dockerfile.klay-beam -t klay-beam:latest .`
 3. Edit `tag-klay-beam-py310.sh` to update the version, for example `0.2.0-rc.2`
-4. Configure docker to authorize it to write to the artifact registry: `gcloud auth configure-docker us-docker.pkg.dev` (only needs to be once)
+4. Configure docker to authorize it to write to the artifact registry: `gcloud auth configure-docker us-docker.pkg.dev` (only needs to be done once)
 5. Run `tag-klay-beam-py310.sh` to tag and push to GCP.
 
 To test the container interactively:
@@ -134,3 +134,116 @@ We check static types using `mypy`.
 ```sh
 make type-check
 ```
+
+## Design Patterns
+
+In Apache Beam, a **Pipeline** is a Directed Acyclic Graph.
+- Each node in the graph is a data processing operation called a **PTransform**
+or "Parallel Transform".
+- **PTransforms** accept oen or more **PCollections** as input, and output one
+  or more **PCollections**
+-
+
+```python
+with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
+    audio, failed, durations = (
+        p
+        # MatchFiles produces a PCollection of FileMetadata objects
+        | beam_io.MatchFiles(match_pattern)
+        # Prevent "fusion"
+        | "Reshuffle" >> beam.Reshuffle()
+        # ReadMatches produces a PCollection of ReadableFile objects
+        | beam_io.ReadMatches()
+        | "Load Audio"
+        >> beam.ParDo(LoadWithTorchaudio()).with_outputs(
+            "failed", "duration_seconds", main="audio"
+        )
+    )
+    (
+        durations
+        | "SumLengths" >> beam.CombineGlobally(sum)
+        | "LogDuration"
+        >> beam.Map(
+            lambda x: logging.info(
+                "Total duration of loaded audio: "
+                f"~= {x:.3f} seconds "
+                f"~= {x / 60:.3f} minutes "
+                f"~= {x / 60 / 60:.3f} hours"
+            )
+        )
+    )
+
+    (
+        failed
+        | "Log Failed" >> beam.Map(lambda x: logging.warning(x))
+        | "Count" >> beam.combiners.Count.Globally()
+        | "Log Failed Count"
+        >> beam.Map(lambda x: logging.warning(f"Failed to decode {x} files"))
+    )
+```
+
+
+### MatchFiles
+
+The `MatchFiles` Transforms returns a PCollection of
+`apache_beam.io.filesystem.FileMetadata` instances, which have the following
+properties ([code](https://beam.apache.org/releases/pydoc/2.50.0/_modules/apache_beam/io/filesystem.html#FileMetadata)):
+
+```
+path: str
+size_in_bytes: int
+last_updated_in_seconds: float
+```
+
+Note that in GCP Cloud Storage, the `last_update_in_seconds` property reflects
+[AutoClass](https://cloud.google.com/storage/docs/autoclass) changes.
+
+
+### Preventing Fusion
+
+Transforms such as `MatchFiles` output PCollections with MANY elements relative
+to the number of input elements. This called a "fan-out" transform. Large
+fan-out transforms should pre proceeded by a Reshuffle when running on GCP
+Dataflow. See [Preventing
+Fusion](https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion)
+in the Dataflow docs.
+
+
+### ReadMatches
+
+The `ReadMatches` Transform returns a PCollection of
+`apache_beam.io.fileio.ReadableFile` instances ([code](https://beam.apache.org/releases/pydoc/2.24.0/_modules/apache_beam/io/fileio.html#ReadableFile)), which have a `.metadata` property and 3 additional methods:
+
+```python
+metadata: apache_beam.io.filesystem.FileMetadata
+open(self, mime_type='text/plain', compression_type=None) -> io.BufferedReader # (for gs:// paths)
+read(self, mime_type='application/octet-stream') -> FileLike
+read_utf8(self)
+```
+
+<!--
+Each filesystem has its own .open method. see details of each here:
+>>> from apache_beam.io.filesystems import FileSystem
+>>> FileSystem.__subclasses__()
+[
+    <class 'apache_beam.io.hadoopfilesystem.HadoopFileSystem'>
+    <class 'apache_beam.io.localfilesystem.LocalFileSystem'>
+    <class 'apache_beam.io.gcp.gcsfilesystem.GCSFileSystem'>
+    <class 'apache_beam.io.aws.s3filesystem.S3FileSystem'>
+    <class 'apache_beam.io.azure.blobstoragefilesystem.BlobStorageFileSystem'>
+]-->
+
+
+### LoadWithPytorch
+
+LoadWithTorchaudio is a custom `beam.DoFn`, turned into a PTransform via the
+`beam.ParDo` helper. See the source for implementation details. Generally,
+custom functions have a few requirements that help them work well in on
+distributed runners. They are:
+
+- The function should be thread-compatible
+- The function should be serializable
+- Recommended: the function be idempotent
+
+For details about these requirements, see the Apache Beam documentation:
+https://beam.apache.org/documentation/programming-guide/#requirements-for-writing-user-code-for-beam-transforms

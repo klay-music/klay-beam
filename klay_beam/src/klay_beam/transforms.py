@@ -284,19 +284,7 @@ class MultiMatchFiles(beam.PTransform):
 
 
 class LoadWithLibrosa(beam.DoFn):
-    """Use librosa to load audio files to numpy arrays.
-
-    NOTES:
-
-    Note that generally, custom functions have a few requirements that help them
-    work well in on distributed runners. They are:
-        - The function should be thread-compatible
-        - The function should be serializable
-        - Recommended: the function be idempotent
-
-    For details about these requirements, see the Apache Beam documentation:
-    https://beam.apache.org/documentation/programming-guide/#requirements-for-writing-user-code-for-beam-transforms
-    """
+    """Use librosa to load audio files to numpy arrays."""
 
     def __init__(self, target_sr: Optional[int], mono: bool):
         self.target_sr = target_sr
@@ -324,20 +312,6 @@ class LoadWithLibrosa(beam.DoFn):
         returns a 1-D numpy array. Librosa ONLY returns a 2-D array when the
         input audio file has multiple channels AND mono=False.
         """
-
-        # I could not find good documentation for beam ReadableFile, so I'm
-        # putting the key information below.
-        #
-        # ReadableFile Properties
-        # - readable_file.metadata.path
-        # - readable_file.metadata.size_in_bytes
-        # - readable_file.metadata.last_updated_in_seconds
-        #
-        # ReadableFile Methods
-        # - readable_file.open(mime_type='text/plain', compression_type=None)
-        # - readable_file.read(mime_type='application/octet-stream')
-        # - readable_file.read_utf8()
-
         path = pathlib.Path(readable_file.metadata.path)
 
         # get the file extension without a period in a safe way
