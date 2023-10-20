@@ -90,12 +90,9 @@ class LoadWithLibrosa(beam.DoFn):
 
 
 class ExtractDiscogsEffnet(beam.DoFn):
-    
-    model_path = str(Path(__file__).parents[2] / "models/discogs_multi_embeddings-effnet-bs64-1.pb")
-
-    def setup(self):
+    def setup(self, model_path: str):
         self.model = TensorflowPredictEffnetDiscogs(
-            graphFilename=self.model_path, output="PartitionedCall:1"
+            graphFilename=model_path, output="PartitionedCall:1"
         )
 
     @property
