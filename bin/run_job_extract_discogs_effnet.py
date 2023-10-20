@@ -96,6 +96,15 @@ def parse_args():
         "--audio-suffix",
         default=".wav",
     )
+
+    parser.add_argument(
+        "--model-path",
+        type=str,
+        default="models/discogs_multi_embeddings-effnet-bs64-1.pb",
+        help="""
+        Path to the model file. This must be a local path.
+        """
+    )
     return parser.parse_known_args(None)
 
 
@@ -110,7 +119,7 @@ def run():
 
     # Pattern to recursively find audio files inside source_audio_path
     match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
-    extract_fn = ExtractDiscogsEffnet()
+    extract_fn = ExtractDiscogsEffnet(model_path=known_args.model_path)
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
