@@ -1,11 +1,7 @@
-name: klay-beam
+name: klay-beam-py310-torch
 
 channels:
   - defaults
-
-# IMPORTANT: THERE ARE MULTIPLE ENVIRONMENT FILES IN THIS REPO!!
-#
-# Are you making a change??? UPDATE THEM ALL!!!!!!!!!!!!!!!!!!!!
 
 dependencies:
   - pip
@@ -23,6 +19,3 @@ dependencies:
   # pytorch deps copied from klay-music/audiolm
   - pytorch::pytorch>=2.0
   - pytorch::torchaudio
-  # We could try installing Beam via conda, but I've only tested that the java
-  # binaries are correctly available by manually copying from the docker image
-  # - conda-forge::apache-beam=2.49

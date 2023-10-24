@@ -5,90 +5,33 @@ from typing import Union
 
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
-from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.options.pipeline_options import SetupOptions
+from apache_beam.options.pipeline_options import (
+    PipelineOptions,
+    SetupOptions,
+    StandardOptions,
+    WorkerOptions,
+)
 
 from klay_beam.transforms import (
-    LoadWithTorchaudio,
-    ResampleAudio,
     SkipCompleted,
     write_file,
     numpy_to_file,
+)
+
+from klay_beam.torch_transforms import (
+    LoadWithTorchaudio,
+    ResampleTorchaudioTensor,
 )
 
 from job_nac.transforms import ExtractDAC, ExtractEncodec
 
 
 """
-Job for extracting EnCodec features:
-
-1. Recursively search a path for `.wav` files
-1. For each audio file, extract EnCodec tokens
-1. Write the results to an .npy file adjacent to the source audio file
-
-To run, activate a suitable python environment such as
-`../environments/osx-64-nac.yml`.
-
-```
-# CD into the root klay_beam dir to the launch script:
-python bin/run_job_extract_nac.py \
-    --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
-    --nac_name dac \
-    --nac_input_sr 44100 \
-    --audio_suffix .wav \
-
-python bin/run_job_extract_nac.py \
-    --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
-    --nac_name encodec \
-    --nac_input_sr 48000 \
-    --audio_suffix .wav \
-
-# Run remote job with autoscaling
-python bin/run_job_extract_nac.py \
-    --runner DataflowRunner \
-    --project klay-training \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --machine_type n1-standard-2 \
-    --region us-central1 \
-    --max_num_workers 1000 \
-    --autoscaling_algorithm THROUGHPUT_BASED \
-    --experiments use_runner_v2 \
-    --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract-ecdc-48k/ \
-    --setup_file ./job_nac/setup.py \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-nac \
-    --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --nac_name encodec \
-    --nac_input_sr 48000 \
-    --audio_suffix .wav \
-    --job_name 'extract-ecdc-002'
-
-
-    --number_of_worker_harness_threads 1 \
-    --experiments no_use_multiple_sdk_containers
-
-# Possible test values for --source_audio_path
-    'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
-
-# Options for --autoscaling-algorithm
-    THROUGHPUT_BASED, NONE
-
-# Extra options to consider
-
-Reduce the maximum number of threads that run DoFn instances. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#reduce-threads
-    --number_of_worker_harness_threads
-
-Create one Apache Beam SDK process per worker. Prevents the shared objects and
-data from being replicated multiple times for each Apache Beam SDK process. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#one-sdk
-    --experiments=no_use_multiple_sdk_containers
-```
-
+Job for extracting EnCodec features. See job_nac/README.md for details.
 """
+
+
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-docker-py3.9-beam2.51-torch2.0"
 
 
 def parse_args():
@@ -149,6 +92,13 @@ def run():
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
+    # Set the default docker image if we're running on Dataflow
+    if (
+        pipeline_options.view_as(StandardOptions).runner == "DataflowRunner"
+        and pipeline_options.view_as(WorkerOptions).sdk_container_image is None
+    ):
+        pipeline_options.view_as(WorkerOptions).sdk_container_image = DEFAULT_IMAGE
+
     # Pattern to recursively find audio files inside source_audio_path
     match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
 
@@ -184,7 +134,7 @@ def run():
             audio_files
             | f"Resample: {extract_fn.sample_rate}Hz"
             >> beam.ParDo(
-                ResampleAudio(
+                ResampleTorchaudioTensor(
                     source_sr_hint=48_000,
                     target_sr=extract_fn.sample_rate,
                 )

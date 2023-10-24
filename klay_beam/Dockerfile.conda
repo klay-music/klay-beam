@@ -1,10 +1,7 @@
 # Example usage:
-# docker build -f Dockerfile.klay-beam-nac -t klay-beam:nac .
+# docker build -f Dockerfile.conda -t klay-beam:py310 .
 
-# Conda + Apache Beam
-#
-# We need two prelimiary images for our multistage build: Apache Beam SDK and
-# Conda
+# Use two prelimiary images for our multistage build: Apache Beam SDK and Conda.
 #
 # 1. Apache Beam SDK
 #
@@ -32,45 +29,61 @@
 #
 # TLDR:
 # PY_VERSION must match the python version specified in environment.yml
+ARG PY_VERSION=3.10
 # BEAM_VERSION must match the version specified in pyproject.toml
-ARG PY_VERSION=3.9
-ARG BEAM_VERSION=2.49.0
-ARG CONDA_LOCK_NAME=006-nac
+ARG BEAM_VERSION=2.50.0
+# Path to the conda lock file as seen by the docker build context
+ARG LOCAL_CONDA_LOCK=./environment/py310-torch.linux-64.lock
+
 
 FROM apache/beam_python${PY_VERSION}_sdk:${BEAM_VERSION} as beam
-ARG PY_VERSION
-ARG BEAM_VERSION
-ARG CONDA_LOCK_NAME
 
 
 # Build the conda environment
 FROM condaforge/mambaforge:latest as conda
 ARG PY_VERSION
 ARG BEAM_VERSION
-ARG CONDA_LOCK_NAME
+ARG LOCAL_CONDA_LOCK
+# Path to the conda lock file in the docker image (relative to WORKDIR)
+ARG DOCKER_CONDA_LOCK=./environment/env.lock
 
 WORKDIR /klay/build
 
 # create the conda environment in /env (intalling packages by copying)
-COPY ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock ./environment/conda-linux-64.${CONDA_LOCK_NAME}.lock
-RUN mamba create --copy -p /env --file environment/conda-linux-64.${CONDA_LOCK_NAME}.lock && conda clean -afy
+COPY ${LOCAL_CONDA_LOCK} ${DOCKER_CONDA_LOCK}
+RUN mamba create --copy -p /env --file ${DOCKER_CONDA_LOCK} && conda clean -afy
 
 # Clean in a separate layer as calling conda still generates some __pycache__ files
 RUN find -name '*.a' -delete && \
   rm -rf /env/conda-meta && \
   rm -rf /env/include && \
-  rm /env/lib/libpython3.9.so.1.0 && \
+  rm /env/lib/libpython${PY_VERSION}.so.1.0 && \
   find -name '__pycache__' -type d -exec rm -rf '{}' '+' && \
-  # find /env/lib/python3.9/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  find /env/lib/python3.9/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  # find /env/lib/python3.9/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' && \
-  find /env/lib/python3.9/site-packages -name '*.pyx' -delete
+  find /env/lib/python${PY_VERSION}/site-packages/scipy -name 'tests' -type d -exec rm -rf '{}' '+' || : && \
+  find /env/lib/python${PY_VERSION}/site-packages/numpy -name 'tests' -type d -exec rm -rf '{}' '+' || : && \
+  find /env/lib/python${PY_VERSION}/site-packages/pandas -name 'tests' -type d -exec rm -rf '{}' '+' || : && \
+  find /env/lib/python${PY_VERSION}/site-packages -name '*.pyx' -delete
 
 
 # python:3.10-slim comes from debian-12-slim
 FROM python:${PY_VERSION}-slim
 ARG PY_VERSION
 ARG BEAM_VERSION
+
+# By default, Beam will create a new python virtual environment to run the job.
+# Suppress this behavior by setting this environment variable. See:
+# https://github.com/apache/beam/blob/65ef48888fa8ee5e4c61cf3eeaf5900f1e8be65b/sdks/python/container/boot.go#L160-L178
+#
+# Note: this environment variable is supported in apache_beam >= 2.48.0. See:
+# https://github.com/apache/beam/blob/master/CHANGES.md#breaking-changes-6
+ENV RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1
+
+# In Dataflow, when running with GPU support, a volume with GPU drivers will be
+# mounted at runtime at /usr/local/nvidia.
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/nvidia/lib64:/usr/local/cuda/lib64
+
+# Set the entrypoint to Apache Beam SDK launcher.
+ENTRYPOINT ["/opt/apache/beam/boot"]
 
 # Copy files from official SDK image, including script/dependencies.
 COPY --from=beam /opt/apache/beam /opt/apache/beam
@@ -84,25 +97,14 @@ RUN . /env/bin/activate
 ENV PATH="/env/bin:$PATH"
 
 # Install submodules and klay_beam
-COPY klay_beam ./klay_beam
-COPY job_nac ./job_nac
+COPY . ./klay_beam
 
-# If you change submodules below, you also may want to also change the local
-# conda environment.
+# klay_beam lists apache-beam as a dependency, but has a loose version
+# requirement. Ensure that the version we install is explicit, and matches the
+# source container of our /opt/apache/beam directory.
 RUN python3 -m pip install \
-  './klay_beam[code-style, tests, type-check]' \
-  './job_nac[code-style, tests, type-check]'
+  apache-beam[gcp]==${BEAM_VERSION} \
+  './klay_beam[code-style, tests, type-check]'
 
 # Verify that the image does not have conflicting dependencies.
 RUN pip check
-
-# In some situations, Beam will create a new python virtual environment to run
-# the job. Suppress this behavior by setting this environment variable. See:
-# https://github.com/apache/beam/blob/65ef48888fa8ee5e4c61cf3eeaf5900f1e8be65b/sdks/python/container/boot.go#L160-L178
-ENV RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1
-
-# Set the entrypoint to Apache Beam SDK launcher.
-ENTRYPOINT ["/opt/apache/beam/boot"]
-
-# A volume with GPU drivers will be mounted at runtime at /usr/local/nvidia.
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/nvidia/lib64:/usr/local/cuda/lib64

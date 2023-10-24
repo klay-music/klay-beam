@@ -9,11 +9,14 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
   "numpy",
-  "klay_beam>=0.10",
-  "torch",
-  "torchaudio",
+  "klay_beam[pytorch]>=0.11",
   "encodec",
   "descript-audio-codec@git+https://github.com/klay-music/descript-audio-codec.git",
+  # Job packages can and should pin a beam version. This is because beam
+  # must also be pinned in the Docker image. An ugrade to the beam version
+  # should necessitate an upgrade to the job package and the recommended
+  # Docker image.
+  "apache_beam[gcp]~=2.51",
 ]
 requires-python = ">=3.9"
 

@@ -1,7 +1,7 @@
 import librosa
 import numpy as np
 
-from klay_beam.torch_utils import TORCH_AVAILABLE, TORCH_IMPORT_ERROR
+from klay_beam.torch_utils import TORCH_AVAILABLE
 from ..utils import skip_if_no_torch
 
 if TORCH_AVAILABLE:
