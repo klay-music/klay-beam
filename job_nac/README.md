@@ -3,13 +3,11 @@
 Neural audio encoding with EnCodec and Descript Audio Codec.
 
 1. Recursively search a path for `.wav` files
-1. For each audio file, extract Neural audio tokens
+1. For each audio file, extract neural audio tokens
 1. Write the results as a file adjacent to the source audio file
 
-To run, activate a suitable python environment such as:
+To run, activate a suitable python environment such as `environment/nac.dev.yml`.
 
--`environment/nac.mac.yml`.
--`environment/nac.dev.yml`
 
 ```bash
 # Example invocation to run locally
@@ -30,16 +28,15 @@ python bin/run_job_extract_nac.py \
 # Run remote job with autoscaling
 python bin/run_job_extract_nac.py \
     --runner DataflowRunner \
-    --project klay-training \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+    --project klay-beam-tests \
+    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
     --region us-central1 \
     --max_num_workers 1000 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
     --temp_location gs://klay-dataflow-test-000/tmp/extract-ecdc-48k/ \
-    --setup_file ./job_nac/setup.py \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-nac \
+    --setup_file ./setup.py \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --nac_name encodec \
@@ -51,7 +48,7 @@ python bin/run_job_extract_nac.py \
 
 
 # Possible test values for --source_audio_path
-    'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
+    'klay-dataflow-test-000/test-audio/abbey_road/wav' \
 
 # Options for --autoscaling-algorithm
     THROUGHPUT_BASED, NONE

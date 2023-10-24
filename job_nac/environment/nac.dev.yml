@@ -1,4 +1,4 @@
-name: nac
+name: nac-dev
 
 channels:
   - defaults
@@ -10,10 +10,11 @@ dependencies:
   # that we want.
   - numpy=1.23
   - ffmpeg>=4.2,<5
-  - pytorch::pytorch>=1.12
-  - pytorch::torchaudio>=0.8
+  # Pin pytorch to guarantee the same version in Docker/Dataflow runtime
+  - pytorch::pytorch=2.0
+  - pytorch::torchaudio=2.0
   - pip
 
   - pip:
-    - -e '../../klay_beam'
+    - -e '../../klay_beam[pytorch]'
     - -e '../.[code-style, tests, type-check]'
