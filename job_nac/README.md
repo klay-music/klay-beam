@@ -27,8 +27,8 @@ python bin/run_job_extract_nac.py \
 # Run remote job with autoscaling
 python bin/run_job_extract_nac.py \
     --runner DataflowRunner \
-    --project klay-beam-tests \
-    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
+    --project klay-training \
+    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --region us-central1 \
     --max_num_workers 1000 \
     --autoscaling_algorithm THROUGHPUT_BASED \
