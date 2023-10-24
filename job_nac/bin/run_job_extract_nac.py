@@ -5,15 +5,22 @@ from typing import Union
 
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
-from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.options.pipeline_options import SetupOptions
+from apache_beam.options.pipeline_options import (
+    PipelineOptions,
+    SetupOptions,
+    StandardOptions,
+    WorkerOptions,
+)
 
 from klay_beam.transforms import (
-    LoadWithTorchaudio,
-    ResampleAudio,
     SkipCompleted,
     write_file,
     numpy_to_file,
+)
+
+from klay_beam.torch_transforms import (
+    LoadWithTorchaudio,
+    ResampleTorchaudioTensor,
 )
 
 from job_nac.transforms import ExtractDAC, ExtractEncodec
@@ -22,6 +29,9 @@ from job_nac.transforms import ExtractDAC, ExtractEncodec
 """
 Job for extracting EnCodec features. See job_nac/README.md for details.
 """
+
+
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-docker-py3.9-beam2.51-torch2.0"
 
 
 def parse_args():
@@ -82,6 +92,13 @@ def run():
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
+    # Set the default docker image if we're running on Dataflow
+    if (
+        pipeline_options.view_as(StandardOptions).runner == "DataflowRunner"
+        and pipeline_options.view_as(WorkerOptions).sdk_container_image is None
+    ):
+        pipeline_options.view_as(WorkerOptions).sdk_container_image = DEFAULT_IMAGE
+
     # Pattern to recursively find audio files inside source_audio_path
     match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
 
@@ -117,7 +134,7 @@ def run():
             audio_files
             | f"Resample: {extract_fn.sample_rate}Hz"
             >> beam.ParDo(
-                ResampleAudio(
+                ResampleTorchaudioTensor(
                     source_sr_hint=48_000,
                     target_sr=extract_fn.sample_rate,
                 )
