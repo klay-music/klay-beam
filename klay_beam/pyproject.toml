@@ -3,9 +3,10 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "klay_beam"
-description = ""
+name = "klay-beam"
+description = "Toolkit for massively parallel audio processing via Apache Beam"
 readme = "README.md"
+license = { file = "LICENSE" }
 dynamic = ["version"]
 dependencies = [
   "apache-beam[gcp]",

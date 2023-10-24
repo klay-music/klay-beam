@@ -2,6 +2,9 @@
 
 Helpers for running massively parallel Apache Beam jobs on audio data.
 
+**NOTE:** This is Beta. Documentation is incomplete. Expect breaking changes
+prior to v1.0.
+
 Processing large batches of audio data can be very time consuming. It is often
 helpful to spin up many instances to apply transformations or extract features
 from a large audio dataset. This package bundles a collection of utility methods
@@ -140,7 +143,7 @@ make type-check
 In Apache Beam, a **Pipeline** is a Directed Acyclic Graph.
 - Each node in the graph is a data processing operation called a **PTransform**
 or "Parallel Transform".
-- **PTransforms** accept oen or more **PCollections** as input, and output one
+- **PTransforms** accept one or more **PCollections** as input, and output one
   or more **PCollections**
 -
 
