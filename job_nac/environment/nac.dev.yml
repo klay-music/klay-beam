@@ -14,5 +14,4 @@ dependencies:
   - pip
 
   - pip:
-    - -e '../../klay_beam[pytorch]'
     - -e '..[code-style, tests, type-check]'
