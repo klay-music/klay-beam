@@ -1,4 +1,4 @@
-name: beam-py3.9-torch2.1
+name: beam-py3.9-torch2.0
 
 channels:
   - defaults
