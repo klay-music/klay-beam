@@ -6,8 +6,6 @@ channels:
 
 dependencies:
   - python=3.9
-  # If we install numpy 1.25, pip replaces it later on. Just start with the one
-  # that we want.
   - numpy=1.23
   - ffmpeg>=4.2,<5
   # Pin pytorch to guarantee the same version in Docker/Dataflow runtime
@@ -17,4 +15,4 @@ dependencies:
 
   - pip:
     - -e '../../klay_beam[pytorch]'
-    - -e '../.[code-style, tests, type-check]'
+    - -e '..[code-style, tests, type-check]'
