@@ -24,56 +24,64 @@ The core transformations include:
 ## Example Job
 
 The example job uses the following ingredients:
-- `bin/run_job_example.py` pipeline script
-- `klay-beam:0.2.0` docker container
+- `klay_beam.run_example` pipeline script
+- A specialized docker image created by `Makefile`
 - `environment/py310-torch.local.yml` local environment
 
+Notes:
+
+
 To run the example job:
-1. Talk to Charles or Max for GCP IAP permissions
+1. Ensure you have GCP permissions
 2. Activate a `klay-beam` conda environment locally, (for example
    `environment/py310-torch.local.yml`)
-3. Run `bin/run_job_example.py` (see example below for arguments)
+3. Invoke `python -m klay_beam.run_example` as per examples below
 
 ```bash
-# Run Locally in the klay-beam conda environment. Running locally allows you to
-# use --input and --output paths on your local filesystem OR in object storage.
-python bin/run_job_example.py \
-    --input 'gs://klay-dataflow-test-000/test-audio/fma_large/005/00500*.mp3' \
-    --output 'test_audio/job_output/{}.wav' \
-    --runner Direct
+# Running locally allows you to use --source_audio_path values paths on your
+# local filesystem OR in gs://object-storage.
+python -m klay_beam.run_example \
+    --runner Direct \
+    --source_audio_suffix .mp3 \
+    --source_audio_path '/local/path/to/mp3s/'
 ```
 
 ```bash
 # Run remotely via GCP Dataflow. Should be executed in the `klay-beam` conda
 # environment to ensure Beam SDK, python, and dependency parity between the
 # local environment and Worker environments.
-python bin/run_job_example.py \
-    --region us-east1 \
-    --autoscaling_algorithm THROUGHPUT_BASED \
+
+KLAY_BEAM_CONTAINER=us-docker.pkg.dev/<your-gcp-project>/<your-docker-artifact-registry>/<your-docker-image>:<tag>
+SERVICE_ACCOUNT_EMAIL=<your-service-account>@<your-gcp-project>.iam.gserviceaccount.com
+TEMP_GS_URL=gs://<your-gs-bucket>/<your-writable-dir/>
+AUDIO_URL='gs://<your-audio-bucket>/audio/'
+
+python -m klay_beam.run_example \
     --runner DataflowRunner \
-    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
-    --disk_size_gb 50 \
+    --max_num_workers=128 \
+    --region us-central1 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --service_account_email ${SERVICE_ACCOUNT_EMAIL} \
     --experiments=use_runner_v2 \
-    --sdk_container_image us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.2.0 \
+    --sdk_container_image ${KLAY_BEAM_CONTAINER} \
     --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/ \
-    --project klay-beam-tests \
-    --input 'gs://klay-dataflow-test-000/test-audio/fma_large/005/**' \
-    --output 'gs://klay-dataflow-test-000/results/outputs/17/{}.wav' \
-    --job_name 'klay-audio-test-017'
+    --temp_location ${TEMP_GS_URL} \
+    --project klay-training \
+    --source_audio_suffix .mp3 \
+    --source_audio_path ${AUDIO_URL} \
+    --machine_type n1-standard-8 \
+    --job_name 'example-job-000'
 ```
 
 Notes:
 
-- When running remotely you can use the `--setup_file` option to upload a local
-  package to the workers. For example `--setup_file=./klay_beam/setup.py` would
-  cause `klay_beam` to be bundled as an `sdist` (when you execute
-  `bin/run_job_example.py`) and installed on the worker nodes replacing any existing
-  installation of `klay_beam` that may be in the docker container. Any missing
-  pip dependencies specified in `pyproject.toml` will also be installed at
-  runtime.
-- When running on Dataflow, view the job execution details and logs at
-  https://console.cloud.google.com/dataflow/jobs?project=klay-beam-tests
+- When running on Dataflow you can use the `--setup_file` option to upload a
+  local package to the workers. For example, when running with
+  `--runner DataflowRunner`, `--setup_file=./your_job/setup.py` would cause
+  `your_job` to be bundled as an `sdist` and installed on the worker nodes
+  replacing any existing installation of `your_job` that may be in the docker
+  container. Any missing pip dependencies specified in `your_job/pyproject.toml`
+  will also be installed at runtime.
 - options for `--autoscaling_algorithm` are `THROUGHPUT_BASED` and `NONE`
 
 # Development
@@ -101,20 +109,7 @@ ffmpeg 4) should be included in the docker container.
 
 ### Docker Build Steps
 
-These steps build the Docker container and push to our GCP docker registry.
-
-1. `cd ..` return to parent dir
-1. `./make-conda-lock-file.sh klay_beam/environment/py310-torch.linux-64.yml` to generate a new
-   `klay_beam/environment/py310-torch.linux-64.lock`. **IMPORTANT: Only run this step
-   when you are changing the conda dependencies in the
-   `klay_beam/environment/py310-torch.linux-64.yml` file.**
-2. Run `docker build -f Dockerfile.klay-beam -t klay-beam:latest .`
-3. Edit `tag-klay-beam-py310.sh` to update the version, for example `0.2.0-rc.2`
-4. Configure docker to authorize it to write to the artifact registry: `gcloud auth configure-docker us-docker.pkg.dev` (only needs to be done once)
-5. Run `tag-klay-beam-py310.sh` to tag and push to GCP.
-
-To test the container interactively:
-`docker run --rm -it --entrypoint /bin/sh klay-beam:latest`
+See an example of building a Compatible docker image in `Makefile`.
 
 ## Code Quality
 ### Testing
