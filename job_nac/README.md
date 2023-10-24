@@ -62,17 +62,6 @@ python environment first):
 pip install [-e] '.[code-style, type-check, tests]'
 ```
 
-## Conda .lock file
-
-The `environment/nac.linux-64.lock` is used for the Docker container. It is
-derived from `environment/nac-linux-64.lock`. If you update the dependencies in
-the `.yml` you must re-generate the lock file:
-
-```bash
-# CD into the parent directory, and run:
-./make-conda-lock-file.sh job_nac/environment/nac.linux-64.yml
-```
-
 ## Dependencies
 ### conda
 We use `pip` to handle python dependencies.  To create or update an environment:
