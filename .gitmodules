@@ -1,9 +1,0 @@
-[submodule "submodules/klay-data"]
-	path = submodules/klay-data
-	url = git@github.com:klay-music/klay-data.git
-[submodule "submodules/klaypy"]
-	path = submodules/klaypy
-	url = git@github.com:klay-music/klaypy.git
-[submodule "submodules/semantic-model"]
-	path = submodules/semantic-model
-	url = git@github.com:klay-music/semantic-model.git
