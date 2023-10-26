@@ -31,7 +31,7 @@ Job for extracting EnCodec features. See job_nac/README.md for details.
 """
 
 
-DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-docker-py3.9-beam2.51-torch2.0"
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-py3.10-beam2.51.0-torch2.0"
 
 
 def parse_args():
