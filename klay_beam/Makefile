@@ -20,7 +20,14 @@ tests:
 %.lock : %.yml
 	./make-conda-lock-file.sh $<
 
-VERSION=$(shell ./get_version.sh)
+
+# Extract klay_beam.__version__ via get_version.sh. Abort if the script fails.
+GET_VERSION_ERROR := $(shell ./get_version.sh >/dev/null; echo $$?)
+ifeq ($(GET_VERSION_ERROR),0)
+    VERSION := $(shell ./get_version.sh)
+else
+    $(error ./get_version.sh error: $(shell ./get_version.sh))
+endif
 
 
 #############
@@ -31,7 +38,7 @@ docker-py3.9-beam2.51.0-torch2.0: ./environment/py3.9-torch2.0.lock
 	docker build \
 	-f Dockerfile.conda \
 	-t klay-beam:latest \
-	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(VERSION)-docker-py3.9-beam$(BEAM_VERSION)-torch2.0 \
+	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(VERSION)-py3.9-beam$(BEAM_VERSION)-torch2.0 \
 	--build-arg="PY_VERSION=3.9" \
 	--build-arg="LOCAL_CONDA_LOCK=$<" \
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
