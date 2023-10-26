@@ -1,78 +1,35 @@
 import argparse
 import os.path
 import logging
-
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
-from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.options.pipeline_options import SetupOptions
+
+from apache_beam.options.pipeline_options import (
+    PipelineOptions,
+    SetupOptions,
+    StandardOptions,
+    WorkerOptions,
+)
 
 from klay_beam.transforms import (
-    LoadWithTorchaudio,
-    ResampleAudio,
-    ExtractChromaFeatures,
     SkipCompleted,
     write_file,
     numpy_to_file,
 )
 
+from klay_beam.torch_transforms import (
+    LoadWithTorchaudio,
+    ResampleTorchaudioTensor,
+)
+
+from job_chroma.transforms import ExtractChromaFeatures
+
 
 """
-Job for extracting EnCodec and Chroma features:
-
-1. Recursively search a path for `.<something>.wav` files
-   (`--source_audio_path`) where `<something>` is one of `source`, `bass`,
-   `vocals`, `drums`, or `other` as specified by `--stem`. If no stem is given,
-    all .wav files will be extracted.
-1. For each audio file, extract features
-1. Write the results to an .npy file adjacent to the source audio file
-
-To run, activate a suitable python environment such as one of
-- `klay_beam/environment/py310-torch.local.yml`
-- `klay_beam/environment/py310-torch.linux-64.yml`
-
-```
-# CD into the root klay_beam dir to the launch script:
-python bin/run_job_extract_chroma.py \
-    --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
-
-# Run remote job with autoscaling
-python bin/run_job_extract_chroma.py \
-    --project klay-training \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --machine_type n1-standard-2 \
-    --region us-central1 \
-    --max_num_workers=550 \
-    --autoscaling_algorithm THROUGHPUT_BASED \
-    --runner DataflowRunner \
-    --experiments=use_runner_v2 \
-    --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.8.1-py310 \
-    --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --job_name 'extract-chroma-006'
-
-# Possible test values for --source_audio_path
-    'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
-
-# Options for --autoscaling-algorithm
-    THROUGHPUT_BASED, NONE
-
-# Extra options to consider
-
-Reduce the maximum number of threads that run DoFn instances. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#reduce-threads
-    --number_of_worker_harness_threads
-
-Create one Apache Beam SDK process per worker. Prevents the shared objects and
-data from being replicated multiple times for each Apache Beam SDK process. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#one-sdk
-    --experiments=no_use_multiple_sdk_containers
-```
-
+Job for extracting Chroma features:
 """
+
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.12.0-py3.10-beam2.51.0-torch2.0"
 
 
 def parse_args():
@@ -114,8 +71,14 @@ def run():
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
-    # Pattern to recursively find mp3s inside source_audio_path
+    # Set the default docker image if we're running on Dataflow
+    if (
+        pipeline_options.view_as(StandardOptions).runner == "DataflowRunner"
+        and pipeline_options.view_as(WorkerOptions).sdk_container_image is None
+    ):
+        pipeline_options.view_as(WorkerOptions).sdk_container_image = DEFAULT_IMAGE
 
+    # Pattern to recursively find audio inside source_audio_path
     match_pattern = os.path.join(known_args.input, "**.wav")
     if known_args.stem is not None:
         match_pattern = os.path.join(known_args.input, f"**.{known_args.stem}.wav")
@@ -134,7 +97,6 @@ def run():
                     old_suffix=".wav",
                     # CAUTION! This if we change the chroma parameters, we need to change this too
                     new_suffix=".chroma_50hz.npy",
-                    check_timestamp=True,
                 )
             )
             # ReadMatches produces a PCollection of ReadableFile objects
@@ -142,15 +104,15 @@ def run():
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
         )
 
-        chroma_audio_sr = 16_000
+        CHROMA_AUDIO_SR = 16_000
 
         (
             audio_files
-            | "Resample: 16k"
+            | f"Resample to F{CHROMA_AUDIO_SR}"
             >> beam.ParDo(
-                ResampleAudio(
+                ResampleTorchaudioTensor(
                     source_sr_hint=48_000,
-                    target_sr=chroma_audio_sr,
+                    target_sr=CHROMA_AUDIO_SR,
                 )
             )
             | "ExtractChroma"
@@ -158,7 +120,7 @@ def run():
                 ExtractChromaFeatures(
                     # CAUTION! This if we change the chroma parameters, we need
                     # to also update the SkipCompleted transform.
-                    audio_sr=chroma_audio_sr,
+                    audio_sr=CHROMA_AUDIO_SR,
                     n_chroma=12,
                     n_fft=2048,
                     win_length=1280,
