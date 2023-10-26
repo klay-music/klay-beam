@@ -31,7 +31,7 @@ class ExtractChromaFeatures(beam.DoFn):
         n_fft: int = 2048,
         win_length: int = 2048,
         hop_length: Union[int, None] = None,
-        norm: float = INF,
+        norm: float = torch.inf,
         device: Union["torch.device", str] = "cpu",
     ):
         self._audio_sr = audio_sr
