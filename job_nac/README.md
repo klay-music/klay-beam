@@ -50,7 +50,7 @@ python bin/run_job_extract_nac.py \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --region us-central1 \
-    --max_num_workers 1000 \
+    --max_num_workers 200 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
@@ -60,7 +60,7 @@ python bin/run_job_extract_nac.py \
     --nac_name encodec \
     --nac_input_sr 48000 \
     --audio_suffix .wav \
-    --machine_type n1-standard-8 \
+    --machine_type n1-standard-4 \
     --job_name 'extract-nac-002'
 
 
@@ -69,6 +69,19 @@ python bin/run_job_extract_nac.py \
 
 # Options for --autoscaling-algorithm
     THROUGHPUT_BASED, NONE
+
+# EnCodec on Dataflow --number_of_worker_harness_threads can be almost be
+# omitted. This would set it to the number of vCPUs so when
+# --machine-type=n1-standard-8, then --number_of_worker_harness_threads defaults
+# to 8. My test job completed successfully, but there were quite a few OOM
+# crashes. Next time I would try:
+    --machine_type n1-standard-8 \
+    --number_of_worker_harness_threads 6 \
+
+# DAC is more resource hungry. THe following succeeded, but still had OOM errors
+# (including OOM errors). See issue #47.
+    --machine_type n1-standard-8 \
+    --number_of_worker_harness_threads 2 \
 ```
 
 # Development
