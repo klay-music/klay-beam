@@ -1,0 +1,11 @@
+name: stem-classifier-dev
+
+channels:
+  - defaults
+
+dependencies:
+  - python=3.9
+  - pip
+
+  - pip:
+    - -e '..[code-style, tests, type-check]'
