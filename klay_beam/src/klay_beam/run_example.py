@@ -25,7 +25,7 @@ python -m klay_beam.run_example \
     --source_audio_suffix .mp3 \
     --source_audio_path ${AUDIO_URL}
 
-    
+
 KLAY_BEAM_CONTAINER=us-docker.pkg.dev/<your-gcp-project>/<your-docker-artifact-registry>/<your-docker-image>:<tag>
 SERVICE_ACCOUNT_EMAIL=dataset-dataflow-worker@klay-training.iam.gserviceaccount.com
 TEMP_GS_URL=gs://<your-gs-bucket>/<your-writable-dir/>
