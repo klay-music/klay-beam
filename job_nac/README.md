@@ -12,19 +12,39 @@ To run, activate the conda dev+launch environment: `environment/nac.dev.yml`.
 # Example invocation to run locally
 python bin/run_job_extract_nac.py \
     --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
     --nac_name dac \
     --nac_input_sr 44100 \
     --audio_suffix .wav \
+    --source_audio_path '/absolute/path/to/source.wav/files/'
 
 python bin/run_job_extract_nac.py \
     --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
     --nac_name encodec \
     --nac_input_sr 48000 \
     --audio_suffix .wav \
+    --source_audio_path '/absolute/path/to/source.wav/files/'
 
-# Run remote job with autoscaling
+# Run remote job in a test environment (GCP Project: klay-beam-tests)
+python bin/run_job_extract_nac.py \
+    --runner DataflowRunner \
+    --project klay-beam-tests \
+    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
+    --region us-central1 \
+    --max_num_workers 50 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --experiments use_runner_v2 \
+    --sdk_location container \
+    --temp_location gs://klay-dataflow-test-000/tmp/nac-test/ \
+    --setup_file ./setup.py \
+    --source_audio_path 'gs://klay-dataflow-test-000/glucose-karaoke/' \
+    --nac_name encodec \
+    --nac_input_sr 48000 \
+    --audio_suffix .wav \
+    --machine_type n1-standard-8 \
+    --job_name 'extract-nac-test'
+
+
+# Run remote job with autoscaling (GCP project: klay-training)
 python bin/run_job_extract_nac.py \
     --runner DataflowRunner \
     --project klay-training \
@@ -34,16 +54,14 @@ python bin/run_job_extract_nac.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract-ecdc-48k/ \
+    --temp_location gs://klay-dataflow-test-000/tmp/nac/ \
     --setup_file ./setup.py \
-    --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --source_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --nac_name encodec \
     --nac_input_sr 48000 \
     --audio_suffix .wav \
-    --machine_type n1-standard-2 \
-    --number_of_worker_harness_threads 2 \
-    --job_name 'extract-ecdc-002'
+    --machine_type n1-standard-8 \
+    --job_name 'extract-nac-002'
 
 
 # Possible test values for --source_audio_path
