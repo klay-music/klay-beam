@@ -1,5 +1,11 @@
 name: nac-dev
 
+# This describes the development and launch environment.
+#
+# IMPORTANT: If you change the dependencies here, you should also make sure the
+# default Docker image (which is likely pined in the bin/run_job_<name>.py
+# script) also reflects your changes.
+
 channels:
   - defaults
   - conda-forge

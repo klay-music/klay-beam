@@ -30,7 +30,20 @@ from job_nac.transforms import ExtractDAC, ExtractEncodec
 Job for extracting EnCodec features. See job_nac/README.md for details.
 """
 
-
+# NOTE: the dependencies versions in Docker image must match the dependencies in
+# the launch/dev environment. When updating dependencies, make sure that the
+# docker image you specify for remote jobs also provides the correct
+# dependencies. Here's where to look for each dependency.
+#
+# - pyproject.toml pins:
+#   - apache_beam
+#   - klay_beam
+# - environment/dev.yml pins:
+#   - pytorch
+#   - python
+#
+# The default docker container specified in the bin/run_job_<name>.py script
+# should provide identical dependencies.
 DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.12.1-py3.9-beam2.51.0-torch2.0"
 
 

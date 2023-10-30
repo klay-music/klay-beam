@@ -6,7 +6,7 @@ Neural audio encoding with EnCodec and Descript Audio Codec.
 1. For each audio file, extract neural audio tokens
 1. Write the results as a file adjacent to the source audio file
 
-To run, activate the conda dev+launch environment: `environment/nac.dev.yml`.
+To run, activate the conda dev+launch environment: `environment/dev.yml`.
 
 ```bash
 # Example invocation to run locally
