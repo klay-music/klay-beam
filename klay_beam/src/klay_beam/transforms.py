@@ -1,6 +1,6 @@
 import pathlib
 import io
-from typing import Optional, Type, Union, List
+from typing import Optional, Type, Union, List, Tuple
 from packaging import version as packaging_version
 import apache_beam as beam
 from apache_beam.io import filesystems
@@ -187,7 +187,7 @@ def numpy_to_file(numpy_data: np.ndarray):
     return in_memory_file_buffer
 
 
-def extract_wds_id_and_ext(readable_file):
+def extract_wds_id_and_ext(readable_file: beam_io.ReadableFile):
     """Given an apache_beam ReadableFile, get a WebDataset style id and
     extension, where the id is everything up the first dot in the filename, and
     the extension is everything after the first dot in the filename.
@@ -200,7 +200,7 @@ def extract_wds_id_and_ext(readable_file):
     return (id, ext)
 
 
-def write_file(output_path_and_buffer):
+def write_file(output_path_and_buffer: Tuple[str, io.BytesIO]):
     """Helper function for writing a buffer to a given path. This should be able
     to handle gs:// style paths as well as local paths.
 

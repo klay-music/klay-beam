@@ -1,28 +1,12 @@
-import logging
 import math
 from librosa import cqt, filters
 import numpy as np
 from typing import Union
 
-
-TORCH_AVAILABLE = False
-TORCH_IMPORT_ERROR = None
-
-try:
-    import torch
-    import torchaudio
-    import torch.nn
-    import torch.nn.functional as F
-    from torchaudio.transforms import Spectrogram
-
-    if torchaudio.__version__ < "0.8.0":
-        raise ImportError(
-            "Incompatible version of torchaudio is installed. Install version 0.8.0 or newer."
-        )
-    TORCH_AVAILABLE = True
-except ImportError as e:
-    TORCH_IMPORT_ERROR = e
-    logging.info(f"torchaudio is not available: {e}")
+import torch
+import torch.nn
+import torch.nn.functional as F
+from torchaudio.transforms import Spectrogram
 
 
 class ChromaExtractor(torch.nn.Module):

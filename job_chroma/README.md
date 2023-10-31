@@ -1,57 +1,64 @@
-# job_nac
+# job_chroma
 
-Neural audio encoding with EnCodec and Descript Audio Codec.
+Extract chroma features from audio files.
 
 1. Recursively search a path for `.wav` files
-1. For each audio file, extract neural audio tokens
-1. Write the results as a file adjacent to the source audio file
+1. For each audio file, extract chroma features
+1. Write the results as a `.npy` adjacent to the source audio file
 
-To run, activate the conda dev+launch environment: `environment/nac.dev.yml`.
+To run, activate the conda dev+launch environment: `environment/dev.yml`.
 
 ```bash
-# Example invocation to run locally
-python bin/run_job_extract_nac.py \
+# CD into the root klay_beam dir to the launch script:
+python bin/run_job_extract_chroma.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
-    --nac_name dac \
-    --nac_input_sr 44100 \
-    --audio_suffix .wav \
 
-python bin/run_job_extract_nac.py \
-    --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
-    --nac_name encodec \
-    --nac_input_sr 48000 \
-    --audio_suffix .wav \
-
-# Run remote job with autoscaling
-python bin/run_job_extract_nac.py \
-    --runner DataflowRunner \
-    --project klay-training \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+# Run remote job in test sandbox GCP project. NOTE: even with only 8 parallel
+# jobs per node, this was able to overload cloud storage (once, with a 503
+# error) on a test dataset of 4 songs. Larger datasets should allow for more
+# parallelism. Additionally, the bottleneck may be a result of all 8 connections
+# from the same IP address which could be mitigated with a high-node count and
+# low parallelism within each node.
+python bin/run_job_extract_chroma.py \
+    --project klay-beam-tests \
+    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
+    --machine_type n1-standard-8 \
     --region us-central1 \
-    --max_num_workers 1000 \
+    --max_num_workers 50 \
     --autoscaling_algorithm THROUGHPUT_BASED \
+    --runner DataflowRunner \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract-ecdc-48k/ \
     --setup_file ./setup.py \
-    --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --nac_name encodec \
-    --nac_input_sr 48000 \
-    --audio_suffix .wav \
-    --machine_type n1-standard-2 \
-    --number_of_worker_harness_threads 2 \
-    --job_name 'extract-ecdc-002'
+    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
+    --source_audio_path 'gs://klay-dataflow-test-000/glucose-karaoke/' \
+    --job_name 'extract-chroma-test-000'
 
+# Run remote job with autoscaling
+python bin/run_job_extract_chroma.py \
+    --project klay-training \
+    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+    --machine_type n1-standard-8 \
+    --region us-central1 \
+    --max_num_workers 550 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --runner DataflowRunner \
+    --experiments use_runner_v2 \
+    --sdk_location container \
+    --setup_file ./setup.py \
+    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
+    --source_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --job_name 'extract-chroma-006'
 
 # Possible test values for --source_audio_path
-    'klay-dataflow-test-000/test-audio/abbey_road/wav' \
+    'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
 
 # Options for --autoscaling-algorithm
     THROUGHPUT_BASED, NONE
 ```
+
+
 
 # Development
 ## Quick Start

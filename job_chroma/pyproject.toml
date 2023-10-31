@@ -3,19 +3,25 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "job_nac"
-description = "Beam job for extracting neural audio codec (NAC) tokens"
+name = "job_chroma"
+description = "Extract chroma features for audio data"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
   "numpy",
-  "klay_beam[pytorch]~=0.11.0",
-  "encodec",
-  "descript-audio-codec@git+https://github.com/klay-music/descript-audio-codec.git",
-  # Job packages can and should pin a beam version. This is because beam
-  # must also be pinned in the Docker image. An ugrade to the beam version
-  # should necessitate an upgrade to the job package and the recommended
-  # Docker image.
+  # Job packages should pin versions for both:
+  # - apache_beam
+  # - klay_beam
+  #
+  # Both klay_beam and apache_beam are pre-installed in the docker container.
+  # Mismatched or incompatible versions between the launch and dockerized
+  # Dataflow runtime environments are likely to break the job or cause bugs that
+  # are subtle and difficult-to-detect.
+  #
+  # If you need to update either dependency, you should also update the default
+  # default docker image which is likely to specified in the the jobs launch
+  # script (bin/run_job_<name>.py).
+  "klay_beam[pytorch]>=0.11.0,<0.13.0",
   "apache_beam[gcp]~=2.51",
 ]
 requires-python = ">=3.9"
@@ -26,7 +32,7 @@ tests = ["pytest"]
 type-check = ["mypy>=0.990", "pydantic>=1.10"]
 
 [tool.setuptools.dynamic]
-version = {attr = "job_nac.__version__"}
+version = {attr = "job_chroma.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -45,3 +51,13 @@ module = [
   "apache_beam.*",
 ]
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+# Running pytest results in many warnings which are associated with google-cloud
+# apis. These warnings are not relevant to the code we are testing, filter then
+# from the output. See:
+# https://github.com/googleapis/google-cloud-python/issues/11184#issuecomment-1640884088
+filterwarnings = [
+    "ignore:Deprecated call to `pkg_resources\\.declare_namespace\\('.*'\\):DeprecationWarning",
+    "ignore::DeprecationWarning:google.rpc",
+]

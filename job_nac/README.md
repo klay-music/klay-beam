@@ -6,44 +6,62 @@ Neural audio encoding with EnCodec and Descript Audio Codec.
 1. For each audio file, extract neural audio tokens
 1. Write the results as a file adjacent to the source audio file
 
-To run, activate the conda dev+launch environment: `environment/nac.dev.yml`.
+To run, activate the conda dev+launch environment: `environment/dev.yml`.
 
 ```bash
 # Example invocation to run locally
 python bin/run_job_extract_nac.py \
     --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
     --nac_name dac \
     --nac_input_sr 44100 \
     --audio_suffix .wav \
+    --source_audio_path '/absolute/path/to/source.wav/files/'
 
 python bin/run_job_extract_nac.py \
     --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
     --nac_name encodec \
     --nac_input_sr 48000 \
     --audio_suffix .wav \
+    --source_audio_path '/absolute/path/to/source.wav/files/'
 
-# Run remote job with autoscaling
+# Run remote job in a test environment (GCP Project: klay-beam-tests)
+python bin/run_job_extract_nac.py \
+    --runner DataflowRunner \
+    --project klay-beam-tests \
+    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
+    --region us-central1 \
+    --max_num_workers 50 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --experiments use_runner_v2 \
+    --sdk_location container \
+    --temp_location gs://klay-dataflow-test-000/tmp/nac-test/ \
+    --setup_file ./setup.py \
+    --source_audio_path 'gs://klay-dataflow-test-000/glucose-karaoke/' \
+    --nac_name encodec \
+    --nac_input_sr 48000 \
+    --audio_suffix .wav \
+    --machine_type n1-standard-8 \
+    --job_name 'extract-nac-test'
+
+
+# Run remote job with autoscaling (GCP project: klay-training)
 python bin/run_job_extract_nac.py \
     --runner DataflowRunner \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --region us-central1 \
-    --max_num_workers 1000 \
+    --max_num_workers 200 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract-ecdc-48k/ \
+    --temp_location gs://klay-dataflow-test-000/tmp/nac/ \
     --setup_file ./setup.py \
-    --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --source_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --nac_name encodec \
     --nac_input_sr 48000 \
     --audio_suffix .wav \
-    --machine_type n1-standard-2 \
-    --number_of_worker_harness_threads 2 \
-    --job_name 'extract-ecdc-002'
+    --machine_type n1-standard-4 \
+    --job_name 'extract-nac-002'
 
 
 # Possible test values for --source_audio_path
@@ -51,6 +69,19 @@ python bin/run_job_extract_nac.py \
 
 # Options for --autoscaling-algorithm
     THROUGHPUT_BASED, NONE
+
+# EnCodec on Dataflow --number_of_worker_harness_threads can be almost be
+# omitted. This would set it to the number of vCPUs so when
+# --machine-type=n1-standard-8, then --number_of_worker_harness_threads defaults
+# to 8. My test job completed successfully, but there were quite a few OOM
+# crashes. Next time I would try:
+    --machine_type n1-standard-8 \
+    --number_of_worker_harness_threads 6 \
+
+# DAC is more resource hungry. THe following succeeded, but still had OOM errors
+# (including OOM errors). See issue #47.
+    --machine_type n1-standard-8 \
+    --number_of_worker_harness_threads 2 \
 ```
 
 # Development
