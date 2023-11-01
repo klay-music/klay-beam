@@ -27,3 +27,4 @@ data/
 
 job_adt/assets/e-gmd_checkpoint
 job_discogs_effnet/models
+job_stem_classifier/scratch
