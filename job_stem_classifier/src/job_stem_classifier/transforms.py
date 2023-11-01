@@ -20,9 +20,16 @@ class StemGroup(StrEnum):
 
 
 class ClassifyAudioStem(beam.DoFn):
-    def __init__(self, stem_map_path: Path):
-        assert stem_map_path.is_file(), f"stem_map_path is not a file: {stem_map_path}"
-        with open(stem_map_path, "r") as f:
+    def __init__(self, stem_map_path: Path, source_dir: str, target_dir: str):
+        self.stem_map_path = stem_map_path
+        self.source_dir = source_dir
+        self.target_dir = target_dir
+
+    def setup(self):
+        assert (
+            self.stem_map_path.is_file()
+        ), f"stem_map_path is not a file: {stem_map_path}"
+        with open(self.stem_map_path, "r") as f:
             stem_map = json.load(f)
 
         # stem_map is a dict of the form: {"other": ["stem_name1", "stem_name2", ....]}
