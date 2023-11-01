@@ -71,6 +71,14 @@ def run():
     print("known_args: {}".format(known_args))
     print("pipeline_args: {}".format(pipeline_args))
 
+    if not "glucose-karaoke" in known_args.input:
+        # ask if the user wants to continue (this would only happen when debugging)
+        print("WARNING.This job is meant to be run on the glucose-karaoke bucket.")
+        print("Please continue only if you are debugging in a local environment.")
+        print("Continue? (y/n)")
+        if input() != "y":
+            return
+
     # pickle the main session in case there are global objects
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
