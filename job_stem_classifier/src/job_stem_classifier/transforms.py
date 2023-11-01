@@ -89,7 +89,10 @@ def replace_root_dir(input_uri: str, source_dir: str, target_dir: str) -> str:
     return os.path.join(target_dir, relative_filename)
 
 
-        return [(orig_path, new_path)]
+def get_parent(path: str) -> str:
+    """This is the equivalent of Path.parent but works on GCS URIs"""
+    parts = path.split("/")[:-1]
+    return "/".join(parts)
 
 
 def invert_stem_map(stem_map: dict[str, list[str]]) -> dict[str, StemGroup]:

@@ -2,7 +2,13 @@ from pathlib import Path
 import pytest
 from tempfile import TemporaryDirectory
 
-from job_stem_classifier.transforms import invert_stem_map, parse_stem, copy_file
+from job_stem_classifier.transforms import (
+    invert_stem_map,
+    parse_stem,
+    copy_file,
+    get_parent,
+    replace_root_dir,
+)
 
 
 def test_invert_stem_map():
@@ -62,9 +68,55 @@ def test_copy_file():
             assert dest.exists()
 
             # copy file
-            copy_file((source_filepath, dest))
+            copy_file((str(source_filepath), str(dest)))
 
             expected_dest = (
                 Path(tmpdir) / f"some_guitar.{stem_name}-{max_count + i}.wav"
             )
             assert expected_dest.exists()
+
+
+@pytest.mark.parametrize(
+    "path, expected",
+    [
+        ("scratch/guitar.wav", "scratch"),
+        ("guitar.wav", ""),
+        ("/guitar.wav", ""),
+        ("file://hello/guitar.wav", "file://hello"),
+        ("gs://bucket/file/foo.bar.baz", "gs://bucket/file"),
+    ],
+)
+def test_get_parent(path, expected):
+    got = get_parent(path)
+    assert got == expected
+
+
+@pytest.mark.parametrize(
+    "path, source_dir, root_dir, expected",
+    [
+        ("scratch/guitar.wav", "scratch", "data", "data/guitar.wav"),
+        (
+            "gs://scratch/guitar.wav",
+            "gs://scratch",
+            "gs://data",
+            "gs://data/guitar.wav",
+        ),
+        (
+            "/home/scratch/guitar.wav",
+            "/home/scratch",
+            "/home/data",
+            "/home/data/guitar.wav",
+        ),
+    ],
+)
+def test_replace_root_dir(path, source_dir, root_dir, expected):
+    got = replace_root_dir(path, source_dir, root_dir)
+    assert got == expected
+
+
+def test_replace_root_dir_fails():
+    path = "gs://bucket/scratch/guitar.wav"
+    source_dir = "scratch"
+    root_dir = "data"
+    with pytest.raises(ValueError):
+        replace_root_dir(path, source_dir, root_dir)
