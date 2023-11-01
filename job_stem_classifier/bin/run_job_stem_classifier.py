@@ -41,6 +41,19 @@ def parse_args():
         """,
     )
 
+    parser.add_argument(
+        "--stem_map_path",
+        default="assets/stems_dict.json",
+        type=Path,
+        help="""
+        Specify the path to the stem map file. This file contains a mapping from each
+        of the stem groups to the stem names in the dataset. If a new dataset split is
+        introduced we should make sure to update this mapping.
+        """,
+    )
+
+    parser.add_argument("--audio_suffix", required=True)
+
     return parser.parse_known_args(None)
 
 
