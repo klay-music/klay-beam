@@ -1,23 +1,16 @@
 import argparse
 import os.path
 import logging
-from typing import Union
 
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
+from apache_beam.io.filesystems import copy
 from apache_beam.options.pipeline_options import (
     PipelineOptions,
     SetupOptions,
     StandardOptions,
     WorkerOptions,
 )
-
-from klay_beam.transforms import (
-    SkipCompleted,
-    write_file,
-    numpy_to_file,
-)
-
 
 from job_stem_classifier.transforms import ClassifyAudioStem
 
@@ -71,20 +64,18 @@ def run():
     match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
-        files = (
+        (
             p
             # MatchFiles produces a PCollection of FileMetadata objects
             | beam_io.MatchFiles(match_pattern)
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
-            # TODO: I don't SkipCompleted makes sense here? We're dynamically updating the
-            # suffix of the file based on the filename, it's difficult to also implement this
-            # logic inside the SkipCompleted method.
+            # NOTE: SkipCompleted doesn't make sense here.
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "ClassifyAudioStem" >> beam.ParDo(ClassifyAudioStem())
-            | "CopyFile" >> beam.ParDo(CopyFile())
+            | "CopyFile" >> beam.ParDo(copy)
         )
 
 
