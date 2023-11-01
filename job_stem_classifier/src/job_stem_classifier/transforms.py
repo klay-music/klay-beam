@@ -3,7 +3,12 @@ import apache_beam.io.fileio as beam_io
 from apache_beam.io.filesystems import FileSystems
 from enum import StrEnum
 import json
-from pathlib import Path
+import logging
+import os
+from pathlib import Path, PurePosixPath
+
+
+assert os.path.sep == "/", "os.path.join (in get_target_path) breaks on Windows"
 
 
 class StemGroup(StrEnum):
@@ -28,20 +33,56 @@ class ClassifyAudioStem(beam.DoFn):
 
     def process(self, readable_file: beam_io.ReadableFile):
         orig_path = Path(readable_file.metadata.path)
-        stem_name = parse_stem(orig_path.name)
+        new_path, suffix = None, None
 
-        stem_group = self.stem_map.get(stem_name, None)
-        if stem_group is None:
-            new_path = orig_path
-        else:
-            suffix = f".{stem_group.value}{orig_path.suffix}"
+        if "_ST_" in orig_path.name:
+            # Identify the stem group
+            stem_name = parse_stem(orig_path.name)
+            stem_group = self.stem_map.get(stem_name, None)
 
-            # NOTE: Here we are discarding the filename and using the directory / track
-            # name as the filename. This is because we want all stems from the same track
-            # to use the same name and be disambiguated by an enumerated stem group.
-            new_path = orig_path.parent / Path(orig_path.parent.stem).with_suffix(
-                suffix
-            )
+            if stem_group is not None:
+                suffix = f".{stem_group.value}{orig_path.suffix}"
+            else:
+                logging.error(
+                    f"stem_group is None for stem_name: {stem_name}. "
+                    "This should not happen. Re-generate the stem_map file."
+                )
+        elif "_AM_" in orig_path.name:
+            # master / instrumental, we classify these as "source"
+            suffix = f".{StemGroup.Source.value}{orig_path.suffix}"
+        elif "_BV_" in orig_path.name:
+            # backing vocals
+            suffix = f".{StemGroup.Vocals.value}{orig_path.suffix}"
+
+        # NOTE: Here we are discarding the filename and using the directory / track
+        # name as the filename. This is because we want all stems from the same track
+        # to use the same name and be disambiguated by an enumerated stem group.
+        if suffix is not None:
+            parent = get_parent(readable_file.metadata.path)
+            new_path = os.path.join(parent, Path(parent).stem + suffix)
+
+        # finally, replace the source directory with the output directory
+        if new_path is not None:
+            new_path = replace_root_dir(new_path, self.source_dir, self.target_dir)
+
+        return [(readable_file.metadata.path, new_path)]
+
+
+def replace_root_dir(input_uri: str, source_dir: str, target_dir: str) -> str:
+    """
+    When processing datasets, we often have multi-layer directories, and we need to
+    map input files to output files. Given an source directory and a target directory,
+    map the input filenames to the output filenames, preserving the relative directory
+    structure. This should work across local paths and GCS URIs.
+    """
+    input_path = PurePosixPath(input_uri)
+    relative_filename = input_path.relative_to(source_dir)
+
+    # pathlib does not safely handle `//` in URIs
+    # `assert str(pathlib.Path("gs://data")) == "gs://data"` fails
+    # As a result, we use os.path.join.
+    return os.path.join(target_dir, relative_filename)
+
 
         return [(orig_path, new_path)]
 
