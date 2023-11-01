@@ -15,6 +15,7 @@ class StemGroup(StrEnum):
     Bass = "bass"
     Drums = "drums"
     Other = "other"
+    Source = "source"
     Vocals = "vocals"
 
 
