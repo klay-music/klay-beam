@@ -1,5 +1,6 @@
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
+from apache_beam.io.filesystems import FileSystems
 from enum import StrEnum
 import json
 from pathlib import Path
@@ -20,26 +21,26 @@ class ClassifyAudioStem(beam.DoFn):
 
         # stem_map is a dict of the form: {"other": ["stem_name1", "stem_name2", ....]}
         # here we invert it to the form: {"stem_name1": "other", "stem_name2": "other", ...}
-        self.stem_map = self._invert_stem_map(stem_map)
+        self.stem_map = invert_stem_map(stem_map)
 
     def get_stem_group(self, stem_name: str) -> StemGroup:
         return self.stem_map[stem_name]
 
     def process(self, readable_file: beam_io.ReadableFile):
-        path = Path(readable_file.metadata.path)
-        stem_name = self.parse_stem(path.name)
+        orig_path = Path(readable_file.metadata.path)
+        stem_name = parse_stem(orig_path.name)
 
         stem_group = self.stem_map.get(stem_name, None)
         if stem_group is None:
-            new_path = str(readable_file.metadata.path)
+            new_path = orig_path
         else:
-            suffix = f".{stem_group.value}{path.suffix}"
-            new_path = str(path.parent / Path(path.stem).with_suffix(suffix))
+            suffix = f".{stem_group.value}{orig_path.suffix}"
+            new_path = orig_path.parent / Path(orig_path.stem).with_suffix(suffix)
 
-        return [(readable_file.metadata.path, new_path)]
+        return [(orig_path, new_path)]
 
 
-def _invert_stem_map(stem_map: dict[str, list[str]]) -> dict[str, StemGroup]:
+def invert_stem_map(stem_map: dict[str, list[str]]) -> dict[str, StemGroup]:
     inverted_map = {}
     for stem_group, stem_list in stem_map.items():
         for stem in stem_list:
@@ -47,5 +48,31 @@ def _invert_stem_map(stem_map: dict[str, list[str]]) -> dict[str, StemGroup]:
     return inverted_map
 
 
-def _parse_stem(filename: str) -> str:
-    return Path(filename).stem.split("_")[-1]
+def parse_stem(filename: str) -> str:
+    return Path(filename).stem.split("_")[-1].lower()
+
+
+def copy_file(source_dest_tup: tuple[Path, Path]):
+    """Copy a file from source to destination. We use this to copy audio files
+    based on their stem suffix, if a stem suffix already exists we will append
+    a '-N' to the stem suffix where N is the next available natural number.
+    """
+    source, dest = source_dest_tup
+    while FileSystems.exists(str(dest)):
+        # parse the stem suffix from the dest path
+        name_without_suffix = Path(dest).stem
+        stem_suffix = Path(name_without_suffix).suffix
+        parts = stem_suffix.split("-")
+
+        # check whether the stem suffix has been incremented before
+        # if not, increment it to 1 else increment the existing value by 1
+        if len(parts) == 2:
+            stem_name, count = parts
+            new_suffix = f"{stem_name}-{int(count) + 1}{dest.suffix}"
+        else:
+            new_suffix = f"{stem_suffix}-1{dest.suffix}"
+
+        # replace the stem suffix with the new one
+        dest = dest.parent / Path(name_without_suffix).with_suffix(new_suffix)
+
+    FileSystems.copy([str(source)], [str(dest)])
