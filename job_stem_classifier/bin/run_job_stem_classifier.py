@@ -42,6 +42,15 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--target_audio_path",
+        dest="output",
+        required=True,
+        help="""
+        Specify the target audio file directory. This can be a local path or a gs:// URI.
+        """,
+    )
+
+    parser.add_argument(
         "--stem_map_path",
         default="assets/stems_dict.json",
         type=Path,
