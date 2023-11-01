@@ -35,7 +35,13 @@ class ClassifyAudioStem(beam.DoFn):
             new_path = orig_path
         else:
             suffix = f".{stem_group.value}{orig_path.suffix}"
-            new_path = orig_path.parent / Path(orig_path.stem).with_suffix(suffix)
+
+            # NOTE: Here we are discarding the filename and using the directory / track
+            # name as the filename. This is because we want all stems from the same track
+            # to use the same name and be disambiguated by an enumerated stem group.
+            new_path = orig_path.parent / Path(orig_path.parent.stem).with_suffix(
+                suffix
+            )
 
         return [(orig_path, new_path)]
 
