@@ -107,13 +107,16 @@ def parse_stem(filename: str) -> str:
     return Path(filename).stem.split("_")[-1].lower()
 
 
-def copy_file(source_dest_tup: tuple[Path, Path]):
+def copy_file(source_dest_tup: tuple[str, str | None]):
     """Copy a file from source to destination. We use this to copy audio files
     based on their stem suffix, if a stem suffix already exists we will append
     a '-N' to the stem suffix where N is the next available natural number.
     """
     source, dest = source_dest_tup
-    while FileSystems.exists(str(dest)):
+    if dest is None:
+        return
+
+    while FileSystems.exists(dest):
         # parse the stem suffix from the dest path
         name_without_suffix = Path(dest).stem
         stem_suffix = Path(name_without_suffix).suffix
@@ -123,11 +126,13 @@ def copy_file(source_dest_tup: tuple[Path, Path]):
         # if not, increment it to 1 else increment the existing value by 1
         if len(parts) == 2:
             stem_name, count = parts
-            new_suffix = f"{stem_name}-{int(count) + 1}{dest.suffix}"
+            new_suffix = f"{stem_name}-{int(count) + 1}{Path(dest).suffix}"
         else:
-            new_suffix = f"{stem_suffix}-1{dest.suffix}"
+            new_suffix = f"{stem_suffix}-1{Path(dest).suffix}"
 
         # replace the stem suffix with the new one
-        dest = dest.parent / Path(name_without_suffix).with_suffix(new_suffix)
+        dest = os.path.join(
+            get_parent(dest), Path(name_without_suffix).with_suffix(new_suffix)
+        )
 
     FileSystems.copy([str(source)], [str(dest)])
