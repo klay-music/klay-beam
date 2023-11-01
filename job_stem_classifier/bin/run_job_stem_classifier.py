@@ -105,7 +105,13 @@ def run():
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "ClassifyAudioStem"
-            >> beam.ParDo(ClassifyAudioStem(known_args.stem_map_path))
+            >> beam.ParDo(
+                ClassifyAudioStem(
+                    known_args.stem_map_path,
+                    source_dir=known_args.input,
+                    target_dir=known_args.output,
+                )
+            )
             | "CopyFile" >> beam.ParDo(copy_file)
         )
 
