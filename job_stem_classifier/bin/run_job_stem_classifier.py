@@ -1,10 +1,10 @@
 import argparse
-import os.path
 import logging
+import os.path
+from pathlib import Path
 
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
-from apache_beam.io.filesystems import copy
 from apache_beam.options.pipeline_options import (
     PipelineOptions,
     SetupOptions,
@@ -12,7 +12,7 @@ from apache_beam.options.pipeline_options import (
     WorkerOptions,
 )
 
-from job_stem_classifier.transforms import ClassifyAudioStem
+from job_stem_classifier.transforms import ClassifyAudioStem, copy_file
 
 
 """
@@ -74,8 +74,9 @@ def run():
             # NOTE: SkipCompleted doesn't make sense here.
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
-            | "ClassifyAudioStem" >> beam.ParDo(ClassifyAudioStem())
-            | "CopyFile" >> beam.ParDo(copy)
+            | "ClassifyAudioStem"
+            >> beam.ParDo(ClassifyAudioStem(known_args.stem_map_path))
+            | "CopyFile" >> beam.ParDo(copy_file)
         )
 
 
