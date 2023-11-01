@@ -36,9 +36,6 @@ class ClassifyAudioStem(beam.DoFn):
         # here we invert it to the form: {"stem_name1": "other", "stem_name2": "other", ...}
         self.stem_map = invert_stem_map(stem_map)
 
-    def get_stem_group(self, stem_name: str) -> StemGroup:
-        return self.stem_map[stem_name]
-
     def process(self, readable_file: beam_io.ReadableFile):
         orig_path = Path(readable_file.metadata.path)
         new_path, suffix = None, None
