@@ -8,6 +8,7 @@ description = "Beam job for classifying stem names of audio files by their file 
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
+  "klay_beam>=0.11.0",
   # Job packages can and should pin a beam version. This is because beam
   # must also be pinned in the Docker image. An ugrade to the beam version
   # should necessitate an upgrade to the job package and the recommended
