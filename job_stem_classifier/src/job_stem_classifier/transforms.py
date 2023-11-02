@@ -28,7 +28,7 @@ class ClassifyAudioStem(beam.DoFn):
     def setup(self):
         assert (
             self.stem_map_path.is_file()
-        ), f"stem_map_path is not a file: {stem_map_path}"
+        ), f"stem_map_path is not a file: {self.stem_map_path}"
         with open(self.stem_map_path, "r") as f:
             stem_map = json.load(f)
 
