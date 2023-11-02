@@ -12,7 +12,11 @@ from apache_beam.options.pipeline_options import (
     WorkerOptions,
 )
 
-from job_stem_classifier.transforms import ClassifyAudioStem, copy_file
+from job_stem_classifier.transforms import (
+    ClassifyAudioStem,
+    copy_file,
+    SkipExistingTrack,
+)
 
 
 """
@@ -101,8 +105,14 @@ def run():
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
-            # NOTE: SkipCompleted doesn't make sense here.
             # ReadMatches produces a PCollection of ReadableFile objects
+            | "SkipExistingTrack"
+            >> beam.ParDo(
+                SkipExistingTrack(
+                    known_args.input,
+                    known_args.output,
+                )
+            )
             | beam_io.ReadMatches()
             | "ClassifyAudioStem"
             >> beam.ParDo(

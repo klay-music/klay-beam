@@ -73,6 +73,31 @@ class ClassifyAudioStem(beam.DoFn):
         return [(readable_file.metadata.path, new_path)]
 
 
+class SkipExistingTrack(beam.DoFn):
+    def __init__(self, source_dir: str, target_dir: str):
+        self.source_dir = source_dir
+        self.target_dir = target_dir
+
+    def process(self, file_metadata):
+        new_path = replace_root_dir(
+            file_metadata.path, self.source_dir, self.target_dir
+        )
+        track_name = get_parent(new_path)
+        stem_files = [
+            os.path.join(track_name, Path(track_name).stem + f".{stem_group.value}.wav")
+            for stem_group in StemGroup
+        ]
+
+        # we skip the track only if all stem files already exist
+        # this still can mean that some enumerated stems are missing
+        # but it's good enough
+        if not all([FileSystems.exists(f) for f in stem_files]):
+            return [file_metadata]
+        else:
+            logging.info(f"Skipping existing track: {track_name}")
+            return []
+
+
 def replace_root_dir(input_uri: str, source_dir: str, target_dir: str) -> str:
     """
     When processing datasets, we often have multi-layer directories, and we need to
