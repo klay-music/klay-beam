@@ -11,3 +11,13 @@ pre-test: code-style type-check
 
 tests:
 	pytest tests/
+
+# If you change the image name, you should also change the DEFAULT_IMAGE in the
+# launch script.
+DOCKER_IMAGE_NAME=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt
+
+docker:
+	docker build -t $(DOCKER_IMAGE_NAME) .
+
+docker-push:
+	docker push $(DOCKER_IMAGE_NAME)

@@ -22,7 +22,7 @@ RUN mkdir -p tmp/e-gmd_checkpoint && cd tmp/e-gmd_checkpoint && \
 # Install local deps
 RUN python3 -m pip install python-rtmidi==1.1.2
 RUN python3 -m pip install tensorflow==2.9.1
-COPY job_adt ./job_adt
+COPY . ./job_adt
 RUN python3 -m pip install './job_adt'
 # Now that we have installed job_adt, we can copy over the checkpoints
 RUN mv tmp/ job_adt/assets/ && rm -rf tmp
@@ -40,7 +40,7 @@ RUN mv tmp/ job_adt/assets/ && rm -rf tmp
 # RUN sed '-i.old' '1 i\import distutils.version' '/usr/local/lib/python3.7/site-packages/tensorflow_probability/python/__init__.py'
 #
 # I found this workaround that prevents the crash, but it's not clear why.
-COPY ./job_adt/tfp_python__init__.py /usr/local/lib/python3.7/site-packages/tensorflow_probability/python/__init__.py
+COPY ./tfp_python__init__.py /usr/local/lib/python3.7/site-packages/tensorflow_probability/python/__init__.py
 
 # Verify that the image does not have conflicting dependencies.
 RUN pip check
