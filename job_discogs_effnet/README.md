@@ -15,17 +15,31 @@ This job will:
 
 
 ```bash
+# Create the dev+launch environment
 conda env create -f ../environments/dev.yml
 conda activate job-discogs-effnet-dev
+
+# To run the job locally, download the pre-trained model to models/ dir
+bin/download-models.sh
 ```
 
 ```
 # cd into the parent dir (one level up from this package) and run the launch script
 python bin/run_job_discogs_effnet.py \
-    --source_audio_path \
-        '/path/to/test/audio/' \
+    --source_audio_path '/path/to/test/audio/' \
     --runner Direct
+```
 
+This job uses a custom Docker image instead of the `--setup_file` option. If you
+change the of the `src` directory, you will also need to build and publish a new 
+docker image:
+```
+make docker
+make docker-push
+```
+
+
+```
 # run remote job with autoscaling
 python bin/run_job_discogs_effnet.py \
     --runner DataflowRunner \
@@ -37,7 +51,6 @@ python bin/run_job_discogs_effnet.py \
     --experiments use_runner_v2 \
     --sdk_location container \
     --temp_location gs://klay-dataflow-test-000/tmp/extract-discogs-effnet/ \
-    --setup_file ./setup.py \
     --source_audio_path 'gs://klay-dataflow-test-001/mtg-jamendo-90s-crop/00' \
     --job_name 'extract-discogs-effnet-001' \
     --machine_type n1-standard-8 \

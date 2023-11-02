@@ -8,9 +8,13 @@ from klay_beam.path import remove_suffix
 
 
 class ExtractDiscogsEffnet(beam.DoFn):
-    def setup(self, model_path: str):
+    def __init__(self, model_path: str):
+        self.model_path = model_path
+        self.model = None
+
+    def setup(self):
         self.model = TensorflowPredictEffnetDiscogs(
-            graphFilename=model_path, output="PartitionedCall:1"
+            graphFilename=self.model_path, output="PartitionedCall:1"
         )
 
     @property

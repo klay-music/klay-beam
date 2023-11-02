@@ -39,7 +39,7 @@ Job for extracting DiscogsEffnet features. See README.md for details.
 #
 # The default docker container specified in the bin/run_job_<name>.py script
 # should provide identical dependencies.
-DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.12.1-py3.9-beam2.51.0"
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam-discogs-effnet"
 
 def parse_args():
     parser = argparse.ArgumentParser()
