@@ -53,13 +53,13 @@ python bin/run_job_discogs_effnet.py \
     --temp_location gs://klay-dataflow-test-000/tmp/extract-discogs-effnet/ \
     --source_audio_path 'gs://klay-dataflow-test-001/mtg-jamendo-90s-crop/00' \
     --job_name 'extract-discogs-effnet-001' \
-    --machine_type n1-standard-8 \
-    --number_of_worker_harness_threads 4 \
+    --machine_type n1-standard-8
 
 # Extra options to consider
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
+    'gs://klay-dataflow-test-000/glucose-karaoke/' \
 
 # Options for --autoscaling-algorithm
     THROUGHPUT_BASED, NONE
