@@ -9,4 +9,4 @@ dependencies:
   - pip
 
   - pip:
-    - -e '../job_adt[code-style, tests, type-check]'
+    - -e '..[code-style, tests, type-check]'
