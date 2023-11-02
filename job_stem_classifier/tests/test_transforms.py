@@ -92,6 +92,21 @@ def test_get_parent(path, expected):
 
 
 @pytest.mark.parametrize(
+    "path, expected",
+    [
+        ("scratch?/guitar.wav", "scratch"),
+        ("guitar.wav", ""),
+        ("/guitar.wav", ""),
+        ("file://hello[]/guitar.wav", "file://hello"),
+        ("gs://bucket/file**/foo.bar.baz", "gs://bucket/file"),
+    ],
+)
+def test_get_parent_with_wildcard_chars(path, expected):
+    got = get_parent(path)
+    assert got == expected
+
+
+@pytest.mark.parametrize(
     "path, source_dir, root_dir, expected",
     [
         ("scratch/guitar.wav", "scratch", "data", "data/guitar.wav"),

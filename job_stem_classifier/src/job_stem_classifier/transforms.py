@@ -89,10 +89,18 @@ def replace_root_dir(input_uri: str, source_dir: str, target_dir: str) -> str:
     return os.path.join(target_dir, relative_filename)
 
 
+WILDCARD_CHARS = ["*", "?", "[", "]"]
+
+
 def get_parent(path: str) -> str:
-    """This is the equivalent of Path.parent but works on GCS URIs"""
+    """This is the equivalent of Path.parent but works on GCS URIs. It also
+    strips out wildcard characters because gsutil doesn't like them.
+    """
     parts = path.split("/")[:-1]
-    return "/".join(parts)
+    parent = "/".join(parts)
+    for char in WILDCARD_CHARS:
+        parent = parent.replace(char, "")
+    return parent
 
 
 def invert_stem_map(stem_map: dict[str, list[str]]) -> dict[str, StemGroup]:
