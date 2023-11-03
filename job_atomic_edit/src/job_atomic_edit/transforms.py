@@ -283,7 +283,10 @@ class ExtractAtomicTriplets(beam.DoFn):
     
     def make_edit(self, edit, stem_d, sr=48000):
         # lots of if statements
-        times = [0, self.t]
+        if self.t is None:
+            times = [0, stem_d['source'].shape[-1] // sr]
+        else:
+            times = [0, self.t]
         if "extract" in edit:
             stem = edit.split(" ")[1]
             ref = stem_d["source"]
@@ -311,9 +314,13 @@ class ExtractAtomicTriplets(beam.DoFn):
         sr = tracks[0][-1]
         assert all([x[-1] == sr for x in tracks])
         path = tracks[0][0].split(".")[0]
-        stem_d = {k.split(".")[1]: x[:, :self.t*sr] for k, x, sr in tracks}
+        if self.t is None:
+            max_len = max([x[1].shape[-1] for x in tracks])
+            stem_d = {k.split(".")[1]: torch.cat([x[:, :max_len], torch.zeros(x.shape[0], max_len - x.shape[-1])], dim=-1) for k, x, sr in tracks}
+        else:
+            stem_d = {k.split(".")[1]: x[:, :self.t*sr] for k, x, sr in tracks}
         for k, v in stem_d.items():
-            if v.view(v.shape[0],v.shape[1] // 2000, 2000).pow(2).mean(-1).sqrt().mean() < self.tol:
+            if v[..., :v.shape[1]//2000*2000].view(v.shape[0],v.shape[1] // 2000, 2000).pow(2).mean(-1).sqrt().mean() < self.tol:
                 # print(f"WARNING: {k} is silent in {song}")
                 edit_instructions = [x for x in edit_instructions if k not in x]
                 stem_d[k] = None

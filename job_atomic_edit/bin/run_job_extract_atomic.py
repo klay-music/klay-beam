@@ -2,7 +2,7 @@ import argparse
 import os.path
 import logging
 from typing import Optional, Type, Union, List
-
+import io
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
 from apache_beam.io.filesystem import FileMetadata
@@ -14,6 +14,7 @@ from apache_beam.options.pipeline_options import (
     WorkerOptions,
 )
 import torch
+import torchaudio
 
 from klay_beam.transforms import *
 
@@ -163,11 +164,16 @@ class LoadWithTorchaudioGrouped(beam.DoFn):
 """
 Job for extracting EnCodec features. See job_atomic_edit/README.md for details.
 """
+def torch_to_file(torch_data: torch.Tensor, sample_rate: int):
+    in_memory_file_buffer = io.BytesIO()
+    torchaudio.save(in_memory_file_buffer, torch_data,sample_rate=sample_rate, format="wav")
+    in_memory_file_buffer.seek(0)
+    return in_memory_file_buffer
 
 edit2ix = {x:i for i,x in enumerate(VALID_EDITS)}
 ix2st = {
-    0: 'source',
-    2: 'target'
+    0: 'src',
+    2: 'tgt'
 }
 
 
@@ -229,9 +235,9 @@ def parse_args():
     )
     parser.add_argument(
         "--t",
-        required=True,
+        required=False,
         type=int,
-        choices=[10],
+        default=None,
         help="""
         Which audio sample rate should we extract from?
         """,
@@ -319,14 +325,12 @@ def run():
             # | "ExtractNAC" >> beam.ParDo(extract_fn).with_outputs("ecdc", main="npy")
             # | beam.Map(print)
         )
+        # write out wav files
+        (
+            out | "CreatewavFile" >> beam.Map(lambda x: (x[0] + '.wav', torch_to_file(x[1], x[2])))
+            | "PersistFile" >> beam.Map(write_file)
+        )
 
-        # (
-        #     npy
-        #     | "CreateNpyFile" >> beam.Map(lambda x: (x[0], numpy_to_file(x[1])))
-        #     | "PersistFile" >> beam.Map(write_file)
-        # )
-
-        # (ecdc | "PersistEcdcFile" >> beam.Map(write_file))
 
 
 if __name__ == "__main__":
