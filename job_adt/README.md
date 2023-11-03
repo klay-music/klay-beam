@@ -67,7 +67,7 @@ python bin/run_job_adt.py \
     --job_name 'adt-001'
 
 # If you edit the job_adt package, but do not want to create a new docker file:
-    --setup_file ./job_adt/setup.py \
+    --setup_file ./setup.py \
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
