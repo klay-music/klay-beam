@@ -44,7 +44,7 @@ python bin/run_job_adt.py \
 #
 # The default docker container specified in the bin/run_job_<name>.py script
 # should provide identical dependencies.
-DEFAULT_IMAGE="us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt"
+DEFAULT_IMAGE="us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.4.1"
 
 tf.disable_v2_behavior()
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"

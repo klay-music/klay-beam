@@ -1,6 +1,6 @@
 import os
 
-__version__ = "0.1.0"
+__version__ = "0.4.1"
 
 # IMPORTANT: Prevent submitit package from silencing Dataflow logs!
 #
