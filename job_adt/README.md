@@ -62,7 +62,6 @@ python bin/run_job_adt.py \
     --project klay-training \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --experiments=no_use_multiple_sdk_containers \
     --number_of_worker_harness_threads=1 \
     --job_name 'adt-001'
 

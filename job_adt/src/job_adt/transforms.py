@@ -30,7 +30,7 @@ tf.disable_v2_behavior()
 
 
 class TranscribeDrumsAudio(beam.DoFn):
-    def __init__(self, source_dir: str, checkpoint_dir: str):
+    def __init__(self, source_dir: str, checkpoint_dir: Union[str, Path]):
         """
         Args:
             source_dir: str
@@ -40,7 +40,7 @@ class TranscribeDrumsAudio(beam.DoFn):
                 The directory where the model checkpoint is stored.
         """
         self.source_dir = source_dir
-        self.checkpoint_dir = checkpoint_dir
+        self.checkpoint_dir = Path(checkpoint_dir)
 
         self.config = configs.CONFIG_MAP["drums"]
         self.hparams = self.config.hparams
@@ -53,6 +53,9 @@ class TranscribeDrumsAudio(beam.DoFn):
         logging.info(
             f"Loading Onsets & Frames model for ADT from: {self.checkpoint_dir}"
         )
+
+        # check that the checkpoint directory exists
+        assert self.checkpoint_dir.is_dir()
 
         # prepare dataset
         self.examples = tf.placeholder(tf.string, [None])

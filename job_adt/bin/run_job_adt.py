@@ -44,7 +44,7 @@ python bin/run_job_adt.py \
 #
 # The default docker container specified in the bin/run_job_<name>.py script
 # should provide identical dependencies.
-DEFAULT_IMAGE="us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.4.1"
+DEFAULT_IMAGE="us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.4.2"
 
 tf.disable_v2_behavior()
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -71,7 +71,7 @@ def parse_args():
     parser.add_argument(
         "--checkpoint_dir",
         type=Path,
-        default="./job_adt/assets/e-gmd_checkpoint/",
+        default="./assets/e-gmd_checkpoint/",
         help="""
         Specify the checkpoint directory.
 
@@ -83,7 +83,6 @@ def parse_args():
     args = parser.parse_known_args(None)
 
     # validate checkpoint dir
-    assert args[0].checkpoint_dir.is_dir()
     assert len(list(args[0].checkpoint_dir.glob("*"))) == 4
     return args
 
