@@ -20,37 +20,25 @@ This job will:
 1. Save results as `*.drums.mid` files adjacent to the `.drums.wav` files
 
 
-This job cannot be launched from OSX. As a result, there is no dedicated launch
-environment. When launching, use the same environment that is used for the
-docker container. `../environments/linux-64.005-adt.yml`.
+This job cannot be launched from OSX.
 
 
 ```bash
 # Get some deps:
 apt-get update && apt-get install -y cmake curl gcc g++ libasound2-dev libjack-dev ffmpeg pkg-config unzip sox
 
-# Get the model checkpoint from within the ./ dir:
-mkdir -p tmp/e-gmd_checkpoint && cd tmp/e-gmd_checkpoint && \
-  curl -LO https://storage.googleapis.com/magentadata/models/onsets_frames_transcription/e-gmd_checkpoint.zip && \
-  unzip e-gmd_checkpoint.zip && rm e-gmd_checkpoint.zip
+# Get model checkpoint
+./fetch-checkpoint.sh
 
-cd ../..
-
-mv tmp/ job_adt/assets/ && rm -rf tmp
-# `job_adt/assets/e-gmd_checkpoint` should contain the following files:
-#   checkpoint
-#   model.ckpt-569400.data-00000-of-00001
-#   model.ckpt-569400.index
-#   model.ckpt-569400.meta
+conda env create -f environment/dev.yml
+conda activate adt-dev
 ```
 
-```bash
-conda env create -f ../environments/linux-64.005-adt.yml
-conda activate adt
-# Manually install this package
-pip install -e '.[code-style, tests, type-check]'
+To make a new Docker image:
 ```
-
+make docker
+make docker-push
+```
 
 ```
 # CD into the parent dir (one level up from this package) and run the launch script
@@ -69,18 +57,16 @@ python bin/run_job_adt.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.4.0 \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/adt/ \
     --project klay-training \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --experiments=no_use_multiple_sdk_containers \
     --number_of_worker_harness_threads=1 \
     --job_name 'adt-001'
 
 # If you edit the job_adt package, but do not want to create a new docker file:
-    --setup_file ./job_adt/setup.py \
+    --setup_file ./setup.py \
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
@@ -101,6 +87,16 @@ https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#one-sdk
     --experiments=no_use_multiple_sdk_containers
 ```
 
+
+# Versioning and Updating
+
+When you make a change and want to publish a new version:
+
+1. Update `src/job_adt/__init__.py`
+2. Update the `DEFAULT_IMAGE` variable in `bin/run_job_adt.py` launch script
+3. Update the value of `DOCKER_IMAGE_NAME` in `Makefile`
+4. Git commit, git tag and git push, for example: `git tag job_adt-0.5.5` and `git push origin job_adt-0.5.5`
+4. Run `make docker && make docker-push`
 
 # Handling Tensorflow
 

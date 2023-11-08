@@ -4,17 +4,22 @@ import os
 import os.path
 from pathlib import Path
 import tensorflow.compat.v1 as tf
-
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
-from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.options.pipeline_options import SetupOptions
+
+from apache_beam.options.pipeline_options import (
+    PipelineOptions,
+    SetupOptions,
+    StandardOptions,
+    WorkerOptions,
+)
 
 from job_adt.transforms import (
     TranscribeDrumsAudio,
     LoadWithLibrosa,
     SkipCompleted,
 )
+
 from job_adt.utils import array_to_bytes, note_sequence_to_midi, write_file
 
 
@@ -27,6 +32,19 @@ python bin/run_job_adt.py \
     --runner Direct
 """
 
+# NOTE: the dependencies versions in Docker image must match the dependencies in
+# the launch/dev environment. When updating dependencies, make sure that the
+# docker image you specify for remote jobs also provides the correct
+# dependencies. Here's where to look for each dependency.
+#
+# - pyproject.toml pins:
+#   - apache_beam
+# - environment/dev.yml pins:
+#   - python
+#
+# The default docker container specified in the bin/run_job_<name>.py script
+# should provide identical dependencies.
+DEFAULT_IMAGE="us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.5.2"
 
 tf.disable_v2_behavior()
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -53,7 +71,7 @@ def parse_args():
     parser.add_argument(
         "--checkpoint_dir",
         type=Path,
-        default="./job_adt/assets/e-gmd_checkpoint/",
+        default="./assets/e-gmd_checkpoint/",
         help="""
         Specify the checkpoint directory.
 
@@ -64,9 +82,6 @@ def parse_args():
 
     args = parser.parse_known_args(None)
 
-    # validate checkpoint dir
-    assert args[0].checkpoint_dir.is_dir()
-    assert len(list(args[0].checkpoint_dir.glob("*"))) == 4
     return args
 
 
@@ -78,6 +93,13 @@ def run():
     # pickle the main session in case there are global objects
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
+
+    # Set the default docker image if we're running on Dataflow
+    if (
+        pipeline_options.view_as(StandardOptions).runner == "DataflowRunner"
+        and pipeline_options.view_as(WorkerOptions).sdk_container_image is None
+    ):
+        pipeline_options.view_as(WorkerOptions).sdk_container_image = DEFAULT_IMAGE
 
     # Pattern to recursively find mp3s inside source_audio_path
     match_pattern = os.path.join(known_args.input, "**.drums.wav")
