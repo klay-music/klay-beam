@@ -27,6 +27,9 @@ RUN python3 -m pip install './job_adt'
 # Now that we have installed job_adt, we can copy over the checkpoints
 RUN mv tmp/ job_adt/assets/ && rm -rf tmp
 
+# Make the docker working dir match the working dir in the launch environment.
+WORKDIR /klay/app/job_adt
+
 # A utility method in the tensorflow_probability package dynamically imports
 # distutils.version as shown here:
 # https://github.com/tensorflow/probability/blob/558b6181122361b725e63b6110d1f67b66eb7e5f/tensorflow_probability/python/__init__.py#L49C27-L49C27
