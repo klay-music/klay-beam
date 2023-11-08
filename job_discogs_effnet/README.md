@@ -2,9 +2,6 @@
 
 Job for extracting DiscogsEffnet embeddings from audio data using essentia.
 
-**NOTE:** Unlike other jobs, this job does not use the `klay_beam` package. It
-uses tensorflow instead of pytorch.
-
 This job will:
 
 1. Recursively search a path for `.wav` files (`--source_audio_path`)
@@ -18,49 +15,55 @@ This job will:
 
 
 ```bash
-conda env create -f ../environments/conda-linux-64.008-discogs-effnet.yml
-conda activate discogs_effnet
+# Create the dev+launch environment
+conda env create -f ../environments/dev.yml
+conda activate job-discogs-effnet-dev
 
-# manually install this package
-pip install -e '.[code-style, tests, type-check]'
+# To run the job locally, download the pre-trained model to models/ dir
+bin/download-models.sh
 ```
 
 ```
 # cd into the parent dir (one level up from this package) and run the launch script
 python bin/run_job_discogs_effnet.py \
-    --source_audio_path \
-        '/path/to/klay-beam/test_audio/abbey_road_48k' \
+    --source_audio_path '/path/to/test/audio/' \
     --runner Direct
+```
 
+This job uses a custom Docker image instead of the `--setup_file` option. If you
+change the contents of the `src` directory, you will also need to build and
+publish a new docker image:
+
+```
+make docker
+make docker-push
+```
+
+
+```
 # run remote job with autoscaling
 python bin/run_job_discogs_effnet.py \
     --runner DataflowRunner \
-    --machine_type n1-standard-2 \
-    --max_num_workers=1000 \
-    --region us-central1 \
-    --autoscaling_algorithm THROUGHPUT_BASED \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:discogs-effnet-0.10.4 \
-    --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/discogs_effnet/ \
     --project klay-training \
-    --source_audio_path \
-        'gs://klay-beam-tests-000/mtg-jamendo-90s-crop/00' \
-    --experiments=no_use_multiple_sdk_containers \
-    --number_of_worker_harness_threads=1 \
-    --job_name 'discogs-effnet-001'
+    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+    --region us-central1 \
+    --max_num_workers 100 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --experiments use_runner_v2 \
+    --sdk_location container \
+    --temp_location gs://klay-dataflow-test-000/tmp/extract-discogs-effnet/ \
+    --source_audio_path 'gs://klay-dataflow-test-001/mtg-jamendo-90s-crop/00' \
+    --job_name 'extract-discogs-effnet-001' \
+    --machine_type n1-standard-8
 
-# If you edit the job_discogs_effnet package, but do not want to create a new docker file:
-    --setup_file ./job_discogs_effnet/setup.py \
+# Extra options to consider
 
 # Possible test values for --source_audio_path
     'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
+    'gs://klay-dataflow-test-000/glucose-karaoke/' \
 
 # Options for --autoscaling-algorithm
     THROUGHPUT_BASED, NONE
-
-# Extra options to consider
 
 Reduce the maximum number of threads that run DoFn instances. See:
 https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#reduce-threads

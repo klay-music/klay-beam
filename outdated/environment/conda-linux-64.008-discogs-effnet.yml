@@ -1,9 +1,0 @@
-name: job_discogs_effnet
-
-channels:
-  - defaults
-  - conda-forge
-
-dependencies:
-  - python=3.9
-  - pip

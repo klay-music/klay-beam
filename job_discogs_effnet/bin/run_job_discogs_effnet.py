@@ -1,78 +1,45 @@
 import argparse
 import os.path
 import logging
-
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
-from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.options.pipeline_options import SetupOptions
 
-from job_discogs_effnet.utils import (
-    SkipCompleted,
-    write_file,
-    numpy_to_file,
+from apache_beam.options.pipeline_options import (
+    PipelineOptions,
+    SetupOptions,
+    StandardOptions,
+    WorkerOptions,
 )
-from job_discogs_effnet.transforms import ExtractDiscogsEffnet, LoadWithLibrosa
+
+from klay_beam.transforms import (
+    LoadWithLibrosa,
+    SkipCompleted,
+    numpy_to_file,
+    write_file,
+)
+
+from job_discogs_effnet.transforms import ExtractDiscogsEffnet
 
 
 """
-Job for extracting DiscogsEffnet features:
-
-1. Recursively search a path for `.wav` files
-1. For each audio file, extract DiscogsEffnet embeddings using essentia
-1. Write the results to an .npy file adjacent to the source audio file
-
-To run, activate a suitable python environment such as
-`../environments/conda-linux-64.008-discogs-effnet.dev.yml`.
-
-```
-# CD into the root klay_beam dir to the launch script:
-python bin/run_job_extract_discogs_effnet.py \
-    --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
-    --audio_suffix .wav
-
-# Run remote job with autoscaling
-python bin/run_job_extract_discogs_effnet.py \
-    --runner DataflowRunner \
-    --project klay-training \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --machine_type n1-standard-2 \
-    --region us-central1 \
-    --max_num_workers 100 \
-    --autoscaling_algorithm THROUGHPUT_BASED \
-    --experiments use_runner_v2 \
-    --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract-discogs-effnet/ \
-    --setup_file ./job_discogs_effnet/setup.py \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.4-discogs-effnet \
-    --source_audio_path \
-        'gs://klay-dataflow-test-001/mtg-jamendo-90s-crop/00' \
-    --job_name 'extract-discogs-effnet-001'
-    --number_of_worker_harness_threads 1 \
-    --experiments no_use_multiple_sdk_containers
-    --audio_suffix .wav
-
-# Possible test values for --source_audio_path
-    'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
-
-# Options for --autoscaling-algorithm
-    THROUGHPUT_BASED, NONE
-
-# Extra options to consider
-
-Reduce the maximum number of threads that run DoFn instances. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#reduce-threads
-    --number_of_worker_harness_threads
-
-Create one Apache Beam SDK process per worker. Prevents the shared objects and
-data from being replicated multiple times for each Apache Beam SDK process. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#one-sdk
-    --experiments=no_use_multiple_sdk_containers
-```
-
+Job for extracting DiscogsEffnet features. See README.md for details.
 """
 
+# NOTE: the dependencies versions in Docker image must match the dependencies in
+# the launch/dev environment. When updating dependencies, make sure that the
+# docker image you specify for remote jobs also provides the correct
+# dependencies. Here's where to look for each dependency.
+#
+# - pyproject.toml pins:
+#   - apache_beam
+#   - klay_beam
+# - environment/dev.yml pins:
+#   - pytorch
+#   - python
+#
+# The default docker container specified in the bin/run_job_<name>.py script
+# should provide identical dependencies.
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam-discogs-effnet"
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -117,6 +84,13 @@ def run():
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
+    # Set the default docker image if we're running on Dataflow
+    if (
+        pipeline_options.view_as(StandardOptions).runner == "DataflowRunner"
+        and pipeline_options.view_as(WorkerOptions).sdk_container_image is None
+    ):
+        pipeline_options.view_as(WorkerOptions).sdk_container_image = DEFAULT_IMAGE
+
     # Pattern to recursively find audio files inside source_audio_path
     match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
     extract_fn = ExtractDiscogsEffnet(model_path=known_args.model_path)
@@ -139,7 +113,7 @@ def run():
             )
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
-            | "LoadResampleAudio" >> beam.ParDo(LoadWithLibrosa(target_sr=16_000))
+            | "LoadResampleAudio" >> beam.ParDo(LoadWithLibrosa(target_sr=16_000, mono=True))
         )
 
         (
