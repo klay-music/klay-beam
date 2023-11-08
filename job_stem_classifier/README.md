@@ -7,8 +7,9 @@ the Glucose Karaoke dataset.
 
 ## Steps
 1. Recursively search a path for `.wav` files
-2. Extract the stem name from each audio filename
-3. Write the file back as a `.<stem_name>.wav` file adjacent to the source audio file
+2. Extract the stem group from each audio filename, the stem group is one of [`bass`, `drums`, `other`, `source`, `vocals`]
+3. Write the file back as a `.<stem_group>.wav` file adjacent to the source audio file
+4. If a file with the same stem group already exists, we enumerate the suffix e.g. `bass`, `bass-1`, `bass-2`, etc.
 
 To run, activate the conda dev+launch environment: `environment/stem_classifier.dev.yml`.
 
