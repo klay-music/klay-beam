@@ -19,38 +19,12 @@ python bin/run_job_stem_classifier.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
     --audio_suffix .wav \
-
-python bin/run_job_stem_classifier.py \
-    --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
-    --audio_suffix .wav \
-
-# Run remote job with autoscaling
-python bin/run_job_stem_classifier.py \
-    --runner DataflowRunner \
-    --project klay-training \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --region us-central1 \
-    --max_num_workers 1000 \
-    --autoscaling_algorithm THROUGHPUT_BASED \
-    --experiments use_runner_v2 \
-    --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/stem-classifier/ \
-    --setup_file ./setup.py \
-    --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --audio_suffix .wav \
-    --machine_type n1-standard-2 \
-    --number_of_worker_harness_threads 2 \
-    --job_name 'stem-classifier-001'
-
-
-# Possible test values for --source_audio_path
-    'klay-dataflow-test-000/test-audio/abbey_road/wav' \
-
-# Options for --autoscaling-algorithm
-    THROUGHPUT_BASED, NONE
 ```
+
+Currently, since we're matching on the file-level and also have inter-file dependencies because of
+the way we're enumerating the stem groups, we cannot run this job in a parallel environment. When
+run in a parallel environment, there is a chance that a race condition would emerge where two
+files within a track are written to the new location with the exact same suffix.
 
 # Development
 ## Quick Start
