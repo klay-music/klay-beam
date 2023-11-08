@@ -88,6 +88,16 @@ https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#one-sdk
 ```
 
 
+# Versioning and Updating
+
+When you make a change and want to publish a new version:
+
+1. Update `src/job_adt/__init__.py`
+2. Update the `DEFAULT_IMAGE` variable in `bin/run_job_adt.py` launch script
+3. Update the value of `DOCKER_IMAGE_NAME` in `Makefile`
+4. Git commit, git tag and git push, for example: `git tag job_adt-0.5.5` and `git push origin job_adt-0.5.5`
+4. Run `make docker && make docker-push`
+
 # Handling Tensorflow
 
 **The Problem**
