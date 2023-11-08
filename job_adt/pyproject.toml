@@ -13,6 +13,9 @@ dependencies = [
   # Myseriously, tensor2tensor is not automatically installed in the docker
   # build workflow, so we add it explicitly here.
   "tensor2tensor",
+  # Pinning numba as advised by a deprecation warning.
+  "numba==0.48.0",
+
 ]
 requires-python = "<3.9"
 
