@@ -31,8 +31,9 @@ python bin/run_job_discogs_effnet.py \
 ```
 
 This job uses a custom Docker image instead of the `--setup_file` option. If you
-change the of the `src` directory, you will also need to build and publish a new 
-docker image:
+change the contents of the `src` directory, you will also need to build and
+publish a new docker image:
+
 ```
 make docker
 make docker-push
