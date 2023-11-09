@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job_rms"
+description = "Extract RMS features for audio data"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+  "numpy",
+  # Job packages should pin versions for both:
+  # - apache_beam
+  # - klay_beam
+  #
+  # Both klay_beam and apache_beam are pre-installed in the docker container.
+  # Mismatched or incompatible versions between the launch and dockerized
+  # Dataflow runtime environments are likely to break the job or cause bugs that
+  # are subtle and difficult-to-detect.
+  #
+  # If you need to update either dependency, you should also update the default
+  # default docker image which is likely to specified in the the jobs launch
+  # script (bin/run_job_<name>.py).
+  "klay_beam[pytorch]>=0.11.0,<0.13.0",
+  "apache_beam[gcp]~=2.51",
+]
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+code-style = ["black>=22.9.0", "flake8>=5"]
+tests = ["pytest"]
+type-check = ["mypy>=0.990", "pydantic>=1.10"]
+
+[tool.setuptools.dynamic]
+version = {attr = "job_rms.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+warn_redundant_casts = true
+check_untyped_defs = true
+allow_redefinition = true
+warn_unreachable = true
+plugins = [
+  "pydantic.mypy",
+]
+
+[[tool.mypy.overrides]]
+module = [
+  "apache_beam.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+# Running pytest results in many warnings which are associated with google-cloud
+# apis. These warnings are not relevant to the code we are testing, filter then
+# from the output. See:
+# https://github.com/googleapis/google-cloud-python/issues/11184#issuecomment-1640884088
+filterwarnings = [
+    "ignore:Deprecated call to `pkg_resources\\.declare_namespace\\('.*'\\):DeprecationWarning",
+    "ignore::DeprecationWarning:google.rpc",
+]
