@@ -26,30 +26,30 @@ SAMPLE_RATE_MAP = {
 }
 
 VALID_EDITS = [
-    'extract bass',
-    'extract vocals',
-    'extract drums',
-    'extract other',
-    'remove bass',
-    'remove vocals',
-    'remove drums',
-    'remove other',
-    'add bass',
-    'add vocals',
-    'add drums',
-    'add other',
-    'replace bass with vocals',
-    'replace bass with drums',
-    'replace bass with other',
-    'replace vocals with bass',
-    'replace vocals with drums',
-    'replace vocals with other',
-    'replace drums with bass',
-    'replace drums with vocals',
-    'replace drums with other',
-    'replace other with bass',
-    'replace other with vocals',
-    'replace other with drums',
+    "extract bass",
+    "extract vocals",
+    "extract drums",
+    "extract other",
+    "remove bass",
+    "remove vocals",
+    "remove drums",
+    "remove other",
+    "add bass",
+    "add vocals",
+    "add drums",
+    "add other",
+    "replace bass with vocals",
+    "replace bass with drums",
+    "replace bass with other",
+    "replace vocals with bass",
+    "replace vocals with drums",
+    "replace vocals with other",
+    "replace drums with bass",
+    "replace drums with vocals",
+    "replace drums with other",
+    "replace other with bass",
+    "replace other with vocals",
+    "replace other with drums",
 ]
 
 
@@ -70,7 +70,7 @@ class ReadEncodec(beam.DoFn):
         except Exception as e:
             logging.error(f"Failed to decode ENCODEC: {key}")
             logging.error(e)
-            return [beam.pvalue.TaggedOutput('failed', (key, e))]
+            return [beam.pvalue.TaggedOutput("failed", (key, e))]
 
         return [(key, audio, sr)]
 
@@ -78,7 +78,13 @@ class ReadEncodec(beam.DoFn):
 class ExtractAtomicTriplets(beam.DoFn):
     """Beam DoFn for extracting encodec tokens from audio."""
 
-    def __init__(self, t: int, tol: float=0.001, t_aug: bool=False, device: Optional[torch.device] = None):
+    def __init__(
+        self,
+        t: int,
+        tol: float = 0.001,
+        t_aug: bool = False,
+        device: Optional[torch.device] = None,
+    ):
         """
         t: length of audio in seconds
         tol: tolerance for silence to remove editing operations
@@ -99,40 +105,76 @@ class ExtractAtomicTriplets(beam.DoFn):
             self._device = get_device()
         # add edit instructions for start to t // 3, t // 3 to 2t // 3, 2t // 3 to end
         if self.t_aug:
-            self.edit_instructions = [x + f' from 0 seconds to {self.t // 3} seconds' for x in VALID_EDITS]
-            self.edit_instructions += [x + f' from {self.t // 3} seconds to {2 * self.t // 3} seconds' for x in VALID_EDITS]
-            self.edit_instructions += [x + f' from {2 * self.t // 3} seconds to {self.t} seconds' for x in VALID_EDITS]
+            self.edit_instructions = [
+                x + f" from 0 seconds to {self.t // 3} seconds" for x in VALID_EDITS
+            ]
+            self.edit_instructions += [
+                x + f" from {self.t // 3} seconds to {2 * self.t // 3} seconds"
+                for x in VALID_EDITS
+            ]
+            self.edit_instructions += [
+                x + f" from {2 * self.t // 3} seconds to {self.t} seconds"
+                for x in VALID_EDITS
+            ]
         else:
             self.edit_instructions = VALID_EDITS
 
-    def make_edit(self, edit: str, stem_d: dict, sr: int=48000):
+    def make_edit(self, edit: str, stem_d: dict, sr: int = 48000):
         """
         edit: string, one of VALID_EDITS
         stem_d: dict, {stem_name: tensor}
         sr: int, sample rate
         """
         if self.t is None:
-            times = [0, stem_d['source'].shape[-1] // sr]
+            times = [0, stem_d["source"].shape[-1] // sr]
         else:
             times = [0, self.t]
         if "extract" in edit:
             stem = edit.split(" ")[1]
             ref = stem_d["source"]
-            tgt = torch.cat([ref[..., :times[0]*sr], stem_d[stem][..., times[0]*sr:times[1]*sr], ref[..., times[1]*sr:]], dim=-1)
+            tgt = torch.cat(
+                [
+                    ref[..., : times[0] * sr],
+                    stem_d[stem][..., times[0] * sr : times[1] * sr],
+                    ref[..., times[1] * sr :],
+                ],
+                dim=-1,
+            )
         elif "remove" in edit:
             stem = edit.split(" ")[1]
             ref = stem_d["source"]
-            tgt_all = sum([v for k,v in stem_d.items() if k not in [stem, 'source']])
-            tgt = torch.cat([ref[..., :times[0]*sr], tgt_all[..., times[0]*sr:times[1]*sr], ref[..., times[1]*sr:]], dim=-1)
+            tgt_all = sum([v for k, v in stem_d.items() if k not in [stem, "source"]])
+            tgt = torch.cat(
+                [
+                    ref[..., : times[0] * sr],
+                    tgt_all[..., times[0] * sr : times[1] * sr],
+                    ref[..., times[1] * sr :],
+                ],
+                dim=-1,
+            )
         elif "add" in edit:
             stem = edit.split(" ")[1]
-            ref = sum([v for k,v in stem_d.items() if k not in [stem, 'source']])
-            tgt = torch.cat([ref[..., :times[0]*sr], stem_d['source'][..., times[0]*sr:times[1]*sr], ref[..., times[1]*sr:]], dim=-1)
+            ref = sum([v for k, v in stem_d.items() if k not in [stem, "source"]])
+            tgt = torch.cat(
+                [
+                    ref[..., : times[0] * sr],
+                    stem_d["source"][..., times[0] * sr : times[1] * sr],
+                    ref[..., times[1] * sr :],
+                ],
+                dim=-1,
+            )
         elif "replace" in edit:
             stem1, stem2 = edit.split(" ")[1], edit.split(" ")[3]
-            ref = sum([v for k,v in stem_d.items() if k not in [stem2, 'source']])
-            tgt_all = sum([v for k,v in stem_d.items() if k not in [stem1, 'source']])
-            tgt = torch.cat([ref[..., :times[0]*sr], tgt_all[..., times[0]*sr:times[1]*sr], ref[..., times[1]*sr:]], dim=-1)
+            ref = sum([v for k, v in stem_d.items() if k not in [stem2, "source"]])
+            tgt_all = sum([v for k, v in stem_d.items() if k not in [stem1, "source"]])
+            tgt = torch.cat(
+                [
+                    ref[..., : times[0] * sr],
+                    tgt_all[..., times[0] * sr : times[1] * sr],
+                    ref[..., times[1] * sr :],
+                ],
+                dim=-1,
+            )
         return ref, edit, tgt
 
     def process(self, element: Tuple[Any, Iterable[Any]]):
@@ -140,13 +182,11 @@ class ExtractAtomicTriplets(beam.DoFn):
         edit_instructions = copy.copy(self.edit_instructions)
         sr = tracks[0][-1]
 
-
         assert type(tracks[0]) == tuple, "tracks should be a list of tuples"
         assert type(tracks[0][0]) == str
         assert type(tracks[0][1]) == torch.Tensor
         assert type(tracks[0][2]) == int
         assert all([x[-1] == sr for x in tracks])
-
 
         # note that path here is the folder name, while song_n just extracts the song name
         # for example:
@@ -154,18 +194,32 @@ class ExtractAtomicTriplets(beam.DoFn):
         # song_n = 1002000
         # path = gs://klay-datasets-001/mtg-jamendo-90s-crop/00/1002000
         path = tracks[0][0].split(".")[0]
-        if self.t is None: # if t is None, then we pad to the longest stem
+        if self.t is None:  # if t is None, then we pad to the longest stem
             max_len = max([x[1].shape[-1] for x in tracks])
-            stem_d = {k.split(".")[1]: torch.cat([x[:, :max_len], torch.zeros(x.shape[0], max_len - x.shape[-1])], dim=-1) for k, x, sr in tracks}
+            stem_d = {
+                k.split(".")[1]: torch.cat(
+                    [x[:, :max_len], torch.zeros(x.shape[0], max_len - x.shape[-1])],
+                    dim=-1,
+                )
+                for k, x, sr in tracks
+            }
         else:
-            stem_d = {k.split(".")[1]: x[:, :self.t*sr] for k, x, sr in tracks}
+            stem_d = {k.split(".")[1]: x[:, : self.t * sr] for k, x, sr in tracks}
         for k, v in stem_d.items():
-            if v[..., :v.shape[1]//2000*2000].view(v.shape[0],v.shape[1] // 2000, 2000).pow(2).mean(-1).sqrt().mean() < self.tol:
+            if (
+                v[..., : v.shape[1] // 2000 * 2000]
+                .view(v.shape[0], v.shape[1] // 2000, 2000)
+                .pow(2)
+                .mean(-1)
+                .sqrt()
+                .mean()
+                < self.tol
+            ):
                 # print(f"WARNING: {k} is silent in {song}")
                 edit_instructions = [x for x in edit_instructions if k not in x]
                 stem_d[k] = None
 
-        stem_d = {k:v for k,v in stem_d.items() if v is not None}
+        stem_d = {k: v for k, v in stem_d.items() if v is not None}
         edit_tupls = []
         for edit in edit_instructions:
             dp = self.make_edit(edit, stem_d, sr=sr)

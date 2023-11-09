@@ -21,6 +21,7 @@ from klay_beam.transforms import *
 from klay_beam.torch_transforms import *
 from job_atomic_edit.transforms import ExtractAtomicTriplets, VALID_EDITS
 
+
 class SkipCompletedGrouped(beam.DoFn):
     def __init__(
         self,
@@ -72,10 +73,20 @@ class SkipCompletedGrouped(beam.DoFn):
 
         logging.info(f"Targets already exist. Skipping: {source_metadata.path}")
         return []
-    
+
     def process(self, src: tuple):
         song, source_metadatas = src
-        return [(song, [item for source_metadata in source_metadatas for item in self.process_track(source_metadata)])]
+        return [
+            (
+                song,
+                [
+                    item
+                    for source_metadata in source_metadatas
+                    for item in self.process_track(source_metadata)
+                ],
+            )
+        ]
+
 
 class LoadWithTorchaudioGrouped(beam.DoFn):
     """Use torchaudio to load audio files to tensors
@@ -160,27 +171,40 @@ class LoadWithTorchaudioGrouped(beam.DoFn):
 
     def process(self, src: tuple):
         song, source_metadatas = src
-        return [(song, [item for source_metadata in source_metadatas for item in self.process_track(source_metadata)])]
+        return [
+            (
+                song,
+                [
+                    item
+                    for source_metadata in source_metadatas
+                    for item in self.process_track(source_metadata)
+                ],
+            )
+        ]
+
+
 """
 Job for extracting EnCodec features. See job_atomic_edit/README.md for details.
 """
+
+
 def torch_to_file(torch_data: torch.Tensor, sample_rate: int):
     in_memory_file_buffer = io.BytesIO()
-    torchaudio.save(in_memory_file_buffer, torch_data,sample_rate=sample_rate, format="wav")
+    torchaudio.save(
+        in_memory_file_buffer, torch_data, sample_rate=sample_rate, format="wav"
+    )
     in_memory_file_buffer.seek(0)
     return in_memory_file_buffer
 
-edit2ix = {x:i for i,x in enumerate(VALID_EDITS)}
-ix2st = {
-    0: 'src',
-    2: 'tgt'
-}
+
+edit2ix = {x: i for i, x in enumerate(VALID_EDITS)}
+ix2st = {0: "src", 2: "tgt"}
 
 
 DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-py3.10-beam2.51.0-torch2.0"
 
+
 class UngroupElements(beam.DoFn):
-    
     def __init__(self, sample_rate: int):
         assert sample_rate in [
             24000,
@@ -188,14 +212,18 @@ class UngroupElements(beam.DoFn):
         ], f"Invalid sample_rate: {sample_rate} for encodec model"
         self.sample_rate = sample_rate
 
-
     def process(self, element):
         k, path, v = element
         for elem in list(v):
-            # process your element 
+            # process your element
             for ix, el in enumerate(elem):
                 if type(el) == torch.Tensor:
-                    yield (f"{path}.{ix2st[ix]}.{edit2ix[elem[1]]}", el, self.sample_rate)
+                    yield (
+                        f"{path}.{ix2st[ix]}.{edit2ix[elem[1]]}",
+                        el,
+                        self.sample_rate,
+                    )
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -273,9 +301,14 @@ def run():
 
     # Pattern to recursively find audio files inside source_audio_path
     # match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
-    match_patterns = [os.path.join(known_args.input, f"**.{stem}") for stem in ['source.wav', 'bass.wav', 'drums.wav', 'other.wav', 'vocals.wav']]
+    match_patterns = [
+        os.path.join(known_args.input, f"**.{stem}")
+        for stem in ["source.wav", "bass.wav", "drums.wav", "other.wav", "vocals.wav"]
+    ]
 
-    new_suffixes = [f'src.{x}.wav' for x in range(len(VALID_EDITS))] + [f'tgt.{x}.wav' for x in range(len(VALID_EDITS))]
+    new_suffixes = [f"src.{x}.wav" for x in range(len(VALID_EDITS))] + [
+        f"tgt.{x}.wav" for x in range(len(VALID_EDITS))
+    ]
 
     # instantiate NAC extractor here so we can use computed variables
     edit_fn = ExtractAtomicTriplets(known_args.t)
@@ -289,12 +322,11 @@ def run():
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
-            
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
-                    old_suffix='.wav',
-                    new_suffix=['.src.0.wav'],
+                    old_suffix=".wav",
+                    new_suffix=[".src.0.wav"],
                     check_timestamp=True,
                 )
             )
@@ -315,7 +347,7 @@ def run():
             #         source_sr_hint=48_000,
             #         target_sr=ungroup_fn.sample_rate,
             #     )
-            # ) 
+            # )
             | beam.Map(lambda x: (x[0].split("/")[-1].split(".")[0], x))
             | "Group by track" >> beam.GroupByKey()
             # | beam.Map(lambda x: (type(x[0]), type(x[1]), [type(y) for y in x[1]], [type(z) for y in x[1] for z in y]))
@@ -327,10 +359,11 @@ def run():
         )
         # write out wav files
         (
-            out | "CreatewavFile" >> beam.Map(lambda x: (x[0] + '.wav', torch_to_file(x[1], x[2])))
+            out
+            | "CreatewavFile"
+            >> beam.Map(lambda x: (x[0] + ".wav", torch_to_file(x[1], x[2])))
             | "PersistFile" >> beam.Map(write_file)
         )
-
 
 
 if __name__ == "__main__":
