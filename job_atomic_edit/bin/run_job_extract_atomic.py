@@ -19,7 +19,7 @@ import torchaudio
 from klay_beam.transforms import *
 
 from klay_beam.torch_transforms import *
-from job_atomic_edit.transforms import ExtractDAC, ExtractEncodec, ExtractEncodecGrouped, ExtractAtomicTriplets, VALID_EDITS
+from job_atomic_edit.transforms import ExtractAtomicTriplets, VALID_EDITS
 
 class SkipCompletedGrouped(beam.DoFn):
     def __init__(
@@ -272,22 +272,20 @@ def run():
         pipeline_options.view_as(WorkerOptions).sdk_container_image = DEFAULT_IMAGE
 
     # Pattern to recursively find audio files inside source_audio_path
-    match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
+    # match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
+    match_patterns = [os.path.join(known_args.input, f"**.{stem}") for stem in ['source.wav', 'bass.wav', 'drums.wav', 'other.wav', 'vocals.wav']]
+
+    new_suffixes = [f'src.{x}.wav' for x in range(len(VALID_EDITS))] + [f'tgt.{x}.wav' for x in range(len(VALID_EDITS))]
 
     # instantiate NAC extractor here so we can use computed variables
     edit_fn = ExtractAtomicTriplets(known_args.t)
     ungroup_fn = UngroupElements(known_args.nac_input_sr)
-    extract_fn: Union[ExtractDAC, ExtractEncodec, ExtractEncodecGrouped]
-    if known_args.nac_name == "dac":
-        extract_fn = ExtractDAC(known_args.nac_input_sr)
-    elif known_args.nac_name == "encodec":
-        extract_fn = ExtractEncodec(known_args.nac_input_sr)
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
             p
             # MatchFiles produces a PCollection of FileMetadata objects
-            | beam_io.MatchFiles(match_pattern)
+            | MultiMatchFiles(match_patterns)
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
@@ -295,8 +293,8 @@ def run():
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
-                    old_suffix=known_args.audio_suffix,
-                    new_suffix=extract_fn.suffix,
+                    old_suffix='.wav',
+                    new_suffix=['.src.0.wav'],
                     check_timestamp=True,
                 )
             )
@@ -311,15 +309,17 @@ def run():
 
         out = (
             audio_files
-            | f"Resample: {extract_fn.sample_rate}Hz"
-            >> beam.ParDo(
-                ResampleTorchaudioTensor(
-                    source_sr_hint=48_000,
-                    target_sr=extract_fn.sample_rate,
-                )
-            )
+            # | f"Resample: {ungroup_fn.sample_rate}Hz"
+            # >> beam.ParDo(
+            #     ResampleTorchaudioTensor(
+            #         source_sr_hint=48_000,
+            #         target_sr=ungroup_fn.sample_rate,
+            #     )
+            # ) 
             | beam.Map(lambda x: (x[0].split("/")[-1].split(".")[0], x))
             | "Group by track" >> beam.GroupByKey()
+            # | beam.Map(lambda x: (type(x[0]), type(x[1]), [type(y) for y in x[1]], [type(z) for y in x[1] for z in y]))
+            # | beam.Map(print)
             | "Get Edit Triplets" >> beam.ParDo(edit_fn)
             | "Ungroup Elements" >> beam.ParDo(ungroup_fn)
             # | "ExtractNAC" >> beam.ParDo(extract_fn).with_outputs("ecdc", main="npy")
