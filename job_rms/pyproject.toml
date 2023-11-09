@@ -9,6 +9,7 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
   "numpy",
+  "librosa>=0.9.0",
   # Job packages should pin versions for both:
   # - apache_beam
   # - klay_beam
