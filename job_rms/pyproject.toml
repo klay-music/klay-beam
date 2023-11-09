@@ -37,6 +37,9 @@ version = {attr = "job_rms.__version__"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+job_rms = ["*.typed"]
+
 [tool.mypy]
 warn_redundant_casts = true
 check_untyped_defs = true
