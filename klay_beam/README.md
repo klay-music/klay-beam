@@ -203,14 +203,20 @@ conda env update -f environment/py310-torch.local.yml
 
 ## Docker Container
 
+When you launch a Beam job with `--runner DataflowRunner` that job will run via
+the [GCP Dataflow][dataflow] service. It is usually best to specify the Docker
+container that will run on Beam worker nodes in GCP Compute. However, you cannot
+use any docker image. Instead, you must prepare an image specifically for working
+with Dataflow.
+
+[dataflow]: https://cloud.google.com/dataflow
+
+See build examples for compatible Docker images in `Makefile`.
+
 This docker will be run on all workers. When running a Beam job on GCP Dataflow
 with the `--setup_file` option missing dependencies will be installed using pip.
 However, to save time, large dependencies (or non-pip dependencies such as
 ffmpeg 4) should be included in the docker container.
-
-### Docker Build Steps
-
-See an example of building a Compatible docker image in `Makefile`.
 
 ## Code Quality
 ### Testing
