@@ -5,7 +5,7 @@ import apache_beam as beam
 import torchaudio
 import torch
 
-from klay_beam.transforms import convert_audio
+from klay_beam.torch_transforms import convert_audio
 from klay_beam.path import move, remove_suffix
 from job_demucs.demucs import DemucsSeparator
 

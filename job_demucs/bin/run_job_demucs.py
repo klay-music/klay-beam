@@ -13,11 +13,14 @@ from apache_beam.options.pipeline_options import (
 )
 
 from klay_beam.transforms import (
-    LoadWithTorchaudio,
-    ResampleAudio,
     write_file,
     numpy_to_wav,
     SkipCompleted,
+)
+
+from klay_beam.torch_transforms import (
+    LoadWithTorchaudio,
+    ResampleTorchaudioTensor,
 )
 
 from job_demucs.transforms import SeparateSources
@@ -124,7 +127,7 @@ def run():
             | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
             | "Resample: 44.1k"
             >> beam.ParDo(
-                ResampleAudio(
+                ResampleTorchaudioTensor(
                     target_sr=44_100,
                     source_sr_hint=48_000,
                 )
@@ -139,7 +142,7 @@ def run():
             )
             | "Resample: 48K"
             >> beam.ParDo(
-                ResampleAudio(
+                ResampleTorchaudioTensor(
                     source_sr_hint=44_100,
                     target_sr=48_000,
                     output_numpy=True,
