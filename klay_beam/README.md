@@ -52,7 +52,7 @@ python -m klay_beam.run_example \
 
 ## Running on GCP via Dataflow
 
-If your audio files are in cloud storage you can process them in using GCP
+If your audio files are in cloud storage you can process them using GCP
 Dataflow, which allows for massive parallel execution. This requires additional
 setup, including:
 
@@ -66,13 +66,13 @@ Finally, you need a specialized docker container that bundles `apache_beam`,
 
 ### Setup GCP
 
-To get started, setup a GCP project by following this steps below, which are
+To get started, setup a GCP project by following this steps below, which were
 adapted from the [Dataflow Quickstart Guide][dataflow-quickstart].
 
 [dataflow-quickstart]: https://cloud.google.com/dataflow/docs/quickstarts/create-pipeline-python
 
 ```bash
-# manually set the following examples
+# Manually set the following variables
 GCP_PROJECT_ID=your-gcp-project  # ID of the GCP project that will run jobs
 USER_EMAIL=you@example.com       # The email associated with your GCP account
 DATAFLOW_BUCKET_NAME=your-bucket # Temp data storage bucket for beam workers
@@ -81,15 +81,17 @@ GCP_SA_NAME=beam-worker          # GCP service account name used by beam workers
 # Compute the full email of the service account used by beam workers
 GCP_SA_EMAIL=${GCP_SA_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com
 # Compute a valid tempo storage path job workers. This is just a proposal. You
-# can put this anywhere, as long the Beam workers are able to write temporary
-# files to this path during job execution.
-TEMP_GS_URL=gs://${DATAFLOW_BUCKET_NAME}/tmp
+# can use any cloud storage path, as long the Beam workers are able to write
+# temporary files to this path during job execution.
+TEMP_GS_URL=gs://${DATAFLOW_BUCKET_NAME}/tmp/
 
-# Create and activate a GCP project. Skip if you want to reuse an existing one.
+# Create and activate a GCP project. You can skip `gcloud projects create` if
+# you have an existing gcp project that you want to use.
 gcloud init
 gcloud projects create ${GCP_PROJECT_ID}
 gcloud config set project ${GCP_PROJECT_ID}
-# Make sure that billing is enabled for your project
+# Make sure that billing is enabled for your project. If billing is not not
+# enabled, use the GCP console to enable it.
 gcloud beta billing projects describe ${GCP_PROJECT_ID}
 gcloud services enable dataflow compute_component logging storage_component storage_api bigquery pubsub datastore.googleapis.com cloudresourcemanager.googleapis.com
 gcloud auth application-default login
@@ -179,9 +181,9 @@ Notes:
 
 ### Custom Docker Images on Dataflow
 
-If you are storing your docker images in a private repo use the IAM section of
-console.cloud.google.com and grant the "Artifact Registry Reader" role to your
-beam worker service account.
+If you are storing your docker images in a private repo, use the IAM section of
+https://console.cloud.google.com and grant the "Artifact Registry Reader" role
+to your Beam worker service account.
 
 # Development
 ## Quick Start
@@ -239,7 +241,6 @@ In Apache Beam, a **Pipeline** is a Directed Acyclic Graph.
 or "Parallel Transform".
 - **PTransforms** accept one or more **PCollections** as input, and output one
   or more **PCollections**
--
 
 ```python
 with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
