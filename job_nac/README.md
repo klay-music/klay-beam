@@ -34,7 +34,7 @@ python bin/run_job_extract_nac.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/nac-test/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/nac-test/ \
     --setup_file ./setup.py \
     --source_audio_path 'gs://klay-dataflow-test-000/glucose-karaoke/' \
     --nac_name encodec \
@@ -54,7 +54,7 @@ python bin/run_job_extract_nac.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/nac/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/nac/ \
     --setup_file ./setup.py \
     --source_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --nac_name encodec \

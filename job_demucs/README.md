@@ -36,7 +36,7 @@ python bin/run_job_demucs.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments=use_runner_v2 \
     --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/demucs/ \
     --source_audio_path 'gs://klay-dataflow-test-000/mtg-jamendo-90s-crop/01' \
     --target_audio_path 'gs://klay-dataflow-test-000/mtg-jamendo-90s-crop/01' \
     --machine_type n2-standard-48 \
@@ -53,7 +53,7 @@ python bin/run_job_demucs.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments=use_runner_v2 \
     --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/demucs/ \
     --source_audio_path 'gs://klay-datasets-001/mtg-jamendo/' \
     --target_audio_path 'gs://klay-datasets-001/mtg-jamendo/' \
     --machine_type n2-standard-48 \

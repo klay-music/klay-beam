@@ -47,7 +47,7 @@ python -m klay_beam.run_example \
     --experiments=use_runner_v2 \
     --sdk_container_image 'us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-docker-py3.9-beam2.51-torch2.0' \
     --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/convert-audio/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/example-job/ \
     --project klay-training \
     --source_audio_suffix .mp3 \
     --source_audio_path 'gs://klay-datasets-001/mtg-jamendo/00' \

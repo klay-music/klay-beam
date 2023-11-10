@@ -43,7 +43,7 @@ python bin/run_job_random_trim.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.7.0-py310-rc.1 \
     --sdk_location=container \
     --setup_file ./job_random_trim/setup.py \
-    --temp_location gs://klay-dataflow-test-000/tmp/jamendo/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/jamendo/ \
     --project klay-training \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo/' \

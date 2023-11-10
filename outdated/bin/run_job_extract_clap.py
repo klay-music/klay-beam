@@ -46,7 +46,7 @@ python bin/run_job_extract_clap.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract-clap/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/extract-clap/ \
     --setup_file ./job_clap/setup.py \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.3-clap \
     --source_audio_path \

@@ -51,7 +51,7 @@ python bin/run_job_discogs_effnet.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract-discogs-effnet/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/extract-discogs-effnet/ \
     --source_audio_path 'gs://klay-dataflow-test-001/mtg-jamendo-90s-crop/00' \
     --job_name 'extract-discogs-effnet-001' \
     --machine_type n1-standard-8

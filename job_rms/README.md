@@ -26,7 +26,7 @@ python bin/run_job_extract_rms.py \
     --experiments use_runner_v2 \
     --sdk_location container \
     --setup_file ./setup.py \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract_rms/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/extract_rms/ \
     --source_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --job_name 'extract-rms-006'
 

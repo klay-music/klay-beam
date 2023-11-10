@@ -34,7 +34,7 @@ python -m klay_beam.run_cuda_test \
     --experiments=use_runner_v2 \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.12.1-py3.9-beam2.51.0-torch1.12-cuda11.6 \
     --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/cuda-test/ \
     --project klay-beam-tests \
     --dataflow_service_options \
         "worker_accelerator=type:nvidia-tesla-t4;count:1;install-nvidia-driver" \

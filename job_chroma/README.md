@@ -31,7 +31,7 @@ python bin/run_job_extract_chroma.py \
     --experiments use_runner_v2 \
     --sdk_location container \
     --setup_file ./setup.py \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/extract_chroma/ \
     --source_audio_path 'gs://klay-dataflow-test-000/glucose-karaoke/' \
     --job_name 'extract-chroma-test-000'
 
@@ -47,7 +47,7 @@ python bin/run_job_extract_chroma.py \
     --experiments use_runner_v2 \
     --sdk_location container \
     --setup_file ./setup.py \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract_chroma/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/extract_chroma/ \
     --source_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --job_name 'extract-chroma-006'
 
