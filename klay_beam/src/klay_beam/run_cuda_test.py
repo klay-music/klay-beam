@@ -10,12 +10,22 @@ import os.path
 
 
 """
-# To run locally
-python bin/run_job_test_cuda.py \
+Check if CUDA is available and log debug information.
+
+Creating a docker image with CUDA support can be tricky. See the klay_beam
+Makefile for an example of how to build such an image.
+
+When running on Dataflow, the `--sdk_container_image` needs pytorch to be
+installed. Unlike most klay_beam jobs, the image does not actually need the
+klay_beam package installed because this file does not actually import klay_beam
+(klay_beam should still be installed in the local launch environment).
+
+# You can test your local environment
+python -m klay_beam.run_cuda_test \
     --runner Direct
 
 # To run on Dataflow
-python bin/run_job_test_cuda.py \
+python klay_beam.run_cuda_test \
     --region us-east4 \
     --autoscaling_algorithm NONE \
     --runner DataflowRunner \
@@ -28,7 +38,7 @@ python bin/run_job_test_cuda.py \
     --project klay-beam-tests \
     --dataflow_service_options \
         "worker_accelerator=type:nvidia-tesla-t4;count:1;install-nvidia-driver" \
-    --job_name 'klay-cuda-test-011'
+    --job_name 'cuda-test'
 """
 
 
