@@ -25,7 +25,7 @@ python -m klay_beam.run_cuda_test \
     --runner Direct
 
 # To run on Dataflow
-python klay_beam.run_cuda_test \
+python -m klay_beam.run_cuda_test \
     --region us-east4 \
     --autoscaling_algorithm NONE \
     --runner DataflowRunner \
