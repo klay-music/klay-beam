@@ -29,38 +29,41 @@ python bin/run_job_demucs.py \
 # Run remote job in test sandbox GCP project.
 python bin/run_job_demucs.py \
     --runner DataflowRunner \
-    --project klay-training \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+    --project klay-beam-tests \
+    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
     --max_num_workers 4 \
     --region us-central1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments=use_runner_v2 \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
-    --setup_file ./setup.py \
-    --source_audio_path 'klay-dataflow-test-000/mtg-jamendo-90s-crop/01' \
-    --target_audio_path 'klay-dataflow-test-000/mtg-jamendo-90s-crop/01' \
+    --source_audio_path 'gs://klay-dataflow-test-000/mtg-jamendo-90s-crop/01' \
+    --target_audio_path 'gs://klay-dataflow-test-000/mtg-jamendo-90s-crop/01' \
     --machine_type n2-standard-48 \
     --number_of_worker_harness_threads=24 \
-    --job_name 'demucs-test-000'
+    --job_name 'demucs-test-002'
 
 # Run remote job with autoscaling
 python bin/run_job_demucs.py \
     --runner DataflowRunner \
-    --project klay-beam-tests \
-    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
+    --project klay-training \
+    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --max_num_workers 100 \
     --region us-central1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments=use_runner_v2 \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
-    --setup_file ./setup.py \
     --source_audio_path 'gs://klay-datasets-001/mtg-jamendo/' \
     --target_audio_path 'gs://klay-datasets-001/mtg-jamendo/' \
     --machine_type n2-standard-48 \
     --number_of_worker_harness_threads=24 \
     --job_name 'demucs-047'
+
+# If you make changes to the demucs package, you can build and push a new docker
+# image, or use:
+    --setup_file ./setup.py \
+
 ```
 
 # Development
