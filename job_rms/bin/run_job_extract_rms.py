@@ -38,7 +38,7 @@ Job for extracting Chroma features:
 #
 # The default docker container specified in the bin/run_job_<name>.py script
 # should provide identical dependencies.
-DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-py3.10"
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-py310"
 
 
 def parse_args():
