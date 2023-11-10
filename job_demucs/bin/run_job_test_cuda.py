@@ -22,13 +22,13 @@ python bin/run_job_test_cuda.py \
     --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
     --disk_size_gb=50 \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.5.0-demucs-cuda \
+    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.12.1-py3.9-beam2.51.0-torch1.12-cuda11.6 \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/ \
     --project klay-beam-tests \
     --dataflow_service_options \
         "worker_accelerator=type:nvidia-tesla-t4;count:1;install-nvidia-driver" \
-    --job_name 'klay-cuda-test-010'
+    --job_name 'klay-cuda-test-011'
 """
 
 
