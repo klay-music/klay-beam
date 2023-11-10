@@ -9,10 +9,23 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
   "numpy",
-  "klay_beam~=0.5",
   "torch",
   "torchaudio",
   "demucs@git+https://github.com/facebookresearch/demucs.git@2e79e6e",
+  # Job packages should pin versions for both:
+  # - apache_beam
+  # - klay_beam
+  #
+  # Both klay_beam and apache_beam are pre-installed in the docker container.
+  # Mismatched or incompatible versions between the launch and dockerized
+  # Dataflow runtime environments are likely to break the job or cause bugs that
+  # are subtle and difficult-to-detect.
+  #
+  # If you need to update either dependency, you should also update the default
+  # default docker image which is likely to specified in the the jobs launch
+  # script (bin/run_job_<name>.py).
+  "klay_beam[pytorch]>=0.11.0,<0.13.0",
+  "apache_beam[gcp]~=2.51",
 ]
 requires-python = ">=3.9"
 

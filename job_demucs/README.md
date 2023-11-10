@@ -15,10 +15,9 @@ Initial job for copying+triming an audio dataset. This job will:
 1. Resample back to 48kHz
 1. Save results to (`--target_audio_path`) preserving the directory structure.
 
-To run, activate a suitable python environment such as
-``../environments/osx-64-job-random-trim.yml`.
+To run, activate the conda dev+launch environment: `environment/dev.yml`.
 
-```
+```bash
 # CD into the parent dir (one level up from this package) and run the launch script
 python bin/run_job_demucs.py \
     --source_audio_path \
@@ -27,46 +26,41 @@ python bin/run_job_demucs.py \
         '/Users/charles/projects/klay/python/klay-beam/test_audio/job_output/split' \
     --runner Direct
 
+# Run remote job in test sandbox GCP project.
+python bin/run_job_demucs.py \
+    --runner DataflowRunner \
+    --project klay-training \
+    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+    --max_num_workers 4 \
+    --region us-central1 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --experiments=use_runner_v2 \
+    --sdk_location=container \
+    --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
+    --setup_file ./setup.py \
+    --source_audio_path 'klay-dataflow-test-000/mtg-jamendo-90s-crop/01' \
+    --target_audio_path 'klay-dataflow-test-000/mtg-jamendo-90s-crop/01' \
+    --machine_type n2-standard-48 \
+    --number_of_worker_harness_threads=24 \
+    --job_name 'demucs-test-000'
+
 # Run remote job with autoscaling
 python bin/run_job_demucs.py \
     --runner DataflowRunner \
+    --project klay-beam-tests \
+    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
     --max_num_workers 100 \
     --region us-central1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.2-demucs \
     --sdk_location=container \
     --temp_location gs://klay-dataflow-test-000/tmp/demucs/ \
-    --project klay-training \
-    --setup_file job_demucs/setup.py \
-    --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/' \
-    --target_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo/' \
+    --setup_file ./setup.py \
+    --source_audio_path 'gs://klay-datasets-001/mtg-jamendo/' \
+    --target_audio_path 'gs://klay-datasets-001/mtg-jamendo/' \
     --machine_type n2-standard-48 \
     --number_of_worker_harness_threads=24 \
-    --job_name 'demucs-046-on-full-length-jamendo-all'
-
-# If you change job_demucs
-    --setup_file ./job_demucs/setup.py \
-
-# Possible test values for --source_audio_path
-    'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
-
-# Options for --autoscaling-algorithm
-    THROUGHPUT_BASED, NONE
-
-# Extra options to consider
-
-Reduce the maximum number of threads that run DoFn instances. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#reduce-threads
-    --number_of_worker_harness_threads
-
-Create one Apache Beam SDK process per worker. Prevents the shared objects and
-data from being replicated multiple times for each Apache Beam SDK process. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#one-sdk
-    --experiments=no_use_multiple_sdk_containers
+    --job_name 'demucs-047'
 ```
 
 # Development
