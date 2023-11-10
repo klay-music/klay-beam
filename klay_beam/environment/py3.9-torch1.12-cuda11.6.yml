@@ -13,9 +13,12 @@ dependencies:
   - ffmpeg>=4.2,<5
   # demucs uses pytorch 1.8.1 (https://github.com/facebookresearch/demucs/blob/main/environment-cuda.yml)
   # klaypy uses 1.12 (https://github.com/klay-music/klaypy/blob/main/environment/linux-64.yml)
-  # Technically >=1.9 should be valid.
-  - pytorch::pytorch>=1.12
-  - torchaudio>=0.8
+  # Technically >=1.9 should be valid. Some promising options include
+  # pytorch-1.12.1-py3.9_cuda11.6_cudnn8.3.2_0.tar.bz2
+  # pytorch-1.13.0-py3.9_cuda11.7_cudnn8.5.0_0.tar.bz2 (failed to solve environment)
+  - pytorch::pytorch=1.12.1=py3.9_cuda11.6_cudnn8.3.2_0
+  - torchaudio=0.12.1
+  - cudatoolkit=11.6
   - tqdm>=4.36
   - pip
   # demucs is listed as a dependency in the job_demucs package's pyproject.toml.
