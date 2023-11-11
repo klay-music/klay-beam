@@ -30,38 +30,48 @@ else
 endif
 
 
+# Global variables. These can be overridden like PY_VERSION below.
+BEAM_VERSION=2.51.0
+
 #############
 # python 3.9
 
-docker-py3.9-beam2.51.0-torch2.0: BEAM_VERSION=2.51.0
-docker-py3.9-beam2.51.0-torch2.0: ./environment/py3.9-torch2.0.lock
-	docker build \
-	-f Dockerfile.conda \
-	-t klay-beam:latest \
-	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(VERSION)-py3.9-beam$(BEAM_VERSION)-torch2.0 \
-	--build-arg="PY_VERSION=3.9" \
-	--build-arg="LOCAL_CONDA_LOCK=$<" \
-	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
-	.
 
-docker-py3.9-beam2.51.0: BEAM_VERSION=2.51.0
 docker-py3.9-beam2.51.0: ./environment/py3.9.lock
+	$(eval PY_VERSION=3.9)
+	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION))
 	docker build \
 	-f Dockerfile.conda \
 	-t klay-beam:latest \
-	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(VERSION)-py3.9-beam$(BEAM_VERSION) \
-	--build-arg="PY_VERSION=3.9" \
+	-t klaymusic/klay-beam:$(TAG) \
+	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(TAG) \
+	--build-arg="PY_VERSION=$(PY_VERSION)" \
 	--build-arg="LOCAL_CONDA_LOCK=$<" \
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
 
-docker-py3.9-beam2.51.0-torch1.12-cuda11.6: BEAM_VERSION=2.51.0
-docker-py3.9-beam2.51.0-torch1.12-cuda11.6: ./environment/py3.9-torch1.12-cuda11.6.lock
+docker-py3.9-beam2.51.0-torch2.0: ./environment/py3.9-torch2.0.lock
+	$(eval PY_VERSION=3.9)
+	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch2.0)
 	docker build \
 	-f Dockerfile.conda \
 	-t klay-beam:latest \
-	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(VERSION)-py3.9-beam$(BEAM_VERSION)-torch1.12-cuda11.6 \
-	--build-arg="PY_VERSION=3.9" \
+	-t klaymusic/klay-beam:$(TAG) \
+	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(TAG) \
+	--build-arg="PY_VERSION=$(PY_VERSION)" \
+	--build-arg="LOCAL_CONDA_LOCK=$<" \
+	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
+	.
+
+docker-py3.9-beam2.51.0-torch1.12-cuda11.6: ./environment/py3.9-torch1.12-cuda11.6.lock
+	$(eval PY_VERSION=3.9)
+	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch1.12-cuda11.6)
+	docker build \
+	-f Dockerfile.conda \
+	-t klay-beam:latest \
+	-t klaymusic/klay-beam:$(TAG) \
+	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(TAG) \
+	--build-arg="PY_VERSION=$(PY_VERSION)" \
 	--build-arg="LOCAL_CONDA_LOCK=$<" \
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
@@ -69,35 +79,41 @@ docker-py3.9-beam2.51.0-torch1.12-cuda11.6: ./environment/py3.9-torch1.12-cuda11
 #############
 # python 3.10
 
-docker-py3.10-beam2.51.0: BEAM_VERSION=2.51.0
 docker-py3.10-beam2.51.0: ./environment/py3.10.lock
+	$(eval PY_VERSION=3.10)
+	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)
 	docker build \
 	-f Dockerfile.conda \
 	-t klay-beam:latest \
-	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(VERSION)-py3.10-beam$(BEAM_VERSION) \
-	--build-arg="PY_VERSION=3.10" \
+	-t klaymusic/klay-beam:$(TAG) \
+	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(TAG) \
+	--build-arg="PY_VERSION=$(PY_VERSION)" \
 	--build-arg="LOCAL_CONDA_LOCK=$<" \
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
 
-docker-py3.10-beam2.51.0-torch2.0: BEAM_VERSION=2.51.0
 docker-py3.10-beam2.51.0-torch2.0: ./environment/py3.10-torch2.0.lock
+	$(eval PY_VERSION=3.10)
+	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch2.0)
 	docker build \
 	-f Dockerfile.conda \
 	-t klay-beam:latest \
-	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(VERSION)-py3.10-beam$(BEAM_VERSION)-torch2.0 \
-	--build-arg="PY_VERSION=3.10" \
+	-t klaymusic/klay-beam:$(TAG) \
+	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(TAG) \
+	--build-arg="PY_VERSION=$(PY_VERSION)" \
 	--build-arg="LOCAL_CONDA_LOCK=$<" \
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
 
-docker-py3.10-beam2.51.0-torch1.11-cuda11.3: BEAM_VERSION=2.51.0
 docker-py3.10-beam2.51.0-torch1.11-cuda11.3: ./environment/py3.10-torch1.11-cuda11.3.lock
+	$(eval PY_VERSION=3.10)
+	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch1.11-cuda11.3)
 	docker build \
 	-f Dockerfile.conda \
 	-t klay-beam:latest \
-	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(VERSION)-py3.10-beam$(BEAM_VERSION)-torch1.11-cuda11.3 \
-	--build-arg="PY_VERSION=3.10" \
+	-t klaymusic/klay-beam:$(TAG) \
+	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(TAG) \
+	--build-arg="PY_VERSION=$(PY_VERSION)" \
 	--build-arg="LOCAL_CONDA_LOCK=$<" \
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
