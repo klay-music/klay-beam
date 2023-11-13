@@ -4,18 +4,43 @@ import logging
 
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
-from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.options.pipeline_options import SetupOptions
+
+from apache_beam.options.pipeline_options import (
+    PipelineOptions,
+    SetupOptions,
+    StandardOptions,
+    WorkerOptions,
+)
 
 from klay_beam.transforms import (
-    convert_audio,
-    LoadWithTorchaudio,
     SkipCompleted,
     write_file,
     numpy_to_file,
 )
 
+from klay_beam.torch_transforms import (
+    LoadWithTorchaudio,
+    convert_audio,
+)
+
 from job_clap.transforms import ExtractCLAP
+
+
+# NOTE: the dependency versions in Docker image must match the dependencies in
+# the launch/dev environment. When updating dependencies, make sure that the
+# docker image you specify for remote jobs also provides the correct
+# dependencies. Here's where to look for each dependency:
+#
+# - pyproject.toml pins:
+#   - apache_beam
+#   - klay_beam
+# - environment/dev.yml pins:
+#   - pytorch
+#   - python
+#
+# The default docker container specified in the bin/run_job_<name>.py script
+# should provide identical dependencies.
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam-demucs"
 
 
 """
@@ -110,6 +135,13 @@ def run():
     # pickle the main session in case there are global objects
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
+
+    # Set the default docker image if we're running on Dataflow
+    if (
+        pipeline_options.view_as(StandardOptions).runner == "DataflowRunner"
+        and pipeline_options.view_as(WorkerOptions).sdk_container_image is None
+    ):
+        pipeline_options.view_as(WorkerOptions).sdk_container_image = DEFAULT_IMAGE
 
     # Pattern to recursively find audio files inside source_audio_path
     match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
