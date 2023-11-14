@@ -3,7 +3,8 @@
 Beam job for extracting CLAP features:
 
 1. Recursively search a path for `.wav` files
-1. For each audio file, extract CLAP embeddings
+1. For each audio file, extract a sequence of CLAP embeddings with a hop size of
+5 seconds. Any files less than 5 seconds long will be skipped.
 1. Write the results to an `.npy` file adjacent to the source audio file
 
 
@@ -25,21 +26,19 @@ python bin/run_job_clap.py \
     --runner DataflowRunner \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --machine_type n1-standard-2 \
+    --machine_type n2-standard-4 \
     --region us-central1 \
     --max_num_workers 100 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
     --temp_location gs://klay-beam-scratch-storage/tmp/extract-clap/ \
-    --setup_file ./setup.py \
     --source_audio_path 'gs://klay-dataflow-test-001/mtg-jamendo-90s-crop/00' \
-    --job_name 'extract-clap-005'
-    --number_of_worker_harness_threads 1 \
-    --audio_suffix .wav
+    --job_name 'extract-clap-012' \
+    --number_of_worker_harness_threads 1
 
-# Possible test values for --source_audio_path
-    'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
+# To make local modifications without pushing a new docker image, use:
+    --setup_file ./setup.py \
 
 # Options for --autoscaling-algorithm
     THROUGHPUT_BASED, NONE
