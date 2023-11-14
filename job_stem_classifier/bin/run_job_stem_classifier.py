@@ -99,7 +99,7 @@ def run():
     match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
-        audio_files = (
+        (
             p
             # MatchFiles produces a PCollection of FileMetadata objects
             | beam_io.MatchFiles(match_pattern)
@@ -116,10 +116,6 @@ def run():
             )
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(LoadWithLibrosa(target_sr=16_000, mono=True))
-        )
-
-        (
-            audio_files
             | "ClassifyAudioStem"
             >> beam.ParDo(
                 ClassifyAudioStem(
