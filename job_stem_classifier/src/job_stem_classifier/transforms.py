@@ -6,9 +6,13 @@ import json
 import logging
 import os
 from pathlib import Path, PurePosixPath
+from typing import Tuple
 
 
 assert os.path.sep == "/", "os.path.join (in get_target_path) breaks on Windows"
+
+
+MIN_AUDIO_DURATION_SECS = 30.0
 
 
 class StemGroup(StrEnum):
@@ -20,10 +24,17 @@ class StemGroup(StrEnum):
 
 
 class ClassifyAudioStem(beam.DoFn):
-    def __init__(self, stem_map_path: Path, source_dir: str, target_dir: str):
+    def __init__(
+        self,
+        stem_map_path: Path,
+        source_dir: str,
+        target_dir: str,
+        min_duration: float = MIN_AUDIO_DURATION_SECS,
+    ):
         self.stem_map_path = stem_map_path
         self.source_dir = source_dir
         self.target_dir = target_dir
+        self.min_duration = min_duration
 
     def setup(self):
         assert (
@@ -36,12 +47,19 @@ class ClassifyAudioStem(beam.DoFn):
         # here we invert it to the form: {"stem_name1": "other", "stem_name2": "other", ...}
         self.stem_map = invert_stem_map(stem_map)
 
-    def process(self, readable_file: beam_io.ReadableFile):
-        orig_path = Path(readable_file.metadata.path)
+    def process(self, audio_tuple: Tuple[str, np.ndarray, int]):
+        filepath, audio, sr = audio_tuple
+
+        assert audio.ndim == 1, "audio must be mono"
+        if len(audio) < self.min_duration * sr:
+            logging.info(f"Skipping {filepath} because it is too short")
+            return
+
+        orig_path = Path(filepath)
         new_path, suffix = None, None
 
         if "_ST_" in orig_path.name:
-            # Identify the stem group
+            # identify the stem group
             stem_name = parse_stem(orig_path.name)
             stem_group = self.stem_map.get(stem_name, None)
 
@@ -63,14 +81,14 @@ class ClassifyAudioStem(beam.DoFn):
         # name as the filename. This is because we want all stems from the same track
         # to use the same name and be disambiguated by an enumerated stem group.
         if suffix is not None:
-            parent = get_parent(readable_file.metadata.path)
+            parent = get_parent(filepath)
             new_path = os.path.join(parent, Path(parent).stem + suffix)
 
         # finally, replace the source directory with the output directory
         if new_path is not None:
             new_path = replace_root_dir(new_path, self.source_dir, self.target_dir)
 
-        return [(readable_file.metadata.path, new_path)]
+        return [(filepath, new_path)]
 
 
 class SkipExistingTrack(beam.DoFn):
