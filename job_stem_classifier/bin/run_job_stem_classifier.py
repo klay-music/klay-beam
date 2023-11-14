@@ -115,8 +115,7 @@ def run():
                 )
             )
             | beam_io.ReadMatches()
-            | "LoadAudio"
-            >> beam.ParDo(LoadWithLibrosa(target_sr=16_000, mono=True))
+            | "LoadAudio" >> beam.ParDo(LoadWithLibrosa(target_sr=16_000, mono=True))
         )
 
         (
