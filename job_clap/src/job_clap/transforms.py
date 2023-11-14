@@ -3,7 +3,7 @@ from huggingface_hub import hf_hub_download
 import laion_clap
 from pathlib import Path
 import torch
-from typing import Tuple, Optional
+from typing import Tuple
 
 import apache_beam as beam
 
@@ -64,11 +64,22 @@ class ExtractCLAP(beam.DoFn):
         frames = []
 
         # the last frame is discarded else we cannot concatenate
-        for frame in x.split(self.num_samples_in_frame, dim=-1)[:-1]:
+        splits = x.split(self.num_samples_in_frame, dim=-1)[:-1]
+        for frame in splits:
             frames.append(frame)
+
+        if len(frames) == 0:
+            logging.error(
+                f"Skipping {key} because it is only {x.shape[1]} samples long, "
+                f"and at least one frame of length {self.num_samples_in_frame} "
+                "is required."
+            )
+            return []
+
         frames = torch.cat(frames, dim=0)
 
         # extract embeddings
+        logging.info(f"Extracting CLAP embeddings for {key}")
         embeds = self.model.get_audio_embedding_from_data(x=frames, use_tensor=True)
         embeds = torch.transpose(embeds, 0, 1)  # -> [D, T]
         return [(output_filename, embeds.detach().cpu().numpy())]

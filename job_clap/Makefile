@@ -1,11 +1,11 @@
 .PHONY: code-style type-check pre-test tests docker docker-push
 
 code-style:
-	flake8 src tests
-	black --check src tests
+	flake8 src tests bin
+	black --check src tests bin
 
 type-check:
-	mypy src tests --namespace-packages
+	mypy src --namespace-packages
 
 pre-test: code-style type-check
 
