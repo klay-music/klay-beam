@@ -1,6 +1,6 @@
 # job_demucs
 
-Initial job for copying+triming an audio dataset. This job will:
+Initial job source-separation on an audio dataset. This job will:
 
 1. Recursively search a path for `.source.wav` files (`--source_audio_path`)
 1. For each audio file, if the targets already exist skip it. For example for
