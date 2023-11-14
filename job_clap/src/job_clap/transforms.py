@@ -1,3 +1,4 @@
+import logging
 from huggingface_hub import hf_hub_download
 import laion_clap
 from pathlib import Path
@@ -15,6 +16,11 @@ CACHE_DIR = Path.home() / ".cache/huggingface/hub/models--lukewys--laion_clap/sn
 FILENAME = "music_audioset_epoch_15_esc_90.14.pt"
 
 
+def download_model():
+    model_path = hf_hub_download(repo_id=REPO_ID, filename=FILENAME)
+    return model_path
+
+
 class ExtractCLAP(beam.DoFn):
     """Beam DoFn for extracting encodec tokens from audio."""
 
@@ -29,8 +35,10 @@ class ExtractCLAP(beam.DoFn):
 
         cached_models = list(CACHE_DIR.glob(FILENAME))
         if not cached_models:
-            model_path = hf_hub_download(repo_id=REPO_ID, filename=FILENAME)
+            logging.info("Downloading model from HuggingFace Hub")
+            model_path = download_model()
         else:
+            logging.info("Loaded model from local cache")
             model_path = cached_models[0]
 
         self.model = laion_clap.CLAP_Module(enable_fusion=False, amodel="HTSAT-base")

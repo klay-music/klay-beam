@@ -44,61 +44,7 @@ DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam-demucs"
 
 
 """
-Job for extracting EnCodec features:
-
-1. Recursively search a path for `.wav` files
-1. For each audio file, extract CLAP embeddings
-1. Write the results to an .npy file adjacent to the source audio file
-
-To run, activate a suitable python environment such as
-`../environments/osx-64-clap.yml`.
-
-```
-# CD into the root klay_beam dir to the launch script:
-python bin/run_job_extract_clap.py \
-    --runner Direct \
-    --source_audio_path '/absolute/path/to/source.wav/files/'
-    --audio_suffix .wav
-
-# Run remote job with autoscaling
-python bin/run_job_extract_clap.py \
-    --runner DataflowRunner \
-    --project klay-training \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
-    --machine_type n1-standard-2 \
-    --region us-central1 \
-    --max_num_workers 100 \
-    --autoscaling_algorithm THROUGHPUT_BASED \
-    --experiments use_runner_v2 \
-    --sdk_location container \
-    --temp_location gs://klay-beam-scratch-storage/tmp/extract-clap/ \
-    --setup_file ./job_clap/setup.py \
-    --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.3-clap \
-    --source_audio_path \
-        'gs://klay-dataflow-test-001/mtg-jamendo-90s-crop/00' \
-    --job_name 'extract-clap-004'
-    --number_of_worker_harness_threads 1 \
-    --experiments no_use_multiple_sdk_containers \
-    --audio_suffix .wav
-
-# Possible test values for --source_audio_path
-    'gs://klay-dataflow-test-000/test-audio/abbey_road/mp3/' \
-
-# Options for --autoscaling-algorithm
-    THROUGHPUT_BASED, NONE
-
-# Extra options to consider
-
-Reduce the maximum number of threads that run DoFn instances. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#reduce-threads
-    --number_of_worker_harness_threads
-
-Create one Apache Beam SDK process per worker. Prevents the shared objects and
-data from being replicated multiple times for each Apache Beam SDK process. See:
-https://cloud.google.com/dataflow/docs/guides/troubleshoot-oom#one-sdk
-    --experiments=no_use_multiple_sdk_containers
-```
-
+Beam job for extracting CLAP features:
 """
 
 
@@ -145,7 +91,7 @@ def run():
 
     # Pattern to recursively find audio files inside source_audio_path
     match_pattern = os.path.join(known_args.input, f"**{known_args.audio_suffix}")
-    extract_fn = ExtractCLAP(device="cpu")
+    extract_fn = ExtractCLAP()
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
