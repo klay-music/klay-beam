@@ -3,6 +3,7 @@ import apache_beam.io.fileio as beam_io
 from apache_beam.io.filesystems import FileSystems
 from enum import StrEnum
 import json
+import numpy as np
 import logging
 import os
 from pathlib import Path, PurePosixPath
