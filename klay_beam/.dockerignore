@@ -1,1 +1,6 @@
 Makefile
+
+# Python
+.mypy_cache
+*.egg-info
+**/__pycache__
