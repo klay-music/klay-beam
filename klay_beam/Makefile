@@ -63,6 +63,19 @@ docker-py3.9-beam2.51.0-torch2.0: ./environment/py3.9-torch2.0.lock
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
 
+docker-py3.9-beam2.51.0-torch2.0-torchvision0.15: ./environment/py3.9-torch2.0-torchvision0.15.lock
+	$(eval PY_VERSION=3.9)
+	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch2.0-torchvision0.15)
+	docker build \
+	-f Dockerfile.conda \
+	-t klay-beam:latest \
+	-t klaymusic/klay-beam:$(TAG) \
+	-t us-docker.pkg.dev/klay-home/klay-docker/klay-beam:$(TAG) \
+	--build-arg="PY_VERSION=$(PY_VERSION)" \
+	--build-arg="LOCAL_CONDA_LOCK=$<" \
+	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
+	.
+
 docker-py3.9-beam2.51.0-torch1.12-cuda11.6: ./environment/py3.9-torch1.12-cuda11.6.lock
 	$(eval PY_VERSION=3.9)
 	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch1.12-cuda11.6)
