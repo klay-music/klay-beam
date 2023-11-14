@@ -11,9 +11,6 @@ dependencies = [
   "huggingface_hub",
   "numpy",
   "laion_clap",
-  "torch",
-  "torchaudio",
-  "torchvision",
   "transformers==4.30.0",
   # Job packages should pin versions for both:
   # - apache_beam

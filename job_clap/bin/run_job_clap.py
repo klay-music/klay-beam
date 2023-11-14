@@ -40,7 +40,7 @@ from job_clap.transforms import ExtractCLAP
 #
 # The default docker container specified in the bin/run_job_<name>.py script
 # should provide identical dependencies.
-DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam-demucs"
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam-clap"
 
 
 """

@@ -33,7 +33,7 @@ class ExtractCLAP(beam.DoFn):
     def setup(self):
         self._device = get_device()
 
-        cached_models = list(CACHE_DIR.glob(FILENAME))
+        cached_models = list(CACHE_DIR.glob(f"**/{FILENAME}"))
         if not cached_models:
             logging.info("Downloading model from HuggingFace Hub")
             model_path = download_model()
