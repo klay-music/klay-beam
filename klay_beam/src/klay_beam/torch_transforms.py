@@ -153,8 +153,11 @@ class ResampleTorchaudioTensor(beam.DoFn):
             logging.info(
                 f"Skipping resample because source was already {self.target_sr}: {key}"
             )
-        elif self.resample is not None and source_sr == self.source_sr_hint:
-            resampled_audio = self.resample(audio)
+        elif (
+            self.resample is not None
+            and source_sr == self.source_sr_hint  # type: ignore[unreachable]
+        ):
+            resampled_audio = self.resample(audio)  # type: ignore[unreachable]
             logging.info(
                 f"Resampled {source_sr} to {self.target_sr} (cached method): {key}"
             )

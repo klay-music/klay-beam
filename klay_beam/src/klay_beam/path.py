@@ -1,5 +1,4 @@
 from pathlib import PurePosixPath
-from urllib.parse import urlparse, urlunparse
 import os.path
 
 
@@ -25,17 +24,18 @@ def move(filename, source_dir, target_dir):
     # method (which is technically private). See:
     # https://stackoverflow.com/questions/38552253/change-urlparse-path-of-a-url
 
-    result = str(PurePosixPath(target_dir) / relative_source_filename)
-    target_dir_is_uri = urlparse(target_dir).scheme != ""
-    if target_dir_is_uri:
-        target_uri = urlparse(target_dir)
-        new_path = str(
-            PurePosixPath(target_uri.path) / PurePosixPath(relative_source_filename)
-        )
-        target_uri = target_uri._replace(path=new_path)
-        result = urlunparse(target_uri)
+    # from urllib.parse import urlparse, urlunparse
+    # result = str(PurePosixPath(target_dir) / relative_source_filename)
+    # target_dir_is_uri = urlparse(target_dir).scheme != ""
+    # if target_dir_is_uri:
+    #     target_uri = urlparse(target_dir)
+    #     new_path = str(
+    #         PurePosixPath(target_uri.path) / PurePosixPath(relative_source_filename)
+    #     )
+    #     target_uri = target_uri._replace(path=new_path)
+    #     result = urlunparse(target_uri)
 
-    return result
+    # return result
 
 
 assert os.path.sep == "/", "os.path.join (in get_target_path) breaks on Windows"

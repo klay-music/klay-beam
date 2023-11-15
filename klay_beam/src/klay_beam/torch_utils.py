@@ -2,7 +2,7 @@ from typing import Tuple, Optional
 import logging
 
 
-def torch_check() -> Tuple[bool, Optional[str]]:
+def torch_check() -> Tuple[bool, Optional[ImportError]]:
     torch_available, torch_import_error = False, None
     try:
         import torch
