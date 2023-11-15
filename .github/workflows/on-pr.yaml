@@ -56,7 +56,9 @@ jobs:
   run_tests:
     strategy:
       matrix:
-        python: ['3.10']
+        condaLockFile:
+          - klay_beam/environment/py3.9.lock
+          - klay_beam/environment/py3.9-torch2.0.lock
         os: ['ubuntu-latest']
     name: run_tests
     runs-on: ${{ matrix.os }}
@@ -74,7 +76,7 @@ jobs:
         with:
           path: ~/conda_pkgs_dir
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('klay_beam/environment/py3.9-torch2.0.lock') }}
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', matrix.condaLockFile)) }}
       - name: Log cache hit status
         continue-on-error: true
         run: |
@@ -82,10 +84,13 @@ jobs:
           ls -lha ~/conda_pkgs_dir
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: beam-py3.9-torch2.0
-          environment-file: klay_beam/environment/py3.9-torch2.0.lock
+          activate-environment: explicit-env
+          environment-file: ${{ matrix.condaLockFile }}
           auto-activate-base: false
           use-only-tar-bz2: true
+          # The example from the docs uses auto-update-conda:false, so we do too. See:
+          # https://github.com/conda-incubator/setup-miniconda#example-7-lockfiles
+          auto-update-conda: false
       - name: Run Tests
         working-directory: ./klay_beam
         run: |
