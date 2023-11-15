@@ -84,7 +84,6 @@ jobs:
         with:
           activate-environment: beam-py3.9-torch2.0
           environment-file: klay_beam/environment/py3.9-torch2.0.lock
-          python-version: ${{ matrix.python }}
           auto-activate-base: false
           use-only-tar-bz2: true
       - name: Run Tests
