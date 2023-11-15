@@ -48,7 +48,7 @@ jobs:
         working-directory: ./klay_beam
         run: |
           python -m pip install --upgrade pip
-          pip install -U '.[type-check]'
+          pip install -U '.[type-check, tests]'
       - name: Run type-check
         working-directory: ./klay_beam
         run: |
