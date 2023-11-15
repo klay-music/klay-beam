@@ -58,7 +58,7 @@ python bin/run_job_adt.py \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --experiments=use_runner_v2 \
     --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/adt/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/adt/ \
     --project klay-training \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \

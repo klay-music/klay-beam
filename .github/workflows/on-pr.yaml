@@ -1,0 +1,98 @@
+name: on-pull-request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  code_style:
+    strategy:
+      matrix:
+        python: ['3.10']
+        os: ['ubuntu-latest']
+    name: code_style
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+          cache: 'pip'
+          cache-dependency-path: ./klay_beam/pyproject.toml
+      - name: Install dependencies
+        working-directory: ./klay_beam
+        run: |
+          python -m pip install -U pip
+          pip install '.[code-style]'
+      - name: Run code-style
+        working-directory: ./klay_beam
+        run: |
+          make code-style
+  type_checking:
+    strategy:
+      matrix:
+        python: ['3.10']
+        os: ['ubuntu-latest']
+    name: type_checking
+    runs-on: ${{  matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+          cache: 'pip'
+          cache-dependency-path: ./klay_beam/pyproject.toml
+      - name: Install dependencies
+        working-directory: ./klay_beam
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U '.[type-check, tests]'
+      - name: Run type-check
+        working-directory: ./klay_beam
+        run: |
+          make type-check
+  run_tests:
+    strategy:
+      matrix:
+        condaLockFile:
+          - klay_beam/environment/py3.9.lock
+          - klay_beam/environment/py3.9-torch2.0.lock
+        os: ['ubuntu-latest']
+    name: run_tests
+    runs-on: ${{ matrix.os }}
+    needs: [type_checking, code_style]
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', matrix.condaLockFile)) }}
+      - name: Log cache hit status
+        continue-on-error: true
+        run: |
+          echo cache hit ${{ steps.run_tests.outputs.cache-hit }}
+          ls -lha ~/conda_pkgs_dir
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: explicit-env
+          environment-file: ${{ matrix.condaLockFile }}
+          auto-activate-base: false
+          use-only-tar-bz2: true
+          # The example from the docs uses auto-update-conda:false, so we do too. See:
+          # https://github.com/conda-incubator/setup-miniconda#example-7-lockfiles
+          auto-update-conda: false
+      - name: Run Tests
+        working-directory: ./klay_beam
+        run: |
+          pip install .[tests]
+          pytest tests

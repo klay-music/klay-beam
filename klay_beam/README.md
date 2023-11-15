@@ -6,9 +6,9 @@ Helpers for running massively parallel Apache Beam jobs on audio data.
 prior to v1.0.
 
 Processing large batches of audio data can be very time consuming. It is often
-helpful to spin up many instances to apply transformations or extract features
-from a large audio dataset. This package bundles a collection of utility methods
-and examples designed to ease the process of massively parallel audio jobs with
+helpful to use many VM instances to apply transformations or extract features
+from a large audio dataset. This package bundles a collection of utilities and
+examples designed to ease the process of massively parallel audio jobs with
 GCP Dataflow and Apache Beam.
 
 The core transformations include:
@@ -21,39 +21,134 @@ The core transformations include:
 - Audio data resampling
 - Audio channel manipulation
 
-## Example Job
+You can use `klay-beam` to write and launch your own custom jobs that build on
+top of these primitives. It is setup to support a wide variety of custom
+dependencies and environments, including pinned versions of Python, Pytorch,
+CUDA (for GPU support), and more.
 
-The example job uses the following ingredients:
-- `klay_beam.run_example` pipeline script
-- A specialized docker image created by `Makefile`
-- `environment/py310-torch.local.yml` local environment
+## Running Locally
 
-Notes:
-
-
-To run the example job:
-1. Ensure you have GCP permissions
-2. Activate a `klay-beam` conda environment locally, (for example
-   `environment/py310-torch.local.yml`)
-3. Invoke `python -m klay_beam.run_example` as per examples below
+Typically you will want to write and test a job on local machine, before testing
+and executing on a massive dataset. For example:
 
 ```bash
-# Running locally allows you to use --source_audio_path values paths on your
-# local filesystem OR in gs://object-storage.
+# Create the environment and install klay_beam
+conda env create -f environment/py3.10-torch2.0.yml`
+conda activate klay-beam-py3.10-torch2.0
+pip install -e .
+```
+
+Then launch the example job:
+
+```bash
+# Then launch the job. Running locally allows you to use --source_audio_path
+#  values paths on your local filesystem OR in gs://object-storage. To use gs://
+# directories, you must be authenticated with GCP
 python -m klay_beam.run_example \
     --runner Direct \
     --source_audio_suffix .mp3 \
     --source_audio_path '/local/path/to/mp3s/'
 ```
 
+## Running on GCP via Dataflow
+
+If your audio files are in cloud storage you can process them using GCP
+Dataflow, which allows for massive parallel execution. This requires additional
+setup, including:
+
+1. Activate Dataflow API
+1. Create GCP service account
+1. Create GCP Cloud Storage bucket
+1. Setup GCP permissions for launching and executing jobs
+
+Finally, you need a specialized docker container that bundles `apache_beam`,
+`klay_beam`, and any additional dependencies. See `Makefile` for examples.
+
+### Setup GCP
+
+To get started, setup a GCP project by following this steps below, which were
+adapted from the [Dataflow Quickstart Guide][dataflow-quickstart].
+
+[dataflow-quickstart]: https://cloud.google.com/dataflow/docs/quickstarts/create-pipeline-python
+
+```bash
+# Manually set the following variables
+GCP_PROJECT_ID=your-gcp-project  # ID of the GCP project that will run jobs
+USER_EMAIL=you@example.com       # The email associated with your GCP account
+DATAFLOW_BUCKET_NAME=your-bucket # Temp data storage bucket for beam workers
+GCP_SA_NAME=beam-worker          # GCP service account name used by beam workers
+
+# Compute the full email of the service account used by beam workers
+GCP_SA_EMAIL=${GCP_SA_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com
+# Compute a valid tempo storage path job workers. This is just a proposal. You
+# can use any cloud storage path, as long the Beam workers are able to write
+# temporary files to this path during job execution.
+TEMP_GS_URL=gs://${DATAFLOW_BUCKET_NAME}/tmp/
+
+# Create and activate a GCP project. You can skip `gcloud projects create` if
+# you have an existing gcp project that you want to use.
+gcloud init
+gcloud projects create ${GCP_PROJECT_ID}
+gcloud config set project ${GCP_PROJECT_ID}
+# Make sure that billing is enabled for your project. If billing is not not
+# enabled, use the GCP console to enable it.
+gcloud beta billing projects describe ${GCP_PROJECT_ID}
+gcloud services enable dataflow compute_component logging storage_component storage_api bigquery pubsub datastore.googleapis.com cloudresourcemanager.googleapis.com
+gcloud auth application-default login
+
+# Dataflow jobs need to write temporary data to cloud storage during job
+# execution. Create a bucket using the gsutil mb (make bucket) command. See
+# `gsutil help mb` for details.
+gsutil mb --autoclass -l US -b on gs://${DATAFLOW_BUCKET_NAME}
+
+# Create a service account which will be used by the worker nodes
+gcloud iam service-accounts create $GCP_SA_NAME --description="Service account used by Apache Beam workers" --display-name="Beam Worker"
+
+# Give the service account access it needs
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} --member="serviceAccount:${GCP_SA_EMAIL}" --role=roles/dataflow.admin
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} --member="serviceAccount:${GCP_SA_EMAIL}" --role=roles/dataflow.worker
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} --member="serviceAccount:${GCP_SA_EMAIL}" --role=roles/storage.objectAdmin
+# Note that the last command above will give the service account (and any users
+# who can impersonate the service account) full access to ALL buckets in the
+# project. If this is undesirable, you can use the Cloud Storage section of
+# console.cloud.google.com to give the service account access to ONLY specific
+# buckets. To do this, navigate to a bucket, and click the "permissions" button.
+#
+# If you choose bucket level permissions, you must also grant:
+# - read+list access to buckets where source data is saved
+# - write access to buckets where result data will be persisted
+
+# To allow users to impersonate the service account, run the following command
+# which grants a user the `roles/iam.serviceAccountUser` (AKA "Service Account
+#  User") role, but only for a specific service account:
+gcloud iam service-accounts add-iam-policy-binding ${GCP_SA_EMAIL} \
+    --member="user:${USER_EMAIL}" \
+    --role="roles/iam.serviceAccountUser"
+
+# Alternatively, if you want to grant the user access to impersonate ALL service
+# accounts, use this command instead:
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+    --member="user:${USER_EMAIL}" \
+    --role=roles/iam.serviceAccountUser
+```
+
+
+### Launch GCP Dataflow Job
+
 ```bash
 # Run remotely via GCP Dataflow. Should be executed in the `klay-beam` conda
 # environment to ensure Beam SDK, python, and dependency parity between the
 # local environment and Worker environments.
 
-KLAY_BEAM_CONTAINER=us-docker.pkg.dev/<your-gcp-project>/<your-docker-artifact-registry>/<your-docker-image>:<tag>
-SERVICE_ACCOUNT_EMAIL=<your-service-account>@<your-gcp-project>.iam.gserviceaccount.com
+# You will need the following configuration values from the setup (above)
+GCP_PROJECT_ID=<your-gcp-project>
+GCP_SA_EMAIL=<your-service-account>@<your-gcp-project>.iam.gserviceaccount.com
 TEMP_GS_URL=gs://<your-gs-bucket>/<your-writable-dir/>
+
+# Additionally, you need a custom Beam container, and an gs:// url that contains
+# the audio files you want to read. You must ensure that the service account
+# has read access to these audio files.
+KLAY_BEAM_CONTAINER=us-docker.pkg.dev/<your-gcp-project>/<your-docker-artifact-registry>/<your-docker-image>:<tag>
 AUDIO_URL='gs://<your-audio-bucket>/audio/'
 
 python -m klay_beam.run_example \
@@ -61,12 +156,12 @@ python -m klay_beam.run_example \
     --max_num_workers=128 \
     --region us-central1 \
     --autoscaling_algorithm THROUGHPUT_BASED \
-    --service_account_email ${SERVICE_ACCOUNT_EMAIL} \
+    --service_account_email ${GCP_SA_EMAIL} \
     --experiments=use_runner_v2 \
     --sdk_container_image ${KLAY_BEAM_CONTAINER} \
     --sdk_location=container \
     --temp_location ${TEMP_GS_URL} \
-    --project klay-training \
+    --project ${GCP_PROJECT_ID} \
     --source_audio_suffix .mp3 \
     --source_audio_path ${AUDIO_URL} \
     --machine_type n1-standard-8 \
@@ -83,6 +178,12 @@ Notes:
   container. Any missing pip dependencies specified in `your_job/pyproject.toml`
   will also be installed at runtime.
 - options for `--autoscaling_algorithm` are `THROUGHPUT_BASED` and `NONE`
+
+### Custom Docker Images on Dataflow
+
+If you are storing your docker images in a private repo, use the IAM section of
+https://console.cloud.google.com and grant the "Artifact Registry Reader" role
+to your Beam worker service account.
 
 # Development
 ## Quick Start
@@ -102,14 +203,20 @@ conda env update -f environment/py310-torch.local.yml
 
 ## Docker Container
 
+When you launch a Beam job with `--runner DataflowRunner` that job will run via
+the [GCP Dataflow][dataflow] service. It is usually best to specify the Docker
+container that will run on Beam worker nodes in GCP Compute. However, you cannot
+use any docker image. Instead, you must prepare an image specifically for working
+with Dataflow.
+
+[dataflow]: https://cloud.google.com/dataflow
+
+See build examples for compatible Docker images in `Makefile`.
+
 This docker will be run on all workers. When running a Beam job on GCP Dataflow
 with the `--setup_file` option missing dependencies will be installed using pip.
 However, to save time, large dependencies (or non-pip dependencies such as
 ffmpeg 4) should be included in the docker container.
-
-### Docker Build Steps
-
-See an example of building a Compatible docker image in `Makefile`.
 
 ## Code Quality
 ### Testing
@@ -140,7 +247,6 @@ In Apache Beam, a **Pipeline** is a Directed Acyclic Graph.
 or "Parallel Transform".
 - **PTransforms** accept one or more **PCollections** as input, and output one
   or more **PCollections**
--
 
 ```python
 with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
@@ -232,7 +338,7 @@ Each filesystem has its own .open method. see details of each here:
 ]-->
 
 
-### LoadWithPytorch
+### LoadWithTorchaudio
 
 LoadWithTorchaudio is a custom `beam.DoFn`, turned into a PTransform via the
 `beam.ParDo` helper. See the source for implementation details. Generally,

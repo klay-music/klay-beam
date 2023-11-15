@@ -35,7 +35,7 @@ python bin/run_job_get_jamendo.py \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments=use_runner_v2 \
     --sdk_location=container \
-    --temp_location gs://klay-dataflow-test-000/tmp/get-jamendo/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/get-jamendo/ \
     --sdk_container_image=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.6.0-py310 \
     --disk_size_gb 50 \
     --job_name 'get-jamendo-002'
