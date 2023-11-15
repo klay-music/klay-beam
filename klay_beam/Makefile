@@ -1,9 +1,5 @@
 .PHONY: code-style type-check pre-test tests
 
-.PHONY: docker-py3.9-beam2.51.0-torch2.0
-.PHONY: docker-py3.10-beam2.51.0
-.PHONY: docker-py3.10-beam2.51.0-torch2.0
-
 code-style:
 	flake8 src tests
 	black --check src tests
@@ -39,6 +35,7 @@ BEAM_VERSION=2.51.0
 # python 3.9
 
 
+.PHONY: docker-py3.9-beam2.51.0
 docker-py3.9-beam2.51.0: ./environment/py3.9.lock
 	$(eval PY_VERSION=3.9)
 	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION))
@@ -52,6 +49,7 @@ docker-py3.9-beam2.51.0: ./environment/py3.9.lock
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
 
+.PHONY: docker-py3.9-beam2.51.0-torch2.0
 docker-py3.9-beam2.51.0-torch2.0: ./environment/py3.9-torch2.0.lock
 	$(eval PY_VERSION=3.9)
 	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch2.0)
@@ -65,6 +63,7 @@ docker-py3.9-beam2.51.0-torch2.0: ./environment/py3.9-torch2.0.lock
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
 
+.PHONY: docker-py3.9-beam2.51.0-torch2.0-torchvision0.15
 docker-py3.9-beam2.51.0-torch2.0-torchvision0.15: ./environment/py3.9-torch2.0-torchvision0.15.lock
 	$(eval PY_VERSION=3.9)
 	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch2.0-torchvision0.15)
@@ -78,6 +77,7 @@ docker-py3.9-beam2.51.0-torch2.0-torchvision0.15: ./environment/py3.9-torch2.0-t
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
 
+.PHONY: docker-py3.9-beam2.51.0-torch1.12-cuda11.6
 docker-py3.9-beam2.51.0-torch1.12-cuda11.6: ./environment/py3.9-torch1.12-cuda11.6.lock
 	$(eval PY_VERSION=3.9)
 	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch1.12-cuda11.6)
@@ -94,6 +94,7 @@ docker-py3.9-beam2.51.0-torch1.12-cuda11.6: ./environment/py3.9-torch1.12-cuda11
 #############
 # python 3.10
 
+.PHONY: docker-py3.10-beam2.51.0
 docker-py3.10-beam2.51.0: ./environment/py3.10.lock
 	$(eval PY_VERSION=3.10)
 	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION))
@@ -107,6 +108,7 @@ docker-py3.10-beam2.51.0: ./environment/py3.10.lock
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
 
+.PHONY: docker-py3.10-beam2.51.0-torch2.0
 docker-py3.10-beam2.51.0-torch2.0: ./environment/py3.10-torch2.0.lock
 	$(eval PY_VERSION=3.10)
 	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch2.0)
@@ -120,6 +122,7 @@ docker-py3.10-beam2.51.0-torch2.0: ./environment/py3.10-torch2.0.lock
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
 
+.PHONY: docker-py3.10-beam2.51.0-torch1.11-cuda11.3
 docker-py3.10-beam2.51.0-torch1.11-cuda11.3: ./environment/py3.10-torch1.11-cuda11.3.lock
 	$(eval PY_VERSION=3.10)
 	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch1.11-cuda11.3)
@@ -136,6 +139,7 @@ docker-py3.10-beam2.51.0-torch1.11-cuda11.3: ./environment/py3.10-torch1.11-cuda
 #############
 # python 3.11
 
+.PHONY: docker-py3.11-beam2.51.0
 docker-py3.11-beam2.51.0: ./environment/py3.11.lock
 	$(eval PY_VERSION=3.11)
 	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION))
@@ -149,6 +153,7 @@ docker-py3.11-beam2.51.0: ./environment/py3.11.lock
 	--build-arg="BEAM_VERSION=$(BEAM_VERSION)" \
 	.
 
+.PHONY: docker-py3.11-beam2.51.0-torch2.0
 docker-py3.11-beam2.51.0-torch2.0: ./environment/py3.11-torch2.0.lock
 	$(eval PY_VERSION=3.11)
 	$(eval TAG=$(VERSION)-py$(PY_VERSION)-beam$(BEAM_VERSION)-torch2.0)
