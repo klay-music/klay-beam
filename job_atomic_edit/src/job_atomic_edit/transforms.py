@@ -8,8 +8,10 @@ from encodec.compress import decompress as decompress_ecdc
 import logging
 import torch
 import io
-from typing import Tuple, Optional, List, Any, Iterable
+from typing import Tuple, Optional, List, Any, Iterable, Union
 import copy
+from apache_beam.io.filesystem import FileMetadata
+from apache_beam.io.filesystems import FileSystems
 
 import apache_beam as beam
 
@@ -53,26 +55,74 @@ VALID_EDITS = [
 ]
 
 
-class ReadEncodec(beam.DoFn):
-    def __init__(self, device: Optional[torch.device] = None):
-        self._device = device
 
-    def setup(self):
-        if self._device is None:
-            self._device = get_device()
+class SkipCompletedMulti(beam.DoFn):
+    """
+    This is a beam DoFn that checks if any of the target triplets already exist.
+    """
+    def __init__(
+        self,
+        old_suffix: Union[str, List[str]],
+        new_suffix: Union[str, List[str]],
+        source_dir: Optional[str] = None,
+        target_dir: Optional[str] = None,
+        check_timestamp: bool = False,
+    ):
+        if isinstance(new_suffix, str):
+            new_suffix = [new_suffix]
+        if isinstance(old_suffix, str):
+            old_suffix = [old_suffix]
+        self._new_suffixes = new_suffix
+        self._old_suffixes = old_suffix
 
-    def process(self, element: Tuple[str, bytes]):
-        key, file_like = element
-        logging.info(f"Decoding ENCODEC: {key}")
+        assert (source_dir is None) == (
+            target_dir is None
+        ), "source_dir and target_dir must both be None or strings"
 
-        try:
-            audio, sr = decompress_ecdc(file_like, self._device)
-        except Exception as e:
-            logging.error(f"Failed to decode ENCODEC: {key}")
-            logging.error(e)
-            return [beam.pvalue.TaggedOutput("failed", (key, e))]
+        self._source_dir = source_dir
+        self._target_dir = target_dir
+        self._check_timestamp = check_timestamp
 
-        return [(key, audio, sr)]
+    def process(self, source_metadata: FileMetadata):
+        # check which suffix the file has
+        for old_suffix in self._old_suffixes:
+            if source_metadata.path.endswith(old_suffix):
+                tgt_suffix = old_suffix
+                break
+        check = remove_suffix(source_metadata.path, tgt_suffix)
+        if self._source_dir is not None:
+            check = move(check, self._source_dir, self._target_dir)
+        checks = [check + suffix for suffix in self._new_suffixes]
+        limits = [1 for _ in checks]
+
+        results = FileSystems.match(checks, limits=limits)
+        assert len(results) > 0, "Unexpected empty results. This should never happen."
+        found_any = 0 # counter for how many of the targets already exist
+        for result in results:
+            num_matches = len(result.metadata_list)
+            logging.info(f"Found {num_matches} of: {result.pattern}")
+            if num_matches != 0 and self._check_timestamp:
+                for target_metadata in result.metadata_list:
+                    if (
+                        target_metadata.last_updated_in_seconds
+                        < source_metadata.last_updated_in_seconds
+                    ):
+                        logging.info(
+                            f"Do not skip! A target was found ({target_metadata.path}), but it is "
+                            f"older than source file ({source_metadata.path})"
+                        )
+                        found_any += 1
+            elif num_matches == 0:
+                found_any += 1
+        if found_any == 0: # i.e. if all targets already exist
+            logging.info(f"Targets already exist. Skipping: {source_metadata.path}")
+            return []
+        elif found_any < len(checks): # i.e. if some targets already exist but not all
+            logging.info(f"Some targets already exist. Assuming missing due to silent tracks. Skipping: {source_metadata.path}")
+            return []
+        else: # i.e. if no targets already exist
+            return [source_metadata]
+
 
 
 class ExtractAtomicTriplets(beam.DoFn):
@@ -197,18 +247,19 @@ class ExtractAtomicTriplets(beam.DoFn):
         if self.t is None:  # if t is None, then we pad to the longest stem
             max_len = max([x[1].shape[-1] for x in tracks])
             stem_d = {
-                k.split(".")[1]: torch.cat(
-                    [x[:, :max_len], torch.zeros(x.shape[0], max_len - x.shape[-1])],
+                track_id.split(".")[1]: torch.cat(
+                    [track[:, :max_len], torch.zeros(track.shape[0], max_len - track.shape[-1])],
                     dim=-1,
                 )
-                for k, x, sr in tracks
+                for track_id, track, sr in tracks
             }
         else:
             stem_d = {k.split(".")[1]: x[:, : self.t * sr] for k, x, sr in tracks}
-        for k, v in stem_d.items():
+        for track_id, track in stem_d.items():
+            # first check for silent tracks by calculating RMS amplitude
             if (
-                v[..., : v.shape[1] // 2000 * 2000]
-                .view(v.shape[0], v.shape[1] // 2000, 2000)
+                track[..., : track.shape[1] // 2000 * 2000]
+                .view(track.shape[0], track.shape[1] // 2000, 2000)
                 .pow(2)
                 .mean(-1)
                 .sqrt()
@@ -216,10 +267,11 @@ class ExtractAtomicTriplets(beam.DoFn):
                 < self.tol
             ):
                 # print(f"WARNING: {k} is silent in {song}")
-                edit_instructions = [x for x in edit_instructions if k not in x]
-                stem_d[k] = None
+                # if silent, remove all edits that involve this stem
+                edit_instructions = [x for x in edit_instructions if track_id not in x]
+                stem_d[track_id] = None
 
-        stem_d = {k: v for k, v in stem_d.items() if v is not None}
+        stem_d = {track_id: track for track_id, track in stem_d.items() if track is not None}
         edit_tupls = []
         for edit in edit_instructions:
             dp = self.make_edit(edit, stem_d, sr=sr)

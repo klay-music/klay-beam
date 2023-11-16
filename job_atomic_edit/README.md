@@ -1,31 +1,43 @@
 # job_atomic_edit
 
-Neural audio encoding with EnCodec and Descript Audio Codec.
+Parsing Song stem files into (source, edit, target) triplets for editing model, using only *atomic* edits.
 
-1. Recursively search a path for `.wav` files
-1. For each audio file, extract neural audio tokens
-1. Write the results as a file adjacent to the source audio file
+An edit is *atomic* if it only specifies direct composition of stems, such as:
+1. Adding tracks
+2. Removing tracks
+3. Replacing tracks with other instruments
+4. Extracting tracks
 
-To run, activate the conda dev+launch environment: `environment/nac.dev.yml`.
+The general pipeline is as follows:
+1. Recursively search a path for `.wav` files for each song
+2. For each song (i.e. group of `.wav` files in DBVO), generate all the corresponding edit triplets
+3. Write the results out as `[SONG-ID].[src|tgt].[EDIT-ID].wav`
+
+Note that `run_job_extract_atomic` accepts the optional argument `--t`, which specifies the maximum
+length for each output triplet in seconds (if not provided, outputs will include the entire song).
+
+To run, activate the conda dev+launch environment: `environment/dev.yml`.
 
 ```bash
 # Example invocation to run locally
-python bin/run_job_extract_nac.py \
+python bin/run_job_extract_atomic.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
     --nac_name dac \
     --nac_input_sr 44100 \
     --audio_suffix .wav \
+    --t 10 \
 
-python bin/run_job_extract_nac.py \
+python bin/run_job_extract_atomic.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
     --nac_name encodec \
     --nac_input_sr 48000 \
     --audio_suffix .wav \
+    --t 10 \
 
 # Run remote job with autoscaling
-python bin/run_job_extract_nac.py \
+python bin/run_job_extract_atomic.py \
     --runner DataflowRunner \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
@@ -43,7 +55,8 @@ python bin/run_job_extract_nac.py \
     --audio_suffix .wav \
     --machine_type n1-standard-2 \
     --number_of_worker_harness_threads 2 \
-    --job_name 'extract-ecdc-002'
+    --job_name 'extract-ecdc-002' \
+    --t 10 \
 
 
 # Possible test values for --source_audio_path
