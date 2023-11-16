@@ -17,6 +17,7 @@ import torch
 import torchaudio
 
 from klay_beam.transforms import *
+from klay_beam.path import move
 
 from klay_beam.torch_transforms import *
 from job_atomic_edit.transforms import (
@@ -43,7 +44,7 @@ edit2ix = {x: i for i, x in enumerate(VALID_EDITS)}
 ix2st = {0: "src", 2: "tgt"}
 
 
-DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-py3.10-beam2.51.0-torch2.0"
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.12.1-py3.9-beam2.51.0-torch2.0"
 
 
 class UngroupElements(beam.DoFn):
@@ -75,6 +76,19 @@ def parse_args():
 
         To run on the full dataset use:
         'gs://klay-datasets/mtg_jamendo_autotagging/audios/'
+        """,
+    )
+
+
+    parser.add_argument(
+        "--target_audio_path",
+        dest="output",
+        required=True,
+        help="""
+        Specify the output directory.
+
+        For example:
+        'gs://klay-dataflow-test-000/results/outputs/1/'
         """,
     )
 
@@ -131,6 +145,11 @@ def run():
     edit_fn = ExtractAtomicTriplets(known_args.t)
     ungroup_fn = UngroupElements()
 
+
+    def move_file(element: Tuple[str, torch.Tensor, int]):
+        filename, torch_data, sample_rate = element
+        return (move(filename, known_args.input, known_args.output), torch_data, sample_rate)
+
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
             p
@@ -151,6 +170,8 @@ def run():
                     ],
                     new_suffix=new_suffixes,
                     check_timestamp=True,
+                    source_dir=known_args.input,
+                    target_dir=known_args.output,
                 )
             )
             # # ReadMatches produces a PCollection of ReadableFile objects
@@ -160,6 +181,7 @@ def run():
 
         out = (
             audio_files
+            | beam.Map(move_file)
             | beam.Map(lambda x: (x[0].split("/")[-1].split(".")[0], x))  # TODO: test
             | "Group by track" >> beam.GroupByKey()
             | "Get Edit Triplets" >> beam.ParDo(edit_fn)

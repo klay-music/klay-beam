@@ -16,7 +16,7 @@ from apache_beam.io.filesystems import FileSystems
 import apache_beam as beam
 
 from klay_beam.torch_transforms import convert_audio
-from klay_beam.path import remove_suffix
+from klay_beam.path import remove_suffix, move
 from klay_beam.utils import get_device
 
 

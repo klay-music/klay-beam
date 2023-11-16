@@ -23,12 +23,14 @@ To run, activate the conda dev+launch environment: `environment/dev.yml`.
 python bin/run_job_extract_atomic.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
+    --target_audio_path '/absolute/path/to/source.wav/files/'
     --audio_suffix .wav \
     --t 10 \
 
 python bin/run_job_extract_atomic.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
+    --target_audio_path '/absolute/path/to/source.wav/files/'
     --audio_suffix .wav \
     --t 10 \
 
@@ -44,8 +46,8 @@ python bin/run_job_extract_atomic.py \
     --sdk_location container \
     --temp_location gs://klay-dataflow-test-000/tmp/extract-ecdc-48k/ \
     --setup_file ./setup.py \
-    --source_audio_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --source_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --target_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --audio_suffix .wav \
     --machine_type n1-standard-2 \
     --number_of_worker_harness_threads 2 \
