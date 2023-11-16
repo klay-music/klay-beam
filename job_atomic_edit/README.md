@@ -23,7 +23,6 @@ To run, activate the conda dev+launch environment: `environment/dev.yml`.
 python bin/run_job_extract_atomic.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
-    --nac_name dac \
     --nac_input_sr 44100 \
     --audio_suffix .wav \
     --t 10 \
@@ -31,7 +30,6 @@ python bin/run_job_extract_atomic.py \
 python bin/run_job_extract_atomic.py \
     --runner Direct \
     --source_audio_path '/absolute/path/to/source.wav/files/'
-    --nac_name encodec \
     --nac_input_sr 48000 \
     --audio_suffix .wav \
     --t 10 \
@@ -50,7 +48,6 @@ python bin/run_job_extract_atomic.py \
     --setup_file ./setup.py \
     --source_audio_path \
         'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --nac_name encodec \
     --nac_input_sr 48000 \
     --audio_suffix .wav \
     --machine_type n1-standard-2 \

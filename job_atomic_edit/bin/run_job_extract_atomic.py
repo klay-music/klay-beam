@@ -47,15 +47,8 @@ DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.11.0-py3.10
 
 
 class UngroupElements(beam.DoFn):
-    def __init__(self, sample_rate: int):
-        assert sample_rate in [
-            24000,
-            48000,
-        ], f"Invalid sample_rate: {sample_rate} for encodec model"
-        self.sample_rate = sample_rate
-
     def process(self, element):
-        k, path, v = element
+        k, path, v, sr = element
         for elem in list(v):
             # process your element
             for ix, el in enumerate(elem):
@@ -63,7 +56,7 @@ class UngroupElements(beam.DoFn):
                     yield (
                         f"{path}.{ix2st[ix]}.{edit2ix[elem[1]]}",
                         el,
-                        self.sample_rate,
+                        sr,
                     )
 
 
@@ -85,24 +78,6 @@ def parse_args():
         """,
     )
 
-    parser.add_argument(
-        "--nac_name",
-        required=True,
-        choices=["dac", "encodec"],
-        help="""
-        Which neural audio codec should we use? Options are ['dac' or 'encodec']
-        """,
-    )
-
-    parser.add_argument(
-        "--nac_input_sr",
-        required=True,
-        type=int,
-        choices=[16000, 24000, 44100, 48000],
-        help="""
-        Which audio sample rate should we extract from?
-        """,
-    )
     parser.add_argument(
         "--t",
         required=False,
@@ -154,7 +129,7 @@ def run():
 
     # instantiate atomic edit extractor here so we can use computed variables
     edit_fn = ExtractAtomicTriplets(known_args.t)
-    ungroup_fn = UngroupElements(known_args.nac_input_sr)
+    ungroup_fn = UngroupElements()
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (

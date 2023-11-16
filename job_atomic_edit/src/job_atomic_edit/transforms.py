@@ -282,4 +282,4 @@ class ExtractAtomicTriplets(beam.DoFn):
         for edit in edit_instructions:
             dp = self.make_edit(edit, stem_d, sr=sr)
             edit_tupls.append(dp)
-        return [(song_n, path, edit_tupls)]
+        return [(song_n, path, edit_tupls, sr)]
