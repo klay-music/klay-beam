@@ -25,7 +25,7 @@ if [[ ! -f ${LOCAL_CONDA_LOCK} ]]; then
     exit 1
 fi
 
-DOCKER_HUB_IMAGE=klaymusic/klay-beam:${DOCKER_TAG}
+DOCKER_HUB_IMAGE=docker.io/klaymusic/klay-beam:${DOCKER_TAG}
 DOCKER_GCP_IMAGE=us-docker.pkg.dev/klay-home/klay-docker/klay-beam:${DOCKER_TAG}
 
 echo "KLAY_BEAM_VERSION=${KLAY_BEAM_VERSION}"
@@ -47,6 +47,5 @@ echo ""
 #     --build-arg="BEAM_VERSION=${BEAM_VERSION}" \
 #     .
 
-
-export DOCKER_HUB_IMAGE=${DOCKER_HUB_IMAGE}
-export DOCKER_GCP_IMAGE=${DOCKER_GCP_IMAGE}
+# export DOCKER_HUB_IMAGE=${DOCKER_HUB_IMAGE}
+# export DOCKER_GCP_IMAGE=${DOCKER_GCP_IMAGE}

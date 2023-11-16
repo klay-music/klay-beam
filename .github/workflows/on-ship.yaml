@@ -25,13 +25,13 @@ jobs:
         working-directory: ./klay_beam
         run: |
           source ./docker-env-helper.sh
-          echo "KLAY_BEAM_VERSION=${KLAY_BEAM_VERSION}\n" >> $GITHUB_OUTPUT
-          echo "PY_VERSION=${PY_VERSION}\n"               >> $GITHUB_OUTPUT
-          echo "BEAM_VERSION=${BEAM_VERSION}\n"           >> $GITHUB_OUTPUT
-          echo "LOCAL_CONDA_LOCK=${LOCAL_CONDA_LOCK}\n"   >> $GITHUB_OUTPUT
-          echo "DOCKER_TAG=${DOCKER_TAG}\n"               >> $GITHUB_OUTPUT
-          echo "DOCKER_HUB_IMAGE=${DOCKER_HUB_IMAGE}\n"   >> $GITHUB_OUTPUT
-          echo "DOCKER_GCP_IMAGE=${DOCKER_GCP_IMAGE}\n"   >> $GITHUB_OUTPUT
+          echo "KLAY_BEAM_VERSION=${KLAY_BEAM_VERSION}" >> $GITHUB_OUTPUT
+          echo "PY_VERSION=${PY_VERSION}"               >> $GITHUB_OUTPUT
+          echo "BEAM_VERSION=${BEAM_VERSION}"           >> $GITHUB_OUTPUT
+          echo "LOCAL_CONDA_LOCK=${LOCAL_CONDA_LOCK}"   >> $GITHUB_OUTPUT
+          echo "DOCKER_TAG=${DOCKER_TAG}"               >> $GITHUB_OUTPUT
+          echo "DOCKER_HUB_IMAGE=${DOCKER_HUB_IMAGE}"   >> $GITHUB_OUTPUT
+          echo "DOCKER_GCP_IMAGE=${DOCKER_GCP_IMAGE}"   >> $GITHUB_OUTPUT
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
