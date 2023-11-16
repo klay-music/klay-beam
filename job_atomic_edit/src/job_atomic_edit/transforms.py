@@ -55,11 +55,11 @@ VALID_EDITS = [
 ]
 
 
-
 class SkipCompletedMulti(beam.DoFn):
     """
     This is a beam DoFn that checks if any of the target triplets already exist.
     """
+
     def __init__(
         self,
         old_suffix: Union[str, List[str]],
@@ -97,7 +97,7 @@ class SkipCompletedMulti(beam.DoFn):
 
         results = FileSystems.match(checks, limits=limits)
         assert len(results) > 0, "Unexpected empty results. This should never happen."
-        found_any = 0 # counter for how many of the targets already exist
+        found_any = 0  # counter for how many of the targets already exist
         for result in results:
             num_matches = len(result.metadata_list)
             logging.info(f"Found {num_matches} of: {result.pattern}")
@@ -114,15 +114,16 @@ class SkipCompletedMulti(beam.DoFn):
                         found_any += 1
             elif num_matches == 0:
                 found_any += 1
-        if found_any == 0: # i.e. if all targets already exist
+        if found_any == 0:  # i.e. if all targets already exist
             logging.info(f"Targets already exist. Skipping: {source_metadata.path}")
             return []
-        elif found_any < len(checks): # i.e. if some targets already exist but not all
-            logging.info(f"Some targets already exist. Assuming missing due to silent tracks. Skipping: {source_metadata.path}")
+        elif found_any < len(checks):  # i.e. if some targets already exist but not all
+            logging.info(
+                f"Some targets already exist. Assuming missing due to silent tracks. Skipping: {source_metadata.path}"
+            )
             return []
-        else: # i.e. if no targets already exist
+        else:  # i.e. if no targets already exist
             return [source_metadata]
-
 
 
 class ExtractAtomicTriplets(beam.DoFn):
@@ -248,7 +249,10 @@ class ExtractAtomicTriplets(beam.DoFn):
             max_len = max([x[1].shape[-1] for x in tracks])
             stem_d = {
                 track_id.split(".")[1]: torch.cat(
-                    [track[:, :max_len], torch.zeros(track.shape[0], max_len - track.shape[-1])],
+                    [
+                        track[:, :max_len],
+                        torch.zeros(track.shape[0], max_len - track.shape[-1]),
+                    ],
                     dim=-1,
                 )
                 for track_id, track, sr in tracks
@@ -271,7 +275,9 @@ class ExtractAtomicTriplets(beam.DoFn):
                 edit_instructions = [x for x in edit_instructions if track_id not in x]
                 stem_d[track_id] = None
 
-        stem_d = {track_id: track for track_id, track in stem_d.items() if track is not None}
+        stem_d = {
+            track_id: track for track_id, track in stem_d.items() if track is not None
+        }
         edit_tupls = []
         for edit in edit_instructions:
             dp = self.make_edit(edit, stem_d, sr=sr)

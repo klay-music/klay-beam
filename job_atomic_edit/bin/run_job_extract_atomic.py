@@ -19,11 +19,16 @@ import torchaudio
 from klay_beam.transforms import *
 
 from klay_beam.torch_transforms import *
-from job_atomic_edit.transforms import ExtractAtomicTriplets, VALID_EDITS, SkipCompletedMulti
+from job_atomic_edit.transforms import (
+    ExtractAtomicTriplets,
+    VALID_EDITS,
+    SkipCompletedMulti,
+)
 
 """
 Job for extracting parsing stem files into (source, edit, target) triples. See job_atomic_edit/README.md for details.
 """
+
 
 def torch_to_file(torch_data: torch.Tensor, sample_rate: int):
     in_memory_file_buffer = io.BytesIO()
@@ -162,7 +167,13 @@ def run():
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompletedMulti(
-                    old_suffix=["source.wav", "bass.wav", "drums.wav", "other.wav", "vocals.wav"],
+                    old_suffix=[
+                        "source.wav",
+                        "bass.wav",
+                        "drums.wav",
+                        "other.wav",
+                        "vocals.wav",
+                    ],
                     new_suffix=new_suffixes,
                     check_timestamp=True,
                 )
@@ -174,7 +185,7 @@ def run():
 
         out = (
             audio_files
-            | beam.Map(lambda x: (x[0].split("/")[-1].split(".")[0], x)) # TODO: test
+            | beam.Map(lambda x: (x[0].split("/")[-1].split(".")[0], x))  # TODO: test
             | "Group by track" >> beam.GroupByKey()
             | "Get Edit Triplets" >> beam.ParDo(edit_fn)
             | "Ungroup Elements" >> beam.ParDo(ungroup_fn)
