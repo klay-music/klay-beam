@@ -7,6 +7,21 @@ on:
 
 jobs:
   docker:
+    strategy:
+      matrix:
+        dockerHelperConfig:
+          # Python 3.9
+          - PY_VERSION=3.9;
+          - PY_VERSION=3.9; TORCH_VERSION=2.0;
+          - PY_VERSION=3.9; TORCH_VERSION=2.0; TORCHVISION_VERSION=0.15;
+          # PYTHON 3.10
+          - PY_VERSION=3.10;
+          - PY_VERSION=3.10; TORCH_VERSION=2.0;
+          - PY_VERSION=3.10; TORCH_VERSION=1.11; CUDA_VERSION=11.3;
+          # PYTHON 3.11
+          - PY_VERSION=3.11;
+          - PY_VERSION=3.11; TORCH_VERSION=2.0;
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,6 +39,8 @@ jobs:
         id: get_variables
         working-directory: ./klay_beam
         run: |
+          BEAM_VERSION=2.51.0
+          ${{ matrix.dockerHelperConfig }}
           source ./docker-env-helper.sh
           echo "KLAY_BEAM_VERSION=${KLAY_BEAM_VERSION}" >> $GITHUB_OUTPUT
           echo "PY_VERSION=${PY_VERSION}"               >> $GITHUB_OUTPUT
@@ -37,10 +54,9 @@ jobs:
         with:
           file: ./klay_beam/Dockerfile.conda
           context: ./klay_beam/
-          push: false
+          push: true
           tags: |
             ${{ steps.get_variables.outputs.DOCKER_HUB_IMAGE }}
-            ${{ steps.get_variables.outputs.DOCKER_GCP_IMAGE }}
           build-args: |
             PY_VERSION=${{ steps.get_variables.outputs.PY_VERSION }}
             BEAM_VERSION=${{ steps.get_variables.outputs.BEAM_VERSION }}
