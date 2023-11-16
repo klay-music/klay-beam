@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - 'ship'
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Get Environment Variables
+        id: get_variables
+        working-directory: ./klay_beam
+        run: |
+          source ./docker-env-helper.sh
+          echo "KLAY_BEAM_VERSION=${KLAY_BEAM_VERSION}\n" >> $GITHUB_OUTPUT
+          echo "PY_VERSION=${PY_VERSION}\n"               >> $GITHUB_OUTPUT
+          echo "BEAM_VERSION=${BEAM_VERSION}\n"           >> $GITHUB_OUTPUT
+          echo "LOCAL_CONDA_LOCK=${LOCAL_CONDA_LOCK}\n"   >> $GITHUB_OUTPUT
+          echo "DOCKER_TAG=${DOCKER_TAG}\n"               >> $GITHUB_OUTPUT
+          echo "DOCKER_HUB_IMAGE=${DOCKER_HUB_IMAGE}\n"   >> $GITHUB_OUTPUT
+          echo "DOCKER_GCP_IMAGE=${DOCKER_GCP_IMAGE}\n"   >> $GITHUB_OUTPUT
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./klay_beam/
+          push: false
+          tags: |
+            ${{ steps.get_variables.outputs.DOCKER_HUB_IMAGE }}
+            ${{ steps.get_variables.outputs.DOCKER_GCP_IMAGE }}
+          build-args: |
+            PY_VERSION=${{ steps.get_variables.outputs.PY_VERSION }}
+            BEAM_VERSION=${{ steps.get_variables.outputs.BEAM_VERSION }}
+            LOCAL_CONDA_LOCK=${{ steps.get_variables.outputs.LOCAL_CONDA_LOCK }}
