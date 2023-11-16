@@ -34,24 +34,46 @@ python bin/run_job_extract_atomic.py \
     --audio_suffix .wav \
     --t 10 \
 
+
+# Run job remotely in a test sandbox
+python bin/run_job_extract_atomic.py \
+    --runner DataflowRunner \
+    --project klay-beam-tests \
+    --service_account_email beam-worker-limited@klay-beam-tests.iam.gserviceaccount.com \
+    --region us-east4 \
+    --max_num_workers 10 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --experiments use_runner_v2 \
+    --sdk_location container \
+    --temp_location gs://klay-beam-scratch-storage/tmp/job-atomic-edit/ \
+    --setup_file ./setup.py \
+    --source_audio_path 'gs://klay-dataflow-test-000/mtg-jamendo-90s-crop/00' \
+    --target_audio_path 'gs://klay-dataflow-test-000/mtg-jamendo-90s-crop/00' \
+    --audio_suffix .wav \
+    --machine_type n1-standard-2 \
+    --number_of_worker_harness_threads 2 \
+    --job_name 'job-atomic-edit-000' \
+    --t 10 \
+
+
 # Run remote job with autoscaling
 python bin/run_job_extract_atomic.py \
     --runner DataflowRunner \
     --project klay-training \
-    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
+    --service_account_email beam-worker-limited@klay-training.iam.gserviceaccount.com \
     --region us-central1 \
     --max_num_workers 1000 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
-    --temp_location gs://klay-dataflow-test-000/tmp/extract-ecdc-48k/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/job-atomic-edit/ \
     --setup_file ./setup.py \
     --source_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --target_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
     --audio_suffix .wav \
     --machine_type n1-standard-2 \
     --number_of_worker_harness_threads 2 \
-    --job_name 'extract-ecdc-002' \
+    --job_name 'job-atomic-edit-000' \
     --t 10 \
 
 
