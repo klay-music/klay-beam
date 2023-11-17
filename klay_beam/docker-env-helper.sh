@@ -36,16 +36,3 @@ echo "DOCKER_TAG=${DOCKER_TAG}"
 echo "DOCKER_HUB_IMAGE=${DOCKER_HUB_IMAGE}"
 echo "DOCKER_GCP_IMAGE=${DOCKER_GCP_IMAGE}"
 echo ""
-
-# echo docker build \
-#     -f Dockerfile.conda \
-#     -t klay-beam:latest \
-#     -t ${DOCKER_HUB_IMAGE} \
-#     -t ${DOCKER_GCP_IMAGE} \
-#     --build-arg="PY_VERSION=${PY_VERSION}" \
-#     --build-arg="LOCAL_CONDA_LOCK=${LOCAL_CONDA_LOCK}" \
-#     --build-arg="BEAM_VERSION=${BEAM_VERSION}" \
-#     .
-
-# export DOCKER_HUB_IMAGE=${DOCKER_HUB_IMAGE}
-# export DOCKER_GCP_IMAGE=${DOCKER_GCP_IMAGE}

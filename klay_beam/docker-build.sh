@@ -7,6 +7,20 @@
 # TORCHVISION_VERSION=0.15
 # CUDA_VERSION=11.3
 
+# Example invocations
+# # Python 3.9
+# PY_VERSION=3.9 ./docker-build.sh
+# PY_VERSION=3.9 TORCH_VERSION=2.0 ./docker-build.sh
+# PY_VERSION=3.9 TORCH_VERSION=2.0 TORCHVISION_VERSION=0.15 ./docker-build.sh
+# # PYTHON 3.10
+# PY_VERSION=3.10 ./docker-build.sh
+# PY_VERSION=3.10 TORCH_VERSION=2.0 ./docker-build.sh
+# PY_VERSION=3.10 TORCH_VERSION=1.11 CUDA_VERSION=11.3 ./docker-build.sh
+# # PYTHON 3.11
+# PY_VERSION=3.11 ./docker-build.sh
+# PY_VERSION=3.11 TORCH_VERSION=2.0 ./docker-build.sh
+
+
 # Extract klay_beam.__version__ via get_version.sh. Abort if the script fails.
 set -e
 KLAY_BEAM_VERSION=$(./get_version.sh)
