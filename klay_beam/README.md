@@ -201,22 +201,30 @@ To create or update an environment:
 conda env update -f environment/py310-torch.local.yml
 ```
 
-## Docker Container
+## Docker Containers
 
 When you launch a Beam job with `--runner DataflowRunner` that job will run via
 the [GCP Dataflow][dataflow] service. It is usually best to specify the Docker
-container that will run on Beam worker nodes in GCP Compute. However, you cannot
-use any docker image. Instead, you must prepare an image specifically for working
-with Dataflow.
+container that will run on Beam worker nodes in GCP Compute (via the
+`--sdk_container_image` flag). However, you cannot use any docker image.
+Instead, you must prepare an image specifically for working with Dataflow.
 
 [dataflow]: https://cloud.google.com/dataflow
 
-See build examples for compatible Docker images in `Makefile`.
+Pre-configured docker images with a variety of dependencies and python version
+are available at
+[hub.docker.com/repository/docker/klaymusic/klay-beam](https://hub.docker.com/repository/docker/klaymusic/klay-beam).
 
-This docker will be run on all workers. When running a Beam job on GCP Dataflow
-with the `--setup_file` option missing dependencies will be installed using pip.
-However, to save time, large dependencies (or non-pip dependencies such as
-ffmpeg 4) should be included in the docker container.
+You can also use `./docker-build.sh` to further customize your images.
+
+When running a job, the docker image you select will be run on all workers. When
+running a Beam job on GCP Dataflow you may specify a local python package the be
+bundled as a python `sdist` and installed in each docker container. To send a
+local package to your worker nodes, supply the `--setup_file` CLI flag when
+launching your job (local packages must `setup.py` file for this to work).
+Missing dependencies will be installed using pip. However, to save time, it is
+ideal to bundle large dependencies (or non-pip dependencies such as ffmpeg 4)
+in the docker container.
 
 ## Code Quality
 ### Testing
