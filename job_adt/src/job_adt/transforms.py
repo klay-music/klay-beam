@@ -22,7 +22,7 @@ import scipy
 import tensorflow.compat.v1 as tf
 from typing import Optional, Tuple, Union, List
 
-from job_adt.utils import add_suffix, remove_suffix_pattern, write_file
+from job_adt.utils import add_suffix, remove_suffix, remove_suffix_pattern, write_file
 from job_adt.path import move
 
 
@@ -240,7 +240,7 @@ class SkipCompleted(beam.DoFn):
         self._check_timestamp = check_timestamp
 
     def process(self, source_metadata: FileMetadata):
-        check = remove_suffix(source_metadata.path, self._old_suffix)
+        check, _ = remove_suffix_pattern(source_metadata.path, self._old_suffix)
         if self._source_dir is not None:
             check = move(check, self._source_dir, self._target_dir)
         checks = [check + suffix for suffix in self._new_suffixes]
