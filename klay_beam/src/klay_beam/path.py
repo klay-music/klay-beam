@@ -48,7 +48,10 @@ def remove_suffix(path: str, suffix: str):
     return path
 
 
-def remove_regex_suffix(path: str, suffix_pattern: str):
+def remove_suffix_pattern(path: str, suffix_pattern: str):
     regex = re.compile(r"{}".format(suffix_pattern))
-    suffix = regex.search(path)[0]
-    return remove_suffix(path, suffix)
+    match = regex.search(path)
+    if match is None:
+        return path
+    else:
+        return remove_suffix(path, match[0])

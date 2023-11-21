@@ -1,5 +1,5 @@
 import pytest
-from klay_beam.path import move, remove_regex_suffix
+from klay_beam.path import move, remove_suffix_pattern
 
 
 def test_move_preserves_directory_structure():
@@ -60,11 +60,12 @@ def test_move_fails():
     "path, pattern, exp",
     [
         ("path/to/audio.drums.wav", r".drums(-\d)?\.wav", "path/to/audio"),
+        ("path/to/audio.drums.wav", ".drums.wav", "path/to/audio"),
         ("/path/to/audio.drums.wav", r".drums(-\d)?\.wav", "/path/to/audio"),
         ("gs://path/to/audio.drums.wav", r".drums(-\d)?\.wav", "gs://path/to/audio"),
         ("path/to/audio.drums-1.wav", r".drums(-\d)?\.wav", "path/to/audio"),
     ],
 )
-def test_remove_regex_suffix(path, pattern, exp):
-    got = remove_regex_suffix(path, pattern)
+def test_remove_suffix_pattern(path, pattern, exp):
+    got = remove_suffix_pattern(path, pattern)
     assert got == exp
