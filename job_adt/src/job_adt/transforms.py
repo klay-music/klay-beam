@@ -22,7 +22,7 @@ import scipy
 import tensorflow.compat.v1 as tf
 from typing import Optional, Tuple, Union, List
 
-from job_adt.utils import add_suffix, remove_suffix, write_file
+from job_adt.utils import add_suffix, remove_suffix_pattern, write_file
 from job_adt.path import move
 
 
@@ -46,7 +46,6 @@ class TranscribeDrumsAudio(beam.DoFn):
         self.hparams = self.config.hparams
         self.hparams.batch_size = 1
         self.hparams.truncated_length_secs = 0
-
 
     def setup(self):
         # This will be executed only once when the pipeline starts.
@@ -73,7 +72,9 @@ class TranscribeDrumsAudio(beam.DoFn):
     ) -> Tuple[str, Optional[note_seq.NoteSequence], int]:
         fname, wav_data, sr = loaded_audio_tuple[0]
         assert sr == 44_100, f"Expected 44.1k audio. Found {sr}. ({fname})"
-        assert fname.endswith(".drums.wav"), f"Expected .drums.wav file. Found {fname}"
+
+        fstem, suffix = remove_suffix_pattern(fname, ".drums(-\d)?\.wav")
+        assert suffix is not None, f"Expected a .drums-x.wav file. Found {fname}"
         logging.info(f"Found audio file: {fname} with length: {len(wav_data)} bytes.")
 
         out_filename = remove_suffix(fname, ".wav")
