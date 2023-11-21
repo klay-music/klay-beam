@@ -1,5 +1,5 @@
 import pytest
-from klay_beam.path import move
+from klay_beam.path import move, remove_regex_suffix
 
 
 def test_move_preserves_directory_structure():
@@ -54,3 +54,17 @@ def test_move_fails():
             "//audio/00",
             "/somewhere/else/",
         )
+
+
+@pytest.mark.parametrize(
+    "path, pattern, exp",
+    [
+        ("path/to/audio.drums.wav", r".drums(-\d)?\.wav", "path/to/audio"),
+        ("/path/to/audio.drums.wav", r".drums(-\d)?\.wav", "/path/to/audio"),
+        ("gs://path/to/audio.drums.wav", r".drums(-\d)?\.wav", "gs://path/to/audio"),
+        ("path/to/audio.drums-1.wav", r".drums(-\d)?\.wav", "path/to/audio"),
+    ],
+)
+def test_remove_regex_suffix(path, pattern, exp):
+    got = remove_regex_suffix(path, pattern)
+    assert got == exp
