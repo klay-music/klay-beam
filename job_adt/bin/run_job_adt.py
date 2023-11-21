@@ -115,8 +115,8 @@ def run():
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
-                    old_suffix=".drums.wav",
-                    new_suffix=[".drums.mid"],
+                    old_suffix=".wav",
+                    new_suffix=[".mid"],
                     source_dir=known_args.input,
                     target_dir=known_args.input,
                     check_timestamp=True,
