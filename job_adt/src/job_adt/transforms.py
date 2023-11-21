@@ -73,7 +73,7 @@ class TranscribeDrumsAudio(beam.DoFn):
         fname, wav_data, sr = loaded_audio_tuple[0]
         assert sr == 44_100, f"Expected 44.1k audio. Found {sr}. ({fname})"
 
-        fstem, suffix = remove_suffix_pattern(fname, ".drums(-\d)?\.wav")
+        fstem, suffix = remove_suffix_pattern(fname, ".drums(-\d+)?\.wav")
         assert suffix is not None, f"Expected a .drums-x.wav file. Found {fname}"
         logging.info(f"Found audio file: {fname} with length: {len(wav_data)} bytes.")
 
