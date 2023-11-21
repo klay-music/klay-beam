@@ -102,7 +102,7 @@ def run():
         pipeline_options.view_as(WorkerOptions).sdk_container_image = DEFAULT_IMAGE
 
     # Pattern to recursively find mp3s inside source_audio_path
-    match_pattern = os.path.join(known_args.input, "**.drums-*.wav")
+    match_pattern = os.path.join(known_args.input, "**.drums*.wav")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         (
