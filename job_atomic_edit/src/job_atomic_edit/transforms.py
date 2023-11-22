@@ -1,13 +1,5 @@
-from audiotools import AudioSignal
-from dac.utils import load_model
-from dac.model import DAC
-from dac.utils.encode import process as encode
-from encodec import EncodecModel
-from encodec.compress import compress_to_file as create_ecdc
-from encodec.compress import decompress as decompress_ecdc
 import logging
 import torch
-import io
 from typing import Tuple, Optional, List, Any, Iterable, Union
 import copy
 from apache_beam.io.filesystem import FileMetadata
@@ -145,6 +137,7 @@ class ExtractAtomicTriplets(beam.DoFn):
         self._device = device
         self.tol = tol
         self.t_aug = t_aug
+        self.POSSIBLE_STEMS = ["bass", "drums", "other", "vocals", 'source']
         if self.t_aug == True:
             raise NotImplementedError("t_aug is not implemented yet")
 
@@ -195,6 +188,8 @@ class ExtractAtomicTriplets(beam.DoFn):
             stem = edit.split(" ")[1]
             ref = stem_d["source"]
             tgt_all = sum([v for k, v in stem_d.items() if k not in [stem, "source"]])
+            if tgt_all == 0:
+                return None
             tgt = torch.cat(
                 [
                     ref[..., : times[0] * sr],
@@ -206,6 +201,8 @@ class ExtractAtomicTriplets(beam.DoFn):
         elif "add" in edit:
             stem = edit.split(" ")[1]
             ref = sum([v for k, v in stem_d.items() if k not in [stem, "source"]])
+            if ref == 0:
+                return None
             tgt = torch.cat(
                 [
                     ref[..., : times[0] * sr],
@@ -218,6 +215,8 @@ class ExtractAtomicTriplets(beam.DoFn):
             stem1, stem2 = edit.split(" ")[1], edit.split(" ")[3]
             ref = sum([v for k, v in stem_d.items() if k not in [stem2, "source"]])
             tgt_all = sum([v for k, v in stem_d.items() if k not in [stem1, "source"]])
+            if ref == 0 or tgt_all == 0:
+                return None
             tgt = torch.cat(
                 [
                     ref[..., : times[0] * sr],
@@ -278,8 +277,19 @@ class ExtractAtomicTriplets(beam.DoFn):
         stem_d = {
             track_id: track for track_id, track in stem_d.items() if track is not None
         }
+        missing_stems = set(self.POSSIBLE_STEMS) - set(stem_d.keys())
+        for stem in missing_stems:
+            # remove edits that involve missing stems
+            edit_instructions = [x for x in edit_instructions if stem not in x]
         edit_tupls = []
+
+        if stem_d.get('source') is None:
+            stem_d['source'] = sum([v for k, v in stem_d.items() if k not in ['source']])
+
+        
+
         for edit in edit_instructions:
             dp = self.make_edit(edit, stem_d, sr=sr)
             edit_tupls.append(dp)
+        edit_tupls = [x for x in edit_tupls if x is not None]
         return [(song_n, path, edit_tupls, sr)]

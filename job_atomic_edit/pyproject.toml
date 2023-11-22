@@ -10,8 +10,6 @@ dynamic = ["version"]
 dependencies = [
   "numpy",
   "klay_beam[pytorch]~=0.12.1",
-  "encodec",
-  "descript-audio-codec@git+https://github.com/klay-music/descript-audio-codec.git",
   # Job packages can and should pin a beam version. This is because beam
   # must also be pinned in the Docker image. An ugrade to the beam version
   # should necessitate an upgrade to the job package and the recommended
