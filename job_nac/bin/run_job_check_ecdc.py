@@ -5,26 +5,29 @@ from typing import Tuple
 
 import apache_beam as beam
 import apache_beam.io.fileio as beam_io
-from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.options.pipeline_options import SetupOptions
+from apache_beam.options.pipeline_options import (
+    PipelineOptions,
+    SetupOptions,
+    StandardOptions,
+    WorkerOptions,
+)
 
 from job_nac.transforms import ReadEncodec
 
 """
 Job for extracting EnCodec features:
 
-1. Recursively search a path for `.wav` files
-1. For each audio file, extract EnCodec tokens
-1. Write the results to an .npy file adjacent to the source audio file
+1. Recursively search a path for `.ecdc` files (EnCodec's native audio format)
+1. For each file, attempt to decode the audio
+1. Log the files that failed to decode
 
-To run, activate a suitable python environment such as
-``../environments/osx-64-nac.yml`.
+To run, activate the dev/launch environment from `environment/dev.yml`.
 
 ```
-# CD into the root klay_beam dir to the launch script:
+# Run local job
 python bin/run_job_check_ecdc.py \
     --runner Direct \
-    --source_ecdc_path '/absolute/path/to/eced/files/'
+    --source_ecdc_path '/absolute/path/to/ecdc/files/'
 
 # Run remote job with autoscaling
 python bin/run_job_check_ecdc.py \
@@ -38,16 +41,29 @@ python bin/run_job_check_ecdc.py \
     --experiments use_runner_v2 \
     --sdk_location container \
     --temp_location gs://klay-beam-scratch-storage/tmp/check-ecdc/ \
-    --setup_file ./job_nac/setup.py \
-    --sdk_container_image \
-        us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.10.0-nac \
+    --setup_file ./setup.py \
     --source_ecdc_path \
-        'gs://klay-datasets-001/mtg-jamendo-90s-crop/00/' \
-    --job_name 'check-ecdc-001-on-jamendo-00'
+        'gs://klay-datasets-001/glucose-karaoke-003' \
+    --job_name 'check-ecdc-karaoke-003'
 ```
 
 """
 
+# NOTE: the dependencies versions in Docker image must match the dependencies in
+# the launch/dev environment. When updating dependencies, make sure that the
+# docker image you specify for remote jobs also provides the correct
+# dependencies. Here's where to look for each dependency.
+#
+# - pyproject.toml pins:
+#   - apache_beam
+#   - klay_beam
+# - environment/dev.yml pins:
+#   - pytorch
+#   - python
+#
+# The default docker container specified in the bin/run_job_<name>.py script
+# should provide identical dependencies.
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.12.1-py3.9-beam2.51.0-torch2.0"
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -93,6 +109,13 @@ def run():
     # pickle the main session in case there are global objects
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = True
+
+    # Set the default docker image if we're running on Dataflow
+    if (
+        pipeline_options.view_as(StandardOptions).runner == "DataflowRunner"
+        and pipeline_options.view_as(WorkerOptions).sdk_container_image is None
+    ):
+        pipeline_options.view_as(WorkerOptions).sdk_container_image = DEFAULT_IMAGE
 
     # Pattern to recursively find audio files inside source_audio_path
     match_pattern = os.path.join(known_args.input, "**.ecdc")
