@@ -14,7 +14,7 @@ tests:
 
 # If you change the image name, you should also change the DEFAULT_IMAGE in the
 # launch script. If you change the version tag, then update __init__.py as well.
-DOCKER_IMAGE_NAME=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.5.2
+DOCKER_IMAGE_NAME=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.5.3
 
 docker:
 	docker build -t $(DOCKER_IMAGE_NAME) .
