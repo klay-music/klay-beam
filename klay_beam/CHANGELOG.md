@@ -1,3 +1,7 @@
+# v0.12.3
+
+- Add `klay_beam.path.remove_suffix_pattern` with tests
+
 # v0.12.2
 
 - Add run_cuda_test example

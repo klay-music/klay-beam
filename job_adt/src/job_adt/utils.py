@@ -3,6 +3,7 @@ import logging
 import note_seq
 from note_seq import midi_io
 import numpy as np
+import re
 import scipy
 from typing import Optional, Tuple, List
 from apache_beam.io.filesystems import FileSystems
@@ -38,6 +39,7 @@ def write_file(output_path_and_buffer):
     with FileSystems.create(output_path) as file_handle:
         file_handle.write(buffer.read())
 
+
 def array_to_bytes(
     audio_tuple: Tuple[str, np.ndarray, int]
 ) -> List[Tuple[str, bytes, int]]:
@@ -55,6 +57,16 @@ def remove_suffix(path: str, suffix: str):
     if path.endswith(suffix):
         return path[: -len(suffix)]
     return path
+
+
+def remove_suffix_pattern(path: str, suffix_pattern: str) -> Tuple[str, Optional[str]]:
+    regex = re.compile(r"{}".format(suffix_pattern))
+    match = regex.search(path)
+    if match is None:
+        return path, None
+    else:
+        suffix = match[0]
+        return remove_suffix(path, match[0]), suffix
 
 
 def add_suffix(path: str, suffix: str):
