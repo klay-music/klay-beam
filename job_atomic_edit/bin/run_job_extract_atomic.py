@@ -24,6 +24,8 @@ from job_atomic_edit.transforms import (
     ExtractAtomicTriplets,
     VALID_EDITS,
     SkipCompletedMulti,
+    MultiReadMatches,
+    MultiLoadWithTorchaudio,
 )
 
 """
@@ -44,7 +46,9 @@ edit2ix = {x: i for i, x in enumerate(VALID_EDITS)}
 ix2st = {0: "src", 2: "tgt"}
 
 
-DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.12.1-py3.9-beam2.51.0-torch2.0"
+DEFAULT_IMAGE = (
+    "us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.12.1-py3.9-beam2.51.0-torch2.0"
+)
 
 
 class UngroupElements(beam.DoFn):
@@ -78,7 +82,6 @@ def parse_args():
         'gs://klay-datasets/mtg_jamendo_autotagging/audios/'
         """,
     )
-
 
     parser.add_argument(
         "--target_audio_path",
@@ -145,10 +148,16 @@ def run():
     edit_fn = ExtractAtomicTriplets(known_args.t)
     ungroup_fn = UngroupElements()
 
-
-    def move_file(element: Tuple[str, torch.Tensor, int]):
+    def move_file_single(element: Tuple[str, torch.Tensor, int]):
         filename, torch_data, sample_rate = element
-        return (move(filename, known_args.input, known_args.output), torch_data, sample_rate)
+        return (
+            move(filename, known_args.input, known_args.output),
+            torch_data,
+            sample_rate,
+        )
+
+    def move_file(element: Tuple[str, List[Tuple[str, torch.Tensor, int]]]):
+        return (element[0], [move_file_single(x) for x in element[1]])
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
@@ -175,16 +184,15 @@ def run():
                 )
             )
             # # ReadMatches produces a PCollection of ReadableFile objects
-            | beam_io.ReadMatches()
-            | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
+            | beam.Map(lambda x: (x.path.split("/")[-1].split(".")[0], x))
+            | "Group by track" >> beam.GroupByKey()
+            | MultiReadMatches()
+            | MultiLoadWithTorchaudio()
         )
 
         out = (
             audio_files
             | beam.Map(move_file)
-            | beam.Map(lambda x: (x[0].split("/")[-1].split(".")[0], x))  # TODO: test
-            | "Group by track" >> beam.GroupByKey()
-            # | beam.Map(lambda x: (x[0], x[1], x[1][0][-1], x[1][0][0].split(".")[0]))
             | "Get Edit Triplets" >> beam.ParDo(edit_fn)
             | "Ungroup Elements" >> beam.ParDo(ungroup_fn)
         )

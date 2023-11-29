@@ -7,9 +7,12 @@ from apache_beam.io.filesystems import FileSystems
 
 import apache_beam as beam
 
-from klay_beam.torch_transforms import convert_audio
+from klay_beam.torch_transforms import convert_audio, LoadWithTorchaudio
 from klay_beam.path import remove_suffix, move
 from klay_beam.utils import get_device
+import pathlib
+import torchaudio
+from klay_beam.torch_utils import TORCH_AVAILABLE, ensure_torch_available
 
 
 SAMPLE_RATE_MAP = {
@@ -92,30 +95,182 @@ class SkipCompletedMulti(beam.DoFn):
         found_any = 0  # counter for how many of the targets already exist
         for result in results:
             num_matches = len(result.metadata_list)
-            logging.info(f"Found {num_matches} of: {result.pattern}")
+            # logging.info(f"Found {num_matches} of: {result.pattern}")
             if num_matches != 0 and self._check_timestamp:
                 for target_metadata in result.metadata_list:
                     if (
                         target_metadata.last_updated_in_seconds
                         < source_metadata.last_updated_in_seconds
                     ):
-                        logging.info(
-                            f"Do not skip! A target was found ({target_metadata.path}), but it is "
-                            f"older than source file ({source_metadata.path})"
-                        )
+                        # logging.info(
+                        #     f"Do not skip! A target was found ({target_metadata.path}), but it is "
+                        #     f"older than source file ({source_metadata.path})"
+                        # )
                         found_any += 1
             elif num_matches == 0:
                 found_any += 1
         if found_any == 0:  # i.e. if all targets already exist
-            logging.info(f"Targets already exist. Skipping: {source_metadata.path}")
+            # logging.info(f"Targets already exist. Skipping: {source_metadata.path}")
             return []
         elif found_any < len(checks):  # i.e. if some targets already exist but not all
-            logging.info(
-                f"Some targets already exist. Assuming missing due to silent tracks. Skipping: {source_metadata.path}"
-            )
+            # logging.info(
+            #     f"Some targets already exist. Assuming missing due to silent tracks. Skipping: {source_metadata.path}"
+            # )
             return []
         else:  # i.e. if no targets already exist
             return [source_metadata]
+
+
+class _MutliReadMatchesFn(beam.DoFn):
+    def __init__(self, compression, skip_directories):
+        self._compression = compression
+        self._skip_directories = skip_directories
+
+    def process_single(
+        self,
+        file_metadata: Union[str, beam.io.filesystem.FileMetadata],
+    ) -> Iterable[beam.io.fileio.ReadableFile]:
+        metadata = (
+            beam.io.filesystem.FileMetadata(file_metadata, 0)
+            if isinstance(file_metadata, str)
+            else file_metadata
+        )
+
+        if (
+            metadata.path.endswith("/") or metadata.path.endswith("\\")
+        ) and self._skip_directories:
+            return
+        elif metadata.path.endswith("/") or metadata.path.endswith("\\"):
+            raise BeamIOError(
+                "Directories are not allowed in ReadMatches transform."
+                "Found %s." % metadata.path
+            )
+
+        # TODO: Mime type? Other arguments? Maybe arguments passed in to transform?
+        return beam.io.fileio.ReadableFile(metadata, self._compression)
+
+    def process(
+        self,
+        file_metadatas: Tuple[
+            Any, Iterable[Union[str, beam.io.filesystem.FileMetadata]]
+        ],
+    ) -> Tuple[Any, Iterable[Iterable[beam.io.fileio.ReadableFile]]]:
+        yield file_metadatas[0], [self.process_single(f) for f in file_metadatas[1]]
+
+
+class MultiReadMatches(beam.PTransform):
+    """Converts each result of MatchFiles() or MatchAll() to a ReadableFile.
+
+    This helps read in a file's contents or obtain a file descriptor."""
+
+    def __init__(self, compression=None, skip_directories=True):
+        self._compression = compression
+        self._skip_directories = skip_directories
+
+    def expand(
+        self,
+        pcolls: beam.PCollection[
+            Tuple[Any, Iterable[Union[str, beam.io.filesystem.FileMetadata]]]
+        ],
+    ):  # -> beam.PCollection[Tuple[Any, Iterable[Any]]]:
+        return pcolls | beam.ParDo(
+            _MutliReadMatchesFn(self._compression, self._skip_directories)
+        )
+
+
+class _MultiLoadWithTorchaudio(beam.DoFn):
+    """Use torchaudio to load audio files to tensors
+
+    NOTES:
+
+    - torchaudio depends on libavcodec, which can be installed with:
+    `conda install 'ffmpeg<5'`. See:
+    https://github.com/pytorch/audio/issues/2363#issuecomment-1179089175
+
+
+    - Torchaudio supports loading in-memory (file-like) files since at least
+    v0.9.0. See: https://pytorch.org/audio/0.9.0/backend.html#load
+
+
+    Note that generally, custom functions have a few requirements that help them
+    work well in on distributed runners. They are:
+        - The function should be thread-compatible
+        - The function should be serializable
+        - Recommended: the function be idempotent
+
+    For details about these requirements, see the Apache Beam documentation:
+    https://beam.apache.org/documentation/programming-guide/#requirements-for-writing-user-code-for-beam-transforms
+    """
+
+    def setup(self):
+        # This will be executed only once when the pipeline starts. This is
+        # where you would create a lock or queue for global resources.
+        ensure_torch_available()
+        pass
+
+    def process_single(self, readable_file: beam.io.fileio.ReadableFile):
+        """
+        Given an Apache Beam ReadableFile, return a `(input_filename, a, sr)` tuple where
+            - `input_filename` is a string
+            - `a` is a pytorch Tensor
+            - `sr` is an int
+
+        For a stereo audio file named '/path/to.some/file.key.mp3', return
+        ```
+        (
+            '/path/to.some/file.key.mp3',
+            tensor([[0.1, 0.2, 0.3], [0.1, 0.2, 0.3]]),
+            44100
+        )
+        ```
+        """
+        path = pathlib.Path(readable_file.metadata.path)
+
+        # get the file extension without a period in a safe way
+        ext_without_dot = path.suffix.lstrip(".")
+        ext_without_dot = None if ext_without_dot == "" else ext_without_dot
+
+        audio_tensor: torch.Tensor
+        sr: int
+
+        # try loading the audio file with torchaudio, but catch RuntimeError,
+        # which are thrown when torchaudio can't load the file.
+        logging.info("Loading: {}".format(path))
+        try:
+            with readable_file.open(mime_type="application/octet-stream") as file_like:
+                audio_tensor, sr = torchaudio.load(file_like, format=ext_without_dot)
+        except (RuntimeError, OSError) as e:
+            # We don't want to log the stacktrace, but for debugging, here's how
+            # we could access it:
+            #
+            # import traceback
+            # tb_str = traceback.format_exception(
+            #     etype=type(e), value=e, tb=e.__traceback__
+            # )
+            logging.warning(f"Error loading audio: {path}")
+            return [beam.pvalue.TaggedOutput("failed", (str(path), e))]
+
+        C, T = audio_tensor.shape
+        duration_seconds = T / sr
+        logging.info(f"Loaded {duration_seconds:.3f} second {C}-channel audio: {path}")
+
+        return readable_file.metadata.path, audio_tensor, sr
+        # beam.pvalue.TaggedOutput("duration_seconds", duration_seconds),
+        # ]
+
+    def process(
+        self,
+        readable_files: Tuple[Any, Iterable[beam.io.fileio.ReadableFile]],
+    ) -> Tuple[Any, Iterable[Any]]:
+        yield (readable_files[0], [self.process_single(f) for f in readable_files[1]])
+
+
+class MultiLoadWithTorchaudio(beam.PTransform):
+    def __init__(self):
+        self.func = _MultiLoadWithTorchaudio()
+
+    def expand(self, element: Tuple[Any, Iterable[Any]]) -> Tuple[Any, Iterable[Any]]:
+        return element | beam.ParDo(self.func)
 
 
 class ExtractAtomicTriplets(beam.DoFn):
@@ -137,7 +292,7 @@ class ExtractAtomicTriplets(beam.DoFn):
         self._device = device
         self.tol = tol
         self.t_aug = t_aug
-        self.POSSIBLE_STEMS = ["bass", "drums", "other", "vocals", 'source']
+        self.POSSIBLE_STEMS = ["bass", "drums", "other", "vocals", "source"]
         if self.t_aug == True:
             raise NotImplementedError("t_aug is not implemented yet")
 
@@ -284,10 +439,10 @@ class ExtractAtomicTriplets(beam.DoFn):
             edit_instructions = [x for x in edit_instructions if stem not in x]
         edit_tupls = []
 
-        if stem_d.get('source') is None:
-            stem_d['source'] = sum([v for k, v in stem_d.items() if k not in ['source']])
-
-        
+        if stem_d.get("source") is None:
+            stem_d["source"] = sum(
+                [v for k, v in stem_d.items() if k not in ["source"]]
+            )
 
         for edit in edit_instructions:
             dp = self.make_edit(edit, stem_d, sr=sr)
