@@ -35,46 +35,46 @@ python bin/run_job_extract_atomic.py \
     --t 10 \
 
 
-# Run job remotely in a test sandbox
+# Run remote job in a test environment (GCP Project: klay-beam-tests)
 python bin/run_job_extract_atomic.py \
     --runner DataflowRunner \
     --project klay-beam-tests \
     --service_account_email beam-worker-limited@klay-beam-tests.iam.gserviceaccount.com \
     --region us-east4 \
-    --max_num_workers 10 \
+    --max_num_workers 20 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
     --temp_location gs://klay-beam-scratch-storage/tmp/job-atomic-edit/ \
     --setup_file ./setup.py \
-    --source_audio_path 'gs://klay-dataflow-test-000/mtg-jamendo-90s-crop/00' \
-    --target_audio_path 'gs://klay-dataflow-test-000/mtg-jamendo-90s-crop/00' \
+    --source_audio_path 'gs://klay-dataflow-test-000/mtg-jamendo-90s-crop' \
+    --target_audio_path 'gs://klay-dataflow-test-000/mtg-jamendo-90s-crop' \
     --audio_suffix .wav \
-    --machine_type n1-standard-2 \
-    --number_of_worker_harness_threads 2 \
+    --machine_type n1-standard-8 \
+    --number_of_worker_harness_threads 8 \
     --job_name 'job-atomic-edit-000' \
-    --t 10 \
+    --t 30
 
 
-# Run remote job with autoscaling
+# Run remote job with autoscaling (GCP project: klay-training)
 python bin/run_job_extract_atomic.py \
     --runner DataflowRunner \
     --project klay-training \
     --service_account_email beam-worker-limited@klay-training.iam.gserviceaccount.com \
     --region us-central1 \
-    --max_num_workers 1000 \
+    --max_num_workers 120 \
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2 \
     --sdk_location container \
     --temp_location gs://klay-beam-scratch-storage/tmp/job-atomic-edit/ \
     --setup_file ./setup.py \
-    --source_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
-    --target_audio_path 'gs://klay-datasets-001/mtg-jamendo-90s-crop/' \
+    --source_audio_path 'gs://klay-datasets-ucsd/mtg-jamendo-90s-crop/' \
+    --target_audio_path 'gs://klay-datasets-ucsd/mtg-jamendo-90s-crop/' \
     --audio_suffix .wav \
-    --machine_type n1-standard-2 \
-    --number_of_worker_harness_threads 2 \
-    --job_name 'job-atomic-edit-000' \
-    --t 10 \
+    --machine_type n1-standard-8 \
+    --number_of_worker_harness_threads 8 \
+    --job_name 'job-atomic-edit-001' \
+    --t 30
 
 
 # Possible test values for --source_audio_path
