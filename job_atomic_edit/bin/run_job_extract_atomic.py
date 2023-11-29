@@ -184,6 +184,7 @@ def run():
             | beam.Map(move_file)
             | beam.Map(lambda x: (x[0].split("/")[-1].split(".")[0], x))  # TODO: test
             | "Group by track" >> beam.GroupByKey()
+            # | beam.Map(lambda x: (x[0], x[1], x[1][0][-1], x[1][0][0].split(".")[0]))
             | "Get Edit Triplets" >> beam.ParDo(edit_fn)
             | "Ungroup Elements" >> beam.ParDo(ungroup_fn)
         )

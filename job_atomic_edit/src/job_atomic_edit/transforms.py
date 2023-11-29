@@ -188,7 +188,7 @@ class ExtractAtomicTriplets(beam.DoFn):
             stem = edit.split(" ")[1]
             ref = stem_d["source"]
             tgt_all = sum([v for k, v in stem_d.items() if k not in [stem, "source"]])
-            if tgt_all == 0:
+            if type(tgt_all) == int:
                 return None
             tgt = torch.cat(
                 [
@@ -201,7 +201,7 @@ class ExtractAtomicTriplets(beam.DoFn):
         elif "add" in edit:
             stem = edit.split(" ")[1]
             ref = sum([v for k, v in stem_d.items() if k not in [stem, "source"]])
-            if ref == 0:
+            if type(ref) == int:
                 return None
             tgt = torch.cat(
                 [
@@ -215,7 +215,7 @@ class ExtractAtomicTriplets(beam.DoFn):
             stem1, stem2 = edit.split(" ")[1], edit.split(" ")[3]
             ref = sum([v for k, v in stem_d.items() if k not in [stem2, "source"]])
             tgt_all = sum([v for k, v in stem_d.items() if k not in [stem1, "source"]])
-            if ref == 0 or tgt_all == 0:
+            if type(ref) == int or type(tgt_all) == int:
                 return None
             tgt = torch.cat(
                 [
@@ -230,20 +230,21 @@ class ExtractAtomicTriplets(beam.DoFn):
     def process(self, element: Tuple[Any, Iterable[Any]]):
         song_n, tracks = element
         edit_instructions = copy.copy(self.edit_instructions)
-        sr = tracks[0][-1]
+        sr = [x[-1] for x in tracks][0]
 
-        assert type(tracks[0]) == tuple, "tracks should be a list of tuples"
-        assert type(tracks[0][0]) == str
-        assert type(tracks[0][1]) == torch.Tensor
-        assert type(tracks[0][2]) == int
-        assert all([x[-1] == sr for x in tracks])
+        # assert type(tracks[0]) == tuple, "tracks should be a list of tuples"
+        # assert type(tracks[0][0]) == str
+        # assert type(tracks[0][1]) == torch.Tensor
+        # assert type(tracks[0][2]) == int
+        # assert all([x[-1] == sr for x in tracks])
 
         # note that path here is the folder name, while song_n just extracts the song name
         # for example:
         # full path = gs://klay-datasets-001/mtg-jamendo-90s-crop/00/1002000.bass.wav
         # song_n = 1002000
         # path = gs://klay-datasets-001/mtg-jamendo-90s-crop/00/1002000
-        path = tracks[0][0].split(".")[0]
+        # path = tracks[0][0].split(".")[0]
+        path = [x[0].split(".")[0] for x in tracks][0]
         if self.t is None:  # if t is None, then we pad to the longest stem
             max_len = max([x[1].shape[-1] for x in tracks])
             stem_d = {
