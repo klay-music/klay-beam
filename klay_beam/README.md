@@ -80,9 +80,10 @@ GCP_SA_NAME=beam-worker          # GCP service account name used by beam workers
 
 # Compute the full email of the service account used by beam workers
 GCP_SA_EMAIL=${GCP_SA_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com
-# Compute a valid tempo storage path job workers. This is just a proposal. You
-# can use any cloud storage path, as long the Beam workers are able to write
-# temporary files to this path during job execution.
+# Compute a valid temporary storage path for job workers to use at runtime. The
+# example below is just a proposal. You can use any cloud storage path, as long
+# the Beam workers are able to write temporary files to this path during job
+# execution.
 TEMP_GS_URL=gs://${DATAFLOW_BUCKET_NAME}/tmp/
 
 # Create and activate a GCP project. You can skip `gcloud projects create` if
