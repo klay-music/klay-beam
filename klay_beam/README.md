@@ -256,12 +256,16 @@ or "Parallel Transform".
 - **PTransforms** accept one or more **PCollections** as input, and output one
   or more **PCollections**
 
+Pipelines written with `klay_beam` typically perform operations on audio data.
+The example below reads all `.wav` files in a cloud storage bucket, calculates
+their total length, and logs the names of any corrupted/unreadable files.
+
 ```python
 with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
     audio, failed, durations = (
         p
         # MatchFiles produces a PCollection of FileMetadata objects
-        | beam_io.MatchFiles(match_pattern)
+        | beam_io.MatchFiles("gs://your-bucket/**.wav)
         # Prevent "fusion"
         | "Reshuffle" >> beam.Reshuffle()
         # ReadMatches produces a PCollection of ReadableFile objects
@@ -294,12 +298,25 @@ with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
     )
 ```
 
+Many `klay_beam` pipelines, including the example above, start with the
+following sequence of `PTransform`s.
+
+1. `apache_beam.io.fileio.MatchFiles` Returns a collection of `FileMetadata`s.
+1. `apache_beam.Reshuffle()`
+1. `apache_beam.io.fileio.ReadMatches` Returns a collection of `ReadableFile`s.
+1. An audio loader for accessing audio data as a `pytorch` Tensor or `numpy`
+   array:
+    - `apache_beam.ParDo(klay_beam.transforms.LoadWithTorchaudio())`
+    - `apache_beam.ParDo(klay_beam.transforms.LoadWithLibrosa())`
+
+The audio loaders above returns a collection of tuples with shape 
+`(filename, audio_data, sample_rate)`,
 
 ### MatchFiles
 
 The `MatchFiles` Transforms returns a PCollection of
 `apache_beam.io.filesystem.FileMetadata` instances, which have the following
-properties ([code](https://beam.apache.org/releases/pydoc/2.50.0/_modules/apache_beam/io/filesystem.html#FileMetadata)):
+properties ([code](https://beam.apache.org/releases/pydoc/2.51.0/_modules/apache_beam/io/filesystem.html#FileMetadata)):
 
 ```
 path: str
@@ -323,8 +340,22 @@ in the Dataflow docs.
 
 ### ReadMatches
 
-The `ReadMatches` Transform returns a PCollection of
-`apache_beam.io.fileio.ReadableFile` instances ([code](https://beam.apache.org/releases/pydoc/2.24.0/_modules/apache_beam/io/fileio.html#ReadableFile)), which have a `.metadata` property and 3 additional methods:
+The `ReadMatches` transform that returns a PCollection of
+`apache_beam.io.fileio.ReadableFile` instances
+([code](https://beam.apache.org/releases/pydoc/2.51.0/_modules/apache_beam/io/fileio.html#ReadableFile)).
+Note that the name of this transform is misleading. It does not actually "read"
+the file. It is a lightweight wrapper around the Metadata that
+
+- Provides helper methods for accessing matched files
+- Skips over any matched directories (as per the `skip_directories=True`
+  initializer arg)
+- Forwards the `compression_type` initializer argument (default: `None`) to
+  helper methods
+
+
+The Transforms that follow ReadMatches (often a `klay_beam` audio loader) should
+expect elements to be `ReadableFile` instances, which have a `.metadata`
+property and 3 additional helper methods:
 
 ```python
 metadata: apache_beam.io.filesystem.FileMetadata
