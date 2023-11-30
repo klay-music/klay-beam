@@ -7,12 +7,11 @@ from apache_beam.io.filesystems import FileSystems
 
 import apache_beam as beam
 
-from klay_beam.torch_transforms import convert_audio, LoadWithTorchaudio
 from klay_beam.path import remove_suffix, move
 from klay_beam.utils import get_device
 import pathlib
 import torchaudio
-from klay_beam.torch_utils import TORCH_AVAILABLE, ensure_torch_available
+from klay_beam.torch_utils import ensure_torch_available
 
 
 SAMPLE_RATE_MAP = {
@@ -141,7 +140,7 @@ class _MutliReadMatchesFn(beam.DoFn):
         ) and self._skip_directories:
             return
         elif metadata.path.endswith("/") or metadata.path.endswith("\\"):
-            raise BeamIOError(
+            raise beam.io.filesystem.BeamIOError(
                 "Directories are not allowed in ReadMatches transform."
                 "Found %s." % metadata.path
             )
@@ -172,7 +171,7 @@ class MultiReadMatches(beam.PTransform):
         pcolls: beam.PCollection[
             Tuple[Any, Iterable[Union[str, beam.io.filesystem.FileMetadata]]]
         ],
-    ):  # -> beam.PCollection[Tuple[Any, Iterable[Any]]]:
+    ):
         return pcolls | beam.ParDo(
             _MutliReadMatchesFn(self._compression, self._skip_directories)
         )
@@ -385,13 +384,9 @@ class ExtractAtomicTriplets(beam.DoFn):
     def process(self, element: Tuple[Any, Iterable[Any]]):
         song_n, tracks = element
         edit_instructions = copy.copy(self.edit_instructions)
+        # under the hood, tracks may be converted to a _ConcatSequence dtype, which is not indexable
+        # thus, accessing sr and path uses the list comprehension logic below
         sr = [x[-1] for x in tracks][0]
-
-        # assert type(tracks[0]) == tuple, "tracks should be a list of tuples"
-        # assert type(tracks[0][0]) == str
-        # assert type(tracks[0][1]) == torch.Tensor
-        # assert type(tracks[0][2]) == int
-        # assert all([x[-1] == sr for x in tracks])
 
         # note that path here is the folder name, while song_n just extracts the song name
         # for example:
