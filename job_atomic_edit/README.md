@@ -76,6 +76,26 @@ python bin/run_job_extract_atomic.py \
     --job_name 'job-atomic-edit-001' \
     --t 30
 
+# Run remote job with constrained autoscaling (GCP project: klay-training) to handle concurrency issues
+python bin/run_job_extract_atomic.py \
+    --runner DataflowRunner \
+    --project klay-training \
+    --service_account_email beam-worker-limited@klay-training.iam.gserviceaccount.com \
+    --region us-central1 \
+    --max_num_workers 60 \
+    --autoscaling_algorithm THROUGHPUT_BASED \
+    --experiments use_runner_v2 \
+    --sdk_location container \
+    --temp_location gs://klay-beam-scratch-storage/tmp/job-atomic-edit/ \
+    --setup_file ./setup.py \
+    --source_audio_path 'gs://klay-datasets-ucsd/mtg-jamendo-90s-crop/' \
+    --target_audio_path 'gs://klay-datasets-ucsd/mtg-jamendo-90s-crop/' \
+    --audio_suffix .wav \
+    --machine_type n1-standard-8 \
+    --number_of_worker_harness_threads 8 \
+    --job_name 'job-atomic-edit-002' \
+    --t 30
+
 
 # Possible test values for --source_audio_path
     'klay-dataflow-test-000/test-audio/abbey_road/wav' \
