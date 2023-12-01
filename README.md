@@ -1,31 +1,34 @@
 # klay-beam
 
-Base repo for running Apache Beam jobs locally or on GCP via Dataflow. This is
-how we run massively parallel jobs with hundreds-of-thousands of input audio
-files, for example:
+Klay Beam is a toolkit for running Apache Beam jobs that process audio data. It
+can be used for parallelizing audio transformations and feature extraction. The
+basic workflow:
 
-- Source separation
-- Feature extraction
-- Cropping
-- Resampling
+1. Write an audio transformation or feature-extraction pipeline
+1. Run and test the pipeline locally
+1. Launch a job with the [GCP Dataflow](https://cloud.google.com/dataflow)
+   runner, scaling up execution to hundreds or thousands of concurrent
+   processes.
 
-Most Beam jobs will require three ingredients which must be engineered for
-compatibility:
+This repository bundles:
 
-1. A pipeline script to define and launch the job
-2. A specialized Docker image that includes Beam SDK and any dependencies required
-   by the pipeline (Dataflow worker nodes will run instances of this image)
-3. A local python environment that also includes the Beam SDK and job
-   dependencies (The job will be launched from this environment. Also used to
-   run the job when running locally with `--runner=Direct`)
+- The `klay_beam` python package with basic utilities for reading, transforming,
+  and writing audio in beam pipelines
+- Docker image build processes for images that can be used in pipelines executed
+  on the Dataflow Beam Runner on GCP. Core images include support for a python
+  versions 3.9, 3.10, 3.11, and PyTorch (optionally with CUDA support). (See:
+  [hub.docker.com/r/klaymusic/klay-beam/](https://hub.docker.com/r/klaymusic/klay-beam/tags))
+- Examples of simple pipeline launch scripts for running jobs locally and on GCP
+  Dataflow.
 
-This repo includes helpers and examples for creating compatible scripts, Docker
-images, and local environments (1, 2, and 3 respectively).
-
+See the [python package readme in `klay_beam`](./klay_beam/README.md) for more
+information.
 
 # Run an example job
 
 ```bash
+pip install klay_beam
+
 python -m klay_beam.run_example \
     --runner Direct \
     --source_audio_suffix .mp3 \
