@@ -1,5 +1,6 @@
 import apache_beam as beam
 from pathlib import Path
+from apache_beam.io.fileio import MatchAll
 from apache_beam.testing.test_pipeline import TestPipeline as BeamTestPipeline
 from apache_beam.testing.util import assert_that, equal_to
 
@@ -25,9 +26,6 @@ def test_MultiMatchFiles():
 
         # Check if the results match the expected file names
         assert_that(file_names, equal_to(expected))
-
-
-from apache_beam.io.fileio import MatchAll
 
 
 def test_apache_beam_MatchAll():
