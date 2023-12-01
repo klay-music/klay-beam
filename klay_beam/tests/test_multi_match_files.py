@@ -29,6 +29,7 @@ def test_MultiMatchFiles():
 
 from apache_beam.io.fileio import MatchAll
 
+
 def test_apache_beam_MatchAll():
     """Klay_beam version 0.12.x has a custom transform called MultiMatchFiles
     used to match multiple file patterns. However, this method is slow, because
