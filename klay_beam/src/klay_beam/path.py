@@ -1,5 +1,6 @@
-from pathlib import PurePosixPath
 import os.path
+from pathlib import PurePosixPath
+import re
 
 
 def move(filename, source_dir, target_dir):
@@ -45,3 +46,12 @@ def remove_suffix(path: str, suffix: str):
     if path.endswith(suffix):
         return path[: -len(suffix)]
     return path
+
+
+def remove_suffix_pattern(path: str, suffix_pattern: str):
+    regex = re.compile(r"{}".format(suffix_pattern))
+    match = regex.search(path)
+    if match is None:
+        return path
+    else:
+        return remove_suffix(path, match[0])

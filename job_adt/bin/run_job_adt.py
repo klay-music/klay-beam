@@ -44,7 +44,7 @@ python bin/run_job_adt.py \
 #
 # The default docker container specified in the bin/run_job_<name>.py script
 # should provide identical dependencies.
-DEFAULT_IMAGE="us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.5.2"
+DEFAULT_IMAGE = "us-docker.pkg.dev/klay-home/klay-docker/klay-beam-adt:0.5.3"
 
 tf.disable_v2_behavior()
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -102,7 +102,7 @@ def run():
         pipeline_options.view_as(WorkerOptions).sdk_container_image = DEFAULT_IMAGE
 
     # Pattern to recursively find mp3s inside source_audio_path
-    match_pattern = os.path.join(known_args.input, "**.drums.wav")
+    match_pattern = os.path.join(known_args.input, "**.drums*.wav")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         (
@@ -115,8 +115,8 @@ def run():
             | "SkipCompleted"
             >> beam.ParDo(
                 SkipCompleted(
-                    old_suffix=".drums.wav",
-                    new_suffix=[".drums.mid"],
+                    old_suffix=".wav",
+                    new_suffix=[".mid"],
                     source_dir=known_args.input,
                     target_dir=known_args.input,
                     check_timestamp=True,

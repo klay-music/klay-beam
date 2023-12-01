@@ -9,6 +9,7 @@ import pydub
 import soundfile as sf
 import numpy as np
 import logging
+import warnings
 import librosa
 
 from apache_beam.io.filesystem import FileMetadata
@@ -270,6 +271,12 @@ class MultiMatchFiles(beam.PTransform):
     a single PCollection of FileMetadata objects."""
 
     def __init__(self, patterns: list[str]):
+        warnings.warn(
+            "MultiMatchFiles will be removed after klay_beam v0.12.x. Use "
+            "`beam.Create([patterns]) | beam.io.fileio.MatchAll()` instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.patterns = patterns
 
     def expand(self, pcoll: beam.PCollection):
