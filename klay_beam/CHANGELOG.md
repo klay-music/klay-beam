@@ -1,6 +1,10 @@
 # v0.12.3
 
 - Add `klay_beam.path.remove_suffix_pattern` with tests
+- Add deprecation warning to `klay_beam.transforms.MultiMatchFiles`. This should
+  be replaced with `p | beam.Create(patterns) | MatchAll()`. See
+  [35e418](https://github.com/klay-music/klay-beam/commit/35e4184cb549cd8533e548733e7a6d9df9d35348)
+  for details.
 
 # v0.12.2
 

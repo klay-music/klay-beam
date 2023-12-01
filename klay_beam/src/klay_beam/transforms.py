@@ -275,7 +275,7 @@ class MultiMatchFiles(beam.PTransform):
             "MultiMatchFiles will be removed after klay_beam v0.12.x. Use "
             "`beam.Create([patterns]) | beam.io.fileio.MatchAll()` instead.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         self.patterns = patterns
 
