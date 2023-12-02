@@ -146,10 +146,18 @@ GCP_PROJECT_ID=<your-gcp-project>
 GCP_SA_EMAIL=<your-service-account>@<your-gcp-project>.iam.gserviceaccount.com
 TEMP_GS_URL=gs://<your-gs-bucket>/<your-writable-dir/>
 
-# Additionally, you need a custom Beam container, and an gs:// url that contains
-# the audio files you want to read. You must ensure that the service account
-# has read access to these audio files.
-KLAY_BEAM_CONTAINER=us-docker.pkg.dev/<your-gcp-project>/<your-docker-artifact-registry>/<your-docker-image>:<tag>
+# Additionally, you need a compatible beam container image, and an gs:// url
+# that contains the audio files you want to read. You must ensure that the
+# service account has read access to these audio files.
+#
+# The klay-beam image that you select should match the version(s) you have
+# installed locally. This docker image in the example below uses:
+#
+# - klay_beam 0.12.2
+# - python 3.9
+# - apache_beam 2.51.0
+# - pytorch 2.0
+KLAY_BEAM_CONTAINER='klaymusic/klay-beam:0.12.2-py3.9-beam2.51.0-torch2.0'
 AUDIO_URL='gs://<your-audio-bucket>/audio/'
 
 python -m klay_beam.run_example \
@@ -266,7 +274,7 @@ with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
     audio, failed, durations = (
         p
         # MatchFiles produces a PCollection of FileMetadata objects
-        | beam_io.MatchFiles("gs://your-bucket/**.wav)
+        | beam_io.MatchFiles("gs://your-bucket/**.wav")
         # Prevent "fusion"
         | "Reshuffle" >> beam.Reshuffle()
         # ReadMatches produces a PCollection of ReadableFile objects

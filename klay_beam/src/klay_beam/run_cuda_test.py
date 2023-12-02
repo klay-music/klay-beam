@@ -13,30 +13,42 @@ import os.path
 Check if CUDA is available and log debug information.
 
 Creating a docker image with CUDA support can be tricky. See the klay_beam
-Makefile for an example of how to build such an image.
+GitHub actions for an example of how to build such an image.
 
 When running on Dataflow, the `--sdk_container_image` needs pytorch to be
 installed. Unlike most klay_beam jobs, the image does not actually need the
 klay_beam package installed because this file does not actually import klay_beam
 (klay_beam should still be installed in the local launch environment).
 
-# You can test your local environment
-python -m klay_beam.run_cuda_test \
-    --runner Direct
+Try using a local development environment such as:
 
-# To run on Dataflow
+conda env create -f environment/py3.10-torch1.11-cuda11.3.yml
+conda env create -f environment/py3.10-torch1.11.yml
+conda activate <your-env-name>
+
+pip install apache_beam==2.51.0 klay_beam==0.12.2
+
+# You can test your local environment
+python -m klay_beam.run_cuda_test --runner Direct
+
+# To run on Dataflow, configure the following environment variables as per the
+# klay_beam README:
+GCP_PROJECT_ID=<your project id>
+GCP_SA_EMAIL=<your service account email>
+TEMP_GS_URL=<gs:// path to a temporary directory>
+
 python -m klay_beam.run_cuda_test \
     --region us-east4 \
     --autoscaling_algorithm NONE \
     --runner DataflowRunner \
-    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
-    --disk_size_gb=50 \
-    --experiments=use_runner_v2 \
-    --sdk_container_image= \
-    us-docker.pkg.dev/klay-home/klay-docker/klay-beam:0.12.1-py3.9-beam2.51.0-torch1.12-cuda11.6 \
-    --sdk_location=container \
-    --temp_location gs://klay-beam-scratch-storage/tmp/cuda-test/ \
-    --project klay-beam-tests \
+    --service_account_email ${GCP_SA_EMAIL} \
+    --disk_size_gb 50 \
+    --experiments use_runner_v2 \
+    --sdk_container_image \
+        klaymusic/klay-beam:0.12.2-py3.10-beam2.51.0-torch1.11-cuda11.3 \
+    --sdk_location container \
+    --temp_location ${TEMP_GS_URL} \
+    --project ${GCP_PROJECT_ID} \
     --dataflow_service_options \
         "worker_accelerator=type:nvidia-tesla-t4;count:1;install-nvidia-driver" \
     --job_name 'cuda-test'
