@@ -2,6 +2,11 @@ from typing import Optional, Tuple, List
 from dataclasses import dataclass
 import numpy as np
 
+from .torch_utils import TORCH_AVAILABLE
+
+if TORCH_AVAILABLE:
+    import torch
+
 
 """Basic klay_beam io types used when reading and writing data.
 
@@ -14,7 +19,7 @@ See: https://beam.apache.org/documentation/programming-guide/#immutability
 @dataclass(frozen=True)
 class Datum:
     """Base type for data that is read and written via klay_beam transforms.
-    
+
     Why are these properties optional? At different stages of a pipeline,
     different properties will be available. For example LoadWithLibrosa will
     populate the source_path, but not the target_path. A downstream transform
@@ -61,7 +66,7 @@ class TorchDatum(Datum):
 
 
 @dataclass(frozen=True)
-class NumpyData():
+class NumpyData:
     """General data storage returned by transforms that do not have a one-to-one
     mapping between input and output files"""
 
@@ -69,7 +74,7 @@ class NumpyData():
 
 
 @dataclass(frozen=True)
-class TorchData():
+class TorchData:
     """General data storage returned by transforms that do not have a one-to-one
     mapping between input and output files"""
 
