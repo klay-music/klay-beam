@@ -76,14 +76,6 @@ def test_fail_LoadWithLibrosa():
     # 44.1kHz.
     data = {"test_corrupt.mp3": ()}
 
-    def verify_data(element):
-        filename, audio, sr = element
-        basename = Path(filename).name
-        expected_shape = data[basename]
-
-        assert sr is None
-        assert audio.shape == expected_shape
-
     expected_filenames = [str(Path(data_dir / datum)) for datum in data.keys()]
 
     with BeamTestPipeline() as p:
@@ -99,9 +91,27 @@ def test_fail_LoadWithLibrosa():
         assert_that(file_names, equal_to(expected_filenames))
 
         # Load the audio files using librosa
-        (
+        audio, failed = (
             readable_files
             | beam_io.ReadMatches()
-            | beam.ParDo(LoadWithLibrosa(target_sr=None, mono=False))
-            | beam.Map(verify_data)
+            | beam.ParDo(LoadWithLibrosa(target_sr=None, mono=False)).with_outputs(
+                "failed", main="audio"
+            )
+        )
+
+        def verify_failed(element):
+            assert element == 1
+
+        (
+            failed
+            | "Count Failed" >> beam.combiners.Count.Globally()
+            | "Check Failed" >> beam.Map(verify_failed)
+        )
+
+        def verify_audio_failed(element):
+            assert element == 0
+        (
+            audio
+            | "Count Audio" >> beam.combiners.Count.Globally()
+            | "Check Audio Failed" >> beam.Map(verify_audio_failed)
         )

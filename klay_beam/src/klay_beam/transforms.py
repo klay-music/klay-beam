@@ -333,7 +333,7 @@ class LoadWithLibrosa(beam.DoFn):
             audio_array, sr = librosa.load(file_like, sr=self.target_sr, mono=self.mono)
             if self.target_sr is not None:
                 assert sr == self.target_sr
-        except RuntimeError:
+        except RuntimeError as e:
             # We don't want to log the stacktrace, but for debugging, here's how
             # we could access it we can access it:
             #
@@ -342,7 +342,8 @@ class LoadWithLibrosa(beam.DoFn):
             #     etype=type(e), value=e, tb=e.__traceback__
             # )
             logging.warning(f"Error loading audio: {path}")
-            return [(readable_file.metadata.path, np.ndarray([]), None)]
+            # return [beam.pvalue.TaggedOutput("failed", (str(path), e))]
+            return [beam.pvalue.TaggedOutput("failed", (str(path), e))]
 
         logging.info(f"Loaded {len(audio_array) / sr:.3f} second mono audio: {path}")
 
