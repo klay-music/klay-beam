@@ -345,6 +345,13 @@ class LoadWithLibrosa(beam.DoFn):
             # return [beam.pvalue.TaggedOutput("failed", (str(path), e))]
             return [beam.pvalue.TaggedOutput("failed", (str(path), e))]
 
-        logging.info(f"Loaded {len(audio_array) / sr:.3f} second mono audio: {path}")
+        num_samples = (
+            len(audio_array) if audio_array.ndim == 1 else audio_array.shape[1]
+        )
+
+        logging.warning(
+            f"Loaded {num_samples / sr:.3f} second, "
+            f"{audio_array.shape}-shaped audio from: {path}"
+        )
 
         return [(readable_file.metadata.path, audio_array, sr)]
