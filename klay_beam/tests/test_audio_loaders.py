@@ -61,6 +61,7 @@ def test_LoadWithLibrosa():
             | beam.Map(verify_data)
         )
 
+
 def test_fail_LoadWithLibrosa():
     this_file = Path(__file__)
     data_dir = this_file.parent / "test_data" / "audio" / "corrupt"
@@ -82,7 +83,7 @@ def test_fail_LoadWithLibrosa():
         basename = Path(filename).name
         expected_shape = data[basename]
 
-        assert sr == None
+        assert sr is None
         assert audio.shape == expected_shape
 
     expected_filenames = [str(Path(data_dir / datum)) for datum in data.keys()]
