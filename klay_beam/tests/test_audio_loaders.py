@@ -110,6 +110,7 @@ def test_fail_LoadWithLibrosa():
 
         def verify_audio_failed(element):
             assert element == 0
+
         (
             audio
             | "Count Audio" >> beam.combiners.Count.Globally()
