@@ -9,7 +9,6 @@ import pydub
 import soundfile as sf
 import numpy as np
 import logging
-import warnings
 import librosa
 
 from apache_beam.io.filesystem import FileMetadata
@@ -268,26 +267,21 @@ class SkipCompleted(beam.DoFn):
 
 class MultiMatchFiles(beam.PTransform):
     """Like beam.io.fileio.MatchFiles, but takes a list of patterns and returns
-    a single PCollection of FileMetadata objects."""
+    a single PCollection of FileMetadata objects.
+
+    Deprecated in klay_beam v0.13.0. Instead, use this instead:
+
+    ```
+    pipeline | beam.Create([patterns]) | beam.io.fileio.MatchAll()
+    ```
+    """
 
     def __init__(self, patterns: list[str]):
-        warnings.warn(
-            "MultiMatchFiles will be removed after klay_beam v0.12.x. Use "
-            "`beam.Create([patterns]) | beam.io.fileio.MatchAll()` instead.",
-            DeprecationWarning,
-            stacklevel=2,
+        raise NotImplementedError(
+            f"Matching {patterns} failed. "
+            "MultiMatchFiles was removed in klay_beam v0.13.0. Use "
+            "`beam.Create([patterns]) | beam.io.fileio.MatchAll()` instead."
         )
-        self.patterns = patterns
-
-    def expand(self, pcoll: beam.PCollection):
-        # Create a list of PCollections by matching each pattern
-        matched_files_list = [
-            pcoll.pipeline | f"MatchFiles {pattern}" >> beam_io.MatchFiles(pattern)
-            for pattern in self.patterns
-        ]
-
-        # Flatten the list of PCollections into a single PCollection
-        return matched_files_list | "Flatten File Results" >> beam.Flatten()
 
 
 class LoadWithLibrosa(beam.DoFn):
