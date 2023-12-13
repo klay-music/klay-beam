@@ -4,7 +4,7 @@ from pathlib import Path
 from apache_beam.testing.test_pipeline import TestPipeline as BeamTestPipeline
 from apache_beam.testing.util import assert_that, equal_to
 
-from klay_beam.transforms import LoadWithLibrosa, MultiMatchFiles
+from klay_beam.transforms import LoadWithLibrosa
 
 
 def test_LoadWithLibrosa():
@@ -43,7 +43,7 @@ def test_LoadWithLibrosa():
 
     with BeamTestPipeline() as p:
         # Apply the custom transform
-        readable_files = p | MultiMatchFiles(patterns)
+        readable_files = p | beam.Create(patterns) | beam.io.fileio.MatchAll()
 
         # Extract file names from the metadata for assertion
         file_names = readable_files | "Extract File Names" >> beam.Map(
@@ -80,7 +80,7 @@ def test_fail_LoadWithLibrosa():
 
     with BeamTestPipeline() as p:
         # Apply the custom transform
-        readable_files = p | MultiMatchFiles(patterns)
+        readable_files = p | beam.Create(patterns) | beam.io.fileio.MatchAll()
 
         # Extract file names from the metadata for assertion
         file_names = readable_files | "Extract File Names" >> beam.Map(
