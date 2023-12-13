@@ -342,7 +342,7 @@ class LoadWithLibrosa(beam.DoFn):
             #     etype=type(e), value=e, tb=e.__traceback__
             # )
             logging.warning(f"Error loading audio: {path}")
-            return (readable_file.metadata.path, np.ndarray([]), sr)
+            return [(readable_file.metadata.path, np.ndarray([]), None)]
 
         logging.info(f"Loaded {len(audio_array) / sr:.3f} second mono audio: {path}")
 
