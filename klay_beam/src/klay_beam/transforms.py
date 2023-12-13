@@ -9,7 +9,6 @@ import pydub
 import soundfile as sf
 import numpy as np
 import logging
-import warnings
 import librosa
 
 from apache_beam.io.filesystem import FileMetadata
@@ -283,6 +282,7 @@ class MultiMatchFiles(beam.PTransform):
             "MultiMatchFiles was removed in klay_beam v0.13.0. Use "
             "`beam.Create([patterns]) | beam.io.fileio.MatchAll()` instead."
         )
+
 
 class LoadWithLibrosa(beam.DoFn):
     """Use librosa to load audio files to numpy arrays."""
