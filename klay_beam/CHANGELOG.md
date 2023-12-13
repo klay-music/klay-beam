@@ -1,3 +1,10 @@
+# v0.13.0
+
+- `LoadWithLibrosa` properly handles invalid audio files, matching behavior of `LoadWithTorachaudio`
+- Remove `klay_beam.transforms.MultiMatchFiles` in favor of native transforms
+  - `readable_files = p | MultiMatchFiles(["**.wav", "**.mp3"])` (obsolete)
+  - `readable_files = p | beam.Create(["**.wav", "**.mp3"]) | beam.io.fileio.MatchAll()`  (use this instead)
+
 # v0.12.3
 
 - Add `klay_beam.path.remove_suffix_pattern` with tests
