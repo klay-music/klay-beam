@@ -4,7 +4,7 @@ import logging
 
 
 def create_test_mono_audio_channel(fade_in_seconds: float = 1.0, sine=False):
-    """Create a 2 second long mono audio data with white noise.
+    """Create a 0.5 second long mono audio data with white noise.
 
     Note the dimensionality. This is just a single channel in a single dimension
     (time) i.e. `[0, 0, 0, ...]`. Some functions in `klay_beam` may expect audio
