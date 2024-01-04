@@ -71,11 +71,11 @@ def spectral_divergence(a, b):
     some examples:
 
     ```
-    x_wav, _ = librosa.load("test_data/music/01.wav", mono=False)
-    x_mp3, _ = librosa.load("test_data/music/01.mp3", mono=False)
-    x_ogg, _ = librosa.load("test_data/music/01.ogg", mono=False)
-    x_opus, _ = librosa.load("test_data/music/01.opus", mono=False)
-    y_mp3, _ = librosa.load("test_data/music/02.mp3", mono=False)
+    x_wav, _ = librosa.load("tests/test_data/music/01.wav", mono=False)
+    x_mp3, _ = librosa.load("tests/test_data/music/01.mp3", mono=False)
+    x_ogg, _ = librosa.load("tests/test_data/music/01.ogg", mono=False)
+    x_opus, _ = librosa.load("tests/test_data/music/01.opus", mono=False)
+    y_mp3, _ = librosa.load("tests/test_data/music/02.mp3", mono=False)
 
     # mp3 vs wav
     spectral_divergence(x_wav, x_mp3)
@@ -264,3 +264,10 @@ def test_mp3_file():
     # Double check that we are getting the same sample rate as we started with
     assert sr1 == sr
     assert sr2 == sr
+
+
+def test_ogg_file():
+    x, sr = librosa.load("tests/test_data/music/01.wav", sr=None, mono=False)
+    in_memory_ogg = numpy_to_ogg(x, sr, safe=False)
+    librosa_stereo, _ = librosa.load(in_memory_ogg, sr=None, mono=False)
+    assert np.all(spectral_divergence(x, librosa_stereo) < 0.125)
