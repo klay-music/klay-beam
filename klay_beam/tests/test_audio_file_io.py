@@ -1,6 +1,7 @@
 import pytest
 import librosa
 import numpy as np
+import scipy
 
 from klay_beam.transforms import (
     numpy_to_mp3,
@@ -50,6 +51,70 @@ def max_difference(a, b):
 def average_difference(a, b):
     assert a.shape == b.shape
     return np.average(np.abs(a - b).reshape(-1))
+
+
+def spectral_divergence(a, b):
+    """Compare the spectral magnitude of two signals. This effectively compares
+    two signals in the frequency domain. The exact formula is from
+    [Arik et al., 2018](https://arxiv.org/abs/1808.06719), but I've seen similar
+    calculations used elsewhere.
+
+    Why bother with a spectral comparison? Heuristic data compressors such as
+    mp3 will make significant changes to the phase (and content) of a signal,
+    but dominant frequency bands should be mostly preserved. We can use this to
+    identify if (for example) our file writer replaced music with noise or
+    silence. It is simple check that should also be robust against the small
+    time shifts introduced by mp3 encoding.
+
+    Empirically, two audio files with the same musical content, but
+    different file encodings (e.g. wav vs mp3) will have a divergence of < 0.1.
+    some examples:
+
+    ```
+    x_wav, _ = librosa.load("test_data/music/01.wav", mono=False)
+    x_mp3, _ = librosa.load("test_data/music/01.mp3", mono=False)
+    x_ogg, _ = librosa.load("test_data/music/01.ogg", mono=False)
+    x_opus, _ = librosa.load("test_data/music/01.opus", mono=False)
+    y_mp3, _ = librosa.load("test_data/music/02.mp3", mono=False)
+
+    # mp3 vs wav
+    spectral_divergence(x_wav, x_mp3)
+    [0.0395, 0.0385]
+
+    # ogg vs wav
+    spectral_divergence(x_wav, x_ogg)
+    [0.0710, 0.0753]
+
+    # different audio content
+    spectral_divergence(x_wav, y_wav)
+    [1.0358, 1.0477]
+    ```
+
+    However, it should be noted that these values will be affected by
+    bitrate, the exact encoder used, and other parameters.
+
+    Args:
+        a, b: Two numpy arrays containing time-domain audio. Each array should
+        have shape=(channels, samples). Note that this operation is not
+        commutative (`spectral_divergence(a, b) != spectral_divergence(b, a)`).
+
+    Returns:
+        divergences: A numpy array of spectral divergence values, with one value
+        for each channel. 0 means the signals are identical, 1 means they are
+        quite different. The value represents an average across the entire
+        signal (longer files will not have a higher value than shorter files).
+    """
+    assert a.shape == b.shape
+    assert a.ndim == 2
+
+    # apply an fft to each channel of each signal
+    a_magnitudes = [np.abs(scipy.signal.stft(channel)[2]) for channel in a]
+    b_magnitudes = [np.abs(scipy.signal.stft(channel)[2]) for channel in b]
+
+    return np.array([
+        np.linalg.norm(a - b) / np.linalg.norm(a)
+        for a, b in zip(a_magnitudes, b_magnitudes)
+    ])
 
 
 def test_sine():
@@ -108,6 +173,28 @@ def test_average_difference():
     assert average_difference(sine_a, sine_b) == pytest.approx(0.3, 1e-14)
 
 
+def test_spectral_divergence():
+    sine_1k0, _ = create_test_sine(total_seconds=10, hz=1000)
+    sine_1k1, _ = create_test_sine(total_seconds=10, hz=1100)
+    sine_10k, _ = create_test_sine(total_seconds=10, hz=10000)
+
+    sine_1k_stereo = np.stack([sine_1k0, sine_1k0])
+    sine_1k1_stereo = np.stack([sine_1k1, sine_1k1])
+    sine_10k_stereo = np.stack([sine_10k, sine_10k])
+
+    noise_stereo = np.random.normal(size=sine_1k_stereo.shape)
+    silence_stereo = np.zeros_like(sine_1k_stereo)
+
+    # should be at least somewhat similar
+    assert np.all(spectral_divergence(sine_1k_stereo, sine_1k_stereo) == 0)
+    assert np.all(spectral_divergence(sine_1k_stereo, sine_1k1_stereo) < 0.5)
+
+    # should be very different
+    assert np.all(spectral_divergence(sine_1k_stereo, sine_10k_stereo) > 1.0)
+    assert np.all(spectral_divergence(sine_1k_stereo, noise_stereo) > 1.0)
+    assert np.all(spectral_divergence(sine_1k_stereo, silence_stereo) >= 1.0)
+
+
 def test_wav_file():
     sine, sr = create_test_sine()
     sine *= 0.5
@@ -137,6 +224,42 @@ def test_wav_file():
     librosa_stereo, sr2 = librosa.load(wav_stereo, sr=None, mono=False)
     assert max_difference(sine_stereo, librosa_stereo) < 1e-4
     assert average_difference(sine_stereo, librosa_stereo) < 1e-4
+
+    # Double check that we are getting the same sample rate as we started with
+    assert sr1 == sr
+    assert sr2 == sr
+
+
+def test_mp3_file():
+    sine, sr = create_test_sine()
+    sine *= 0.5
+
+    sine_mono = np.array([sine])
+    sine_stereo = np.array([sine, sine])
+
+    # make in-memory audio files
+    mp3_mono = numpy_to_mp3(sine_mono, sr)
+    mp3_stereo = numpy_to_mp3(sine_stereo, sr)
+
+    # use Librosa to read the in-memory audio files. Annoyingly, librosa returns
+    # mono audio as a 1-d array. As a result, we must compare to sine instead of
+    # sine_mono
+    librosa_mono, sr1 = librosa.load(mp3_mono, sr=None, mono=False)
+    assert max_difference(sine, librosa_mono) < 1e-2
+    assert average_difference(sine, librosa_mono) < 1e-4
+
+    # Also verify the intermediary_bit_depth flag works as expected.
+    mp3_mono = numpy_to_mp3(sine_mono, sr, intermediary_bit_depth=8)
+    librosa_mono, sr1 = librosa.load(mp3_mono, sr=None, mono=False)
+    assert max_difference(sine, librosa_mono) < 1e-1
+    assert average_difference(sine, librosa_mono) < 1e-2
+
+    # Try a stereo file
+    librosa_stereo, sr2 = librosa.load(mp3_stereo, sr=None, mono=False)
+    assert max_difference(sine_stereo, librosa_stereo) < 1e-2
+    assert average_difference(sine_stereo, librosa_stereo) < 1e-4
+
+    assert np.all(spectral_divergence(librosa_stereo, sine_stereo) < 0.1)
 
     # Double check that we are getting the same sample rate as we started with
     assert sr1 == sr
