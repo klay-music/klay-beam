@@ -31,6 +31,9 @@ version = {attr = "klay_beam.__version__"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+klay_beam = ["py.typed"]
+
 [tool.mypy]
 warn_redundant_casts = true
 check_untyped_defs = true
