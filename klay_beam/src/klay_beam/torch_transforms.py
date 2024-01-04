@@ -132,9 +132,9 @@ class ResampleTorchaudioTensor(beam.DoFn):
                 self.source_sr_hint, self.target_sr
             )
 
-    def process(
+    def process(  # type: ignore
         self,
-        audio_tuple: Tuple[str, Union["torch.Tensor", np.ndarray], int],  # type: ignore
+        audio_tuple: Tuple[str, Union["torch.Tensor", np.ndarray], int],
     ):
         key, audio, source_sr = audio_tuple
 
