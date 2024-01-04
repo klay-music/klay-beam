@@ -146,7 +146,7 @@ class ResampleTorchaudioTensor(beam.DoFn):
                 f"fewer channels (found {channels})"
             )
 
-        resampled_audio: Optional[torch.Tensor] = None
+        resampled_audio: torch.Tensor
 
         if source_sr == self.target_sr:
             resampled_audio = audio

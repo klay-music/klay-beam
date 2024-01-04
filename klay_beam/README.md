@@ -33,9 +33,9 @@ and executing on a massive dataset. For example:
 
 ```bash
 # Create the environment and install klay_beam
-conda env create -f environment/py3.10-torch2.0.yml`
+conda env create -f environment/py3.10-torch2.0.yml
 conda activate klay-beam-py3.10-torch2.0
-pip install -e .
+pip install -e ".[tests, code-style, type-check]"
 ```
 
 Then launch the example job:
