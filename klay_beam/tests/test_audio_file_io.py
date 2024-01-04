@@ -111,10 +111,12 @@ def spectral_divergence(a, b):
     a_magnitudes = [np.abs(scipy.signal.stft(channel)[2]) for channel in a]
     b_magnitudes = [np.abs(scipy.signal.stft(channel)[2]) for channel in b]
 
-    return np.array([
-        np.linalg.norm(a - b) / np.linalg.norm(a)
-        for a, b in zip(a_magnitudes, b_magnitudes)
-    ])
+    return np.array(
+        [
+            np.linalg.norm(a - b) / np.linalg.norm(a)
+            for a, b in zip(a_magnitudes, b_magnitudes)
+        ]
+    )
 
 
 def test_sine():
@@ -162,8 +164,8 @@ def test_average_difference():
 
     # Check that we are getting the average of the absolute differences
     sine_b, _ = create_test_sine()
-    sine_b[:len(sine_b) // 2] += 0.3
-    sine_b[len(sine_b) // 2:] -= 0.3
+    sine_b[: len(sine_b) // 2] += 0.3
+    sine_b[len(sine_b) // 2 :] -= 0.3
     assert average_difference(sine_a, sine_b) == pytest.approx(0.3, 1e-14)
 
     # check it also works with stereo
@@ -268,6 +270,6 @@ def test_mp3_file():
 
 def test_ogg_file():
     x, sr = librosa.load("tests/test_data/music/01.wav", sr=None, mono=False)
-    in_memory_ogg = numpy_to_ogg(x, sr, safe=False)
+    in_memory_ogg = numpy_to_ogg(x, int(sr), safe=False)
     librosa_stereo, _ = librosa.load(in_memory_ogg, sr=None, mono=False)
     assert np.all(spectral_divergence(x, librosa_stereo) < 0.125)

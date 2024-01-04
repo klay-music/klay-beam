@@ -48,6 +48,7 @@ module = [
   "soundfile",
   "torch.*",
   "torchaudio",
+  "pkg_resources",
 ]
 ignore_missing_imports = true
 
