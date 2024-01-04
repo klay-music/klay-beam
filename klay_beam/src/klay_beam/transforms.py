@@ -234,7 +234,7 @@ class SkipCompleted(beam.DoFn):
         self._target_dir = target_dir
         self._check_timestamp = check_timestamp
 
-    def process(self, source_metadata: FileMetadata):
+    def process(self, source_metadata: FileMetadata):  # type: ignore
         check = remove_suffix(source_metadata.path, self._old_suffix)
         if self._source_dir is not None:
             check = move(check, self._source_dir, self._target_dir)
@@ -291,7 +291,7 @@ class LoadWithLibrosa(beam.DoFn):
         self.target_sr = target_sr
         self.mono = mono
 
-    def process(self, readable_file: beam_io.ReadableFile):
+    def process(self, readable_file: beam_io.ReadableFile):  # type: ignore
         """
         Given an Apache Beam ReadableFile, return a `(input_filename, a, sr)`
         tuple where:

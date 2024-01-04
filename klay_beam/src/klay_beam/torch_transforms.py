@@ -45,7 +45,7 @@ class LoadWithTorchaudio(beam.DoFn):
         ensure_torch_available()
         pass
 
-    def process(self, readable_file: beam_io.ReadableFile):
+    def process(self, readable_file: beam_io.ReadableFile):  # type: ignore
         """
         Given an Apache Beam ReadableFile, return a `(input_filename, a, sr)` tuple where
             - `input_filename` is a string
@@ -132,7 +132,10 @@ class ResampleTorchaudioTensor(beam.DoFn):
                 self.source_sr_hint, self.target_sr
             )
 
-    def process(self, audio_tuple: Tuple[str, Union["torch.Tensor", np.ndarray], int]):
+    def process(
+        self,
+        audio_tuple: Tuple[str, Union["torch.Tensor", np.ndarray], int],  # type: ignore
+    ):
         key, audio, source_sr = audio_tuple
 
         # check if audio_tensor is a numpy array or a torch tensor
