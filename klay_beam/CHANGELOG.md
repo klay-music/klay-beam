@@ -1,3 +1,8 @@
+# V0.13.1
+
+- Add tests for `numpy_to_wav`, `numpy_to_mp3` and `numpy_to_ogg`.
+- Ensure `py.typed` is present in pip package
+
 # v0.13.0
 
 - `LoadWithLibrosa` properly handles invalid audio files, matching behavior of `LoadWithTorachaudio`

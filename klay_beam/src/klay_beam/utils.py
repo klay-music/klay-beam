@@ -3,7 +3,9 @@ from pkg_resources import parse_version
 
 
 def get_device(mps_valid: bool = False) -> torch.device:
-    if mps_valid and torch.has_mps:
+    # torch.has_mps is not available in older versions of torch such as 1.11.
+    # Ensure it exists before using it. This also satisfies mypy.
+    if mps_valid and hasattr(torch, "has_mps") and torch.has_mps:
         return torch.device("mps")
     elif torch.cuda.is_available():
         # if cuda version < 11, RTX 30xx series not available

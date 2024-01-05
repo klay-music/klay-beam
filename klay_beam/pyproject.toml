@@ -19,7 +19,7 @@ requires-python = ">=3.8"
 
 [project.optional-dependencies]
 code-style = ["black>=22.9.0", "flake8>=5"]
-tests = ["pytest"]
+tests = ["pytest", "scipy"]
 type-check = ["mypy>=0.990", "pydantic>=1.10", "types-setuptools"]
 # Torchaudio loading of in-memory (file-like) audio  is supported at least since
 # 0.8.0: https://pytorch.org/audio/0.8.0/backend.html#load
@@ -30,6 +30,9 @@ version = {attr = "klay_beam.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+klay_beam = ["py.typed"]
 
 [tool.mypy]
 warn_redundant_casts = true
@@ -48,6 +51,7 @@ module = [
   "soundfile",
   "torch.*",
   "torchaudio",
+  "pkg_resources",
 ]
 ignore_missing_imports = true
 
