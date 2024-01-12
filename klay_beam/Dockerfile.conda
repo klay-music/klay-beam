@@ -106,5 +106,7 @@ RUN python3 -m pip install \
   apache-beam[gcp]==${BEAM_VERSION} \
   './klay_beam[code-style, tests, type-check]'
 
+RUN cd klay_beam && pytest tests/
+
 # Verify that the image does not have conflicting dependencies.
 RUN pip check
