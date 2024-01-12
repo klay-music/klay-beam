@@ -220,6 +220,7 @@ class SkipCompleted(beam.DoFn):
         source_dir: Optional[str] = None,
         target_dir: Optional[str] = None,
         check_timestamp: bool = False,
+        overwrite: bool = False,
     ):
         if isinstance(new_suffix, str):
             new_suffix = [new_suffix]
@@ -233,8 +234,12 @@ class SkipCompleted(beam.DoFn):
         self._source_dir = source_dir
         self._target_dir = target_dir
         self._check_timestamp = check_timestamp
+        self._overwrite = overwrite
 
     def process(self, source_metadata: FileMetadata):  # type: ignore
+        if self._overwrite:
+            return [source_metadata]
+
         check = remove_suffix(source_metadata.path, self._old_suffix)
         if self._source_dir is not None:
             check = move(check, self._source_dir, self._target_dir)

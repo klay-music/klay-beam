@@ -43,6 +43,20 @@ def test_skip_completed():
         metadata_02
     ], "SkipCompleted should return the input file when some target files are missing"
 
+    # test overwrite
+    metadata_03 = FileMetadata(
+        path=str(Path(data_dir) / "exists.wav"),
+        size_in_bytes=16,
+    )
+    does_not_skip = SkipCompleted(
+        old_suffix=".wav",
+        new_suffix=".01.txt",
+        overwrite=True,
+    )
+    assert does_not_skip.process(metadata_03) == [
+        metadata_03
+    ], "SkipCompleted should return the input file when overwrite is True"
+
 
 def test_skip_completed_with_timestamp():
     this_file = Path(__file__)
