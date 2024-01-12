@@ -2,6 +2,12 @@
 
 - Add tests for `numpy_to_wav`, `numpy_to_mp3` and `numpy_to_ogg`.
 - Ensure `py.typed` is present in pip package
+- Add `overwrite=False` parameter to SkipCompleted (#73)
+- Run tests in docker container during build
+- Add two build configurations with apache_beam 2.53.0. The next release may
+  default to `2.53.0`
+  - `PY_VERSION=3.10; BEAM_VERSION=2.53.0;`
+  - `PY_VERSION=3.10; BEAM_VERSION=2.53.0; TORCH_VERSION=2.0;`
 
 # v0.13.0
 
