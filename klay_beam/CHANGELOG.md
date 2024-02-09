@@ -1,3 +1,8 @@
+# V0.13.2
+
+- Set default `apache_beam` in CI version to `2.53.0`
+- Add GitHub workflow for publishing to PyPI
+
 # V0.13.1
 
 - Add tests for `numpy_to_wav`, `numpy_to_mp3` and `numpy_to_ogg`.

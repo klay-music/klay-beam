@@ -1,24 +1,34 @@
-name: ci
+name: publish-docker-hub
 
 on:
   push:
     branches:
-      - 'ship'
+      - 'docker-hub'
 
 jobs:
   docker:
     strategy:
       matrix:
         dockerHelperConfig:
+          # These lines below refer to conda lock files in the
+          # `klay-beam/environment` dir. If you want to add a new configuration,
+          # it is not enough to just add a new line below. You must also ensure
+          # that an appropriately named conda lock file exists with the with the
+          # specified torch, torchvision, cuda versions.
+          #
+          # Note that the lines below may change the `BEAM_VERSION` without
+          # adding a conda lock file. This is because the python `apache-beam`
+          # package is installed Dockerfile.conda. Adding `BEAM_VERSION=2.50.0`
+          # to one of the lines below will just override the default apache-beam
+          # version specified in docker-env-helper.sh.
+          #
           # Python 3.9
           - PY_VERSION=3.9;
           - PY_VERSION=3.9; TORCH_VERSION=2.0;
           - PY_VERSION=3.9; TORCH_VERSION=2.0; TORCHVISION_VERSION=0.15;
           # PYTHON 3.10
           - PY_VERSION=3.10;
-          - PY_VERSION=3.10; BEAM_VERSION=2.53.0;
           - PY_VERSION=3.10; TORCH_VERSION=2.0;
-          - PY_VERSION=3.10; BEAM_VERSION=2.53.0; TORCH_VERSION=2.0;
           - PY_VERSION=3.10; TORCH_VERSION=1.11; CUDA_VERSION=11.3;
           # PYTHON 3.11
           - PY_VERSION=3.11;
