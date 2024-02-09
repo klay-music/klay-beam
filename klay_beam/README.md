@@ -262,7 +262,7 @@ git push
 Once pip action completes successfully, push to DockerHub (see [../.github/workflows/publish-docker-hub.yaml](../.github/workflows/publish-docker-hub.yaml)):
 
 ```sh
-git checkout docker-hub
+git checkout publish-docker-hub
 git merge main --ff-only
 git push
 ```
