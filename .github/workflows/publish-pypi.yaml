@@ -19,6 +19,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - run: python3 -m pip install --upgrade build && python3 -m build
+      - run: python3 -m pip install --upgrade build && cd klay_beam && python3 -m build
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: klay_beam/dist/

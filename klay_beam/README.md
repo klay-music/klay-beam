@@ -237,19 +237,24 @@ in the docker container.
 
 ## Publishing to pip/PyPI and DockerHub
 
-After tests pass, and you are ready to publish to pip, create a git tag
+Ensure:
+1. Tests pass
+1. `src/klay_beam/__init__.py` has the desired version
+1. And you are ready to publish to pip, create a git tag
+
+Tag the release:
 
 ```sh
 git checkout main
 git pull
-git tag v$(get_version.sh)
-git push origin v$(get_version.sh)
+git tag v$(./get_version.sh)
+git push origin v$(./get_version.sh)
 ```
 
 Push to `pypi` branch to publish to pip (see [../.github/workflows/publish-pypi.yaml](../.github/workflows/publish-pypi.yaml)):
 
 ```sh
-git checkout pypi
+git checkout publish-pypi
 git merge main --ff-only
 git push
 ```
