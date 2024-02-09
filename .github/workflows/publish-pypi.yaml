@@ -3,7 +3,7 @@ name: publish-pypi
 on:
   push:
     branches:
-      - 'pypi'
+      - 'publish-pypi'
 
 jobs:
   pypi-publish:

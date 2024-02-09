@@ -3,7 +3,7 @@ name: publish-docker-hub
 on:
   push:
     branches:
-      - 'docker-hub'
+      - 'publish-docker-hub'
 
 jobs:
   docker:
