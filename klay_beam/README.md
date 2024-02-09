@@ -235,6 +235,34 @@ Missing dependencies will be installed using pip. However, to save time, it is
 ideal to bundle large dependencies (or non-pip dependencies such as ffmpeg 4)
 in the docker container.
 
+## Publishing to pip/PyPI and DockerHub
+
+After tests pass, and you are ready to publish to pip, create a git tag
+
+```sh
+git checkout main
+git pull
+git tag v$(get_version.sh)
+git push origin v$(get_version.sh)
+```
+
+Push to `pypi` branch to publish to pip (see [../.github/workflows/publish-pypi.yaml](../.github/workflows/publish-pypi.yaml)):
+
+```sh
+git checkout pypi
+git merge main --ff-only
+git push
+```
+
+Once pip action completes successfully, push to DockerHub (see [../.github/workflows/publish-docker-hub.yaml](../.github/workflows/publish-docker-hub.yaml)):
+
+```sh
+git checkout docker-hub
+git merge main --ff-only
+git push
+```
+
+
 ## Code Quality
 ### Testing
 We use `pytest` for testing, there's no coverage target at the moment but
@@ -318,7 +346,7 @@ following sequence of `PTransform`s.
     - `apache_beam.ParDo(klay_beam.transforms.LoadWithTorchaudio())`
     - `apache_beam.ParDo(klay_beam.transforms.LoadWithLibrosa())`
 
-The audio loaders above returns a collection of tuples with shape 
+The audio loaders above returns a collection of tuples with shape
 `(filename, audio_data, sample_rate)`,
 
 ### MatchFiles
