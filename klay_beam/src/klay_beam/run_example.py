@@ -111,6 +111,7 @@ def run():
             )
         )
 
+        # log duration of audio
         (
             durations
             | "SumLengths" >> beam.CombineGlobally(sum)
@@ -125,10 +126,19 @@ def run():
             )
         )
 
+        # log count of number of audio files
+        (
+            durations
+            | "Count" >> beam.combiners.Count.Globally()
+            | "LogCount"
+            >> beam.Map(lambda x: logging.info(f"Total number of audio files: {x}"))
+        )
+
+        # log number of audio files that failed to load
         (
             failed
             | "Log Failed" >> beam.Map(lambda x: logging.warning(x))
-            | "Count" >> beam.combiners.Count.Globally()
+            | "Count Failed" >> beam.combiners.Count.Globally()
             | "Log Failed Count"
             >> beam.Map(lambda x: logging.warning(f"Failed to decode {x} files"))
         )
