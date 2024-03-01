@@ -6,11 +6,20 @@
 # lock file and copy the reulting lock file adjacent to the input .yml
 
 # ensure that the first argument is a filename ending with .yml or .yaml
-if [ -z "$1" ] || [ "${1: -4}" != ".yml" ] && [ "${1: -5}" != ".yaml" ]; then
-    echo "Please provide a filename ending in .yml or .yaml"
+if [ -z "$1" ]; then
+    echo "Please provide a filename."
     exit 1
 fi
 
+case "$1" in
+    *.yml | *.yaml)
+        # The filename ends with .yml or .yaml, proceed with your script
+        ;;
+    *)
+        echo "Please provide a filename ending in .yml or .yaml"
+        exit 1
+        ;;
+esac
 
 NAME=$(basename $1 .yml)
 LOCAL_YML_DIR=$(dirname $1)
