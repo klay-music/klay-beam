@@ -22,4 +22,4 @@ dependencies:
   - git
 
   - pip:
-    - '../submodules/klay-data[type-check, code-style, tests]'
+    - './submodules/klay-data[type-check, code-style, tests]'
