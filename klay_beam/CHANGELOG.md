@@ -1,3 +1,7 @@
+# V0.13.3
+- `INCLUDE_KLAY_DATA` variable can now be used to build a docker container `klay-data` included
+- New environments: `py3.10-torch2.1-klay_data3.0`, `py3.10-torch2.1-cuda12.1`, `py3.9-torch2.1-cuda12.1`
+
 # V0.13.2
 
 - Set default `apache_beam` in CI version to `2.53.0`
