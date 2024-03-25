@@ -15,6 +15,7 @@
 # 4. TORCH_VERSION
 # 5. TORCHVISION_VERSION
 # 6. CUDA_VERSION
+# 7. INCLUDE_KLAY_DATA
 #
 # This script is responsible for setting default values for the first three
 # (KLAY_BEAM_VERSION, PY_VERSION, and BEAM_VERSION). Any of the remaining three
@@ -32,6 +33,7 @@ fi
 
 : ${PY_VERSION:=3.9}
 : ${BEAM_VERSION:=2.53.0}
+: ${INCLUDE_KLAY_DATA:=False}
 
 VERSIONS=""
 
@@ -47,8 +49,15 @@ if [[ ! -z ${CUDA_VERSION} ]]; then
     VERSIONS=${VERSIONS}-cuda${CUDA_VERSION}
 fi
 
+if [[ "$INCLUDE_KLAY_DATA" == "True" ]]; then
+    KLAY_DATA_NAME="-klay-data"
+else
+    KLAY_DATA_NAME=""
+fi
+
+
 LOCAL_CONDA_LOCK=./environment/py${PY_VERSION}${VERSIONS}.lock
-DOCKER_TAG=${KLAY_BEAM_VERSION}-py${PY_VERSION}-beam${BEAM_VERSION}${VERSIONS}
+DOCKER_TAG=${KLAY_BEAM_VERSION}-py${PY_VERSION}-beam${BEAM_VERSION}${VERSIONS}${KLAY_DATA_NAME}
 
 
 if [[ ! -f ${LOCAL_CONDA_LOCK} ]]; then
