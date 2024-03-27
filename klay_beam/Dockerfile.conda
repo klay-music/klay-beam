@@ -31,7 +31,7 @@
 # PY_VERSION must match the python version specified in environment.yml
 ARG PY_VERSION=3.10
 # BEAM_VERSION must match the version specified in pyproject.toml
-ARG BEAM_VERSION=2.50.0
+ARG BEAM_VERSION=2.53.0
 # Path to the conda lock file as seen by the docker build context
 ARG LOCAL_CONDA_LOCK=./environment/py310-torch.linux-64.lock
 
