@@ -23,15 +23,7 @@ esac
 
 
 # check that the submodules/ directory exists
-LOCAL_SUBMODULES_PATH="./submodules"
-
-if [ -d "$LOCAL_SUBMODULES_PATH" ]; then
-  echo "$LOCAL_SUBMODULES_PATH is a directory."
-else
-  echo "$LOCAL_SUBMODULES_PATH is not a directory, please run: git submodule update --init --recursive"
-  exit 1
-fi
-
+LOCAL_SUBMODULES_PATH="submodules"
 
 NAME=$(basename $1 .yml)
 LOCAL_YML_DIR=$(dirname $1)
@@ -39,6 +31,21 @@ LOCAL_YML_BASE=$(basename $1)
 echo $LOCAL_YML_BASE
 # Replace the .yml extension with .lock
 LOCAL_LOCKFILE=$(echo $1 | sed 's/\.yml$/.lock/')
+
+
+# check if klay-data in NAME, if yes then include submodules
+if [[ $NAME == *"klay-data"* ]]; then
+  INCLUDE_SUBMODULES=True
+
+  # check if submodules is a valid directory
+  if [ -d "$LOCAL_YML_DIR/submodules" ]; then
+    echo "$LOCAL_YML_DIR/submodules is a directory."
+  else
+    echo "$LOCAL_YML_DIR/submodules is not a directory, please run: git submodule update --init --recursive"
+    exit 1
+  fi
+fi
+
 
 DOCKER_WORKDIR=/klay/build
 DOCKER_YML=${DOCKER_WORKDIR}/conda-env.${NAME}.yml
@@ -54,7 +61,8 @@ FROM condaforge/mambaforge:latest
 
 WORKDIR ${DOCKER_WORKDIR}
 COPY $LOCAL_YML_BASE ${DOCKER_YML}
-ADD $LOCAL_SUBMODULES_PATH ${DOCKER_SUBMODULE_DIR}
+
+RUN if [[ -n $INCLUDE_SUBMODULES ]]; then cp -r ./submodules $DOCKER_SUBMODULE_DIR; fi
 RUN mamba env create --file ${DOCKER_YML} -p /tmp-env
 RUN conda list --explicit -p /tmp-env > ${DOCKER_LOCKFILE}
 EOF
