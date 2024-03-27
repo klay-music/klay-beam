@@ -2,6 +2,9 @@ name: klay-beam
 
 channels:
   - defaults
+  - conda-forge
+  - pytorch
+  - nvidia
 
 # IMPORTANT: THERE ARE MULTIPLE ENVIRONMENT FILES IN THIS REPO!!
 #
