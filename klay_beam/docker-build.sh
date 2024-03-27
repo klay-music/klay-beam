@@ -24,6 +24,7 @@
 # PY_VERSION=3.10 ./docker-build.sh
 # PY_VERSION=3.10 TORCH_VERSION=2.0 ./docker-build.sh
 # PY_VERSION=3.10 TORCH_VERSION=1.11 CUDA_VERSION=11.3 ./docker-build.sh
+# PY_VERSION=3.10 TORCH_VERSION=2.0 INCLUDE_KLAY_DATA=True ./docker-build.sh
 #
 # # PYTHON 3.11
 # PY_VERSION=3.11 ./docker-build.sh
