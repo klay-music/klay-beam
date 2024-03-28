@@ -18,6 +18,7 @@ dependencies:
   - torchaudio>=2
   - cudatoolkit=11.7
   - tqdm>=4.36
+  - conda-forge::fsspec
   - pip
   # demucs is listed as a dependency in the job_demucs package's pyproject.toml.
   # However, it is specified as a git dependency, so the the conda environment
