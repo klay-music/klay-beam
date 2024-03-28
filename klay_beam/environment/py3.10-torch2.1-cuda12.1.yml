@@ -13,14 +13,17 @@ channels:
 dependencies:
   - pip
   - python=3.10
-  - numpy=1.24
   # ffmpeg 4.4 is required for torchaudio
-  - conda-forge::ffmpeg=4.4
+  - conda-forge::ffmpeg>4.2,<5
   # libiconv and xorg-libxau are required for ffmpeg
-  - conda-forge::libiconv=1.17
-  - conda-forge::xorg-libxau=1.0
+  - conda-forge::libiconv
+  - conda-forge::xorg-libxau
   # libsndfile 1.2.0 is required for the soundfile pip package
   - conda-forge::libsndfile>=1.2.0
-  # pytorch deps copied from klaymm
-  - pytorch::pytorch=2.1=py3.10_cuda12.1_cudnn8.9.2_0
-  - pytorch::torchaudio
+  - pytorch::pytorch>=2.1=py3.10_cuda12.1_cudnn8.9.2_0
+  - pytorch::torchaudio>=2
+  - pytorch::torchvision>=0.15
+  - nvidia::cuda-toolkit>=12
+  # actions tells us that certain deps are missing, we include them here
+  - conda-forge::fsspec
+  - git
