@@ -1,14 +1,12 @@
-name: klay-beam-py3.10-torch2.1-cuda12.1
+name: klay-beam
 
 channels:
   - defaults
-  - conda-forge
-  - pytorch
-  - nvidia
 
 dependencies:
   - pip
   - python=3.10
+  - numpy=1.24
   # ffmpeg 4.4 is required for torchaudio
   - conda-forge::ffmpeg=4.4
   # libiconv and xorg-libxau are required for ffmpeg
@@ -17,6 +15,6 @@ dependencies:
   # libsndfile 1.2.0 is required for the soundfile pip package
   - conda-forge::libsndfile>=1.2.0
   - pytorch::pytorch=2.1=py3.10_cuda12.1_cudnn8.9.2_0
-  - pytorch::torchaudio>=2
-  - pytorch::torchvision>=0.15
+  - pytorch::torchaudio
+  - pytorch::torchvision
   - nvidia::cuda-toolkit>=12
