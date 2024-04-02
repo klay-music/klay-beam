@@ -172,6 +172,7 @@ https://conda.anaconda.org/conda-forge/linux-64/cuda-libraries-static-12.1.1-ha7
 https://conda.anaconda.org/nvidia/linux-64/cuda-runtime-12.1.0-0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/filelock-3.13.1-py310h06a4308_0.conda
 https://repo.anaconda.com/pkgs/main/linux-64/freetype-2.12.1-h4a9f257_0.conda
+https://conda.anaconda.org/conda-forge/noarch/fsspec-2024.3.1-pyhca7485f_0.conda
 https://repo.anaconda.com/pkgs/main/linux-64/gmpy2-2.1.2-py310heeb90bb_0.conda
 https://conda.anaconda.org/conda-forge/linux-64/gxx-12.3.0-h95e488c_3.conda
 https://conda.anaconda.org/conda-forge/linux-64/gxx_linux-64-12.3.0-h4a1b8e8_3.conda
