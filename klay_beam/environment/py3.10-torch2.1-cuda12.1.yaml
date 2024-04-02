@@ -18,3 +18,4 @@ dependencies:
   - pytorch::torchaudio
   - pytorch::torchvision
   - nvidia::cuda-toolkit>=12
+  - conda-forge::fsspec
