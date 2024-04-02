@@ -92,7 +92,7 @@ WORKDIR /klay/app
 
 # Copy the conda environment from the conda build stage
 COPY --from=conda /env /env
-RUN python3 -m venv /env
+RUN python$PY_VERSION -m venv /env
 RUN . /env/bin/activate
 ENV PATH="/env/bin:$PATH"
 
