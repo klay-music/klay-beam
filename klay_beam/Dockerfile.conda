@@ -65,8 +65,8 @@ RUN find -name '*.a' -delete && \
   find /env/lib/python${PY_VERSION}/site-packages -name '*.pyx' -delete
 
 
-# python:3.10-slim comes from debian-12-slim
-FROM python:${PY_VERSION}-slim
+# python:3.10-slim-bullseye comes from debian-11-slim (bullseye)
+FROM python:${PY_VERSION}-slim-bullseye
 ARG PY_VERSION
 ARG BEAM_VERSION
 
