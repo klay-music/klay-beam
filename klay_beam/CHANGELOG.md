@@ -1,3 +1,8 @@
+# v0.13.5
+- Skipped 0.13.3 and 0.13.4 due to invalid changes to `main`
+- Minor fixes to `docker` build scripts
+- New environment: `py3.10-torch2.1-cuda12.1`
+
 # v0.13.2
 
 - Set default `apache_beam` in CI version to `2.53.0`
