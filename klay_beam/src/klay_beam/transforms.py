@@ -354,3 +354,18 @@ class LoadWithLibrosa(beam.DoFn):
         )
 
         return [(readable_file.metadata.path, audio_array, sr)]
+
+
+class LoadNpy(beam.DoFn):
+    """Load .npy files."""
+
+    def process(self, readable_file: beam_io.ReadableFile):  # type: ignore
+        """
+        Given an Apache Beam ReadableFile, return a `(input_filename, feats)` tuple where
+            - `input_filename` is a string
+            - `feats` is an np.ndarray
+        """
+        logging.info("Loading: {}".format(readable_file.metadata.path))
+        with readable_file.open(mime_type="application/octet-stream") as file_like:
+            feats = np.load(file_like)
+        return [(readable_file.metadata.path, feats)]
