@@ -11,4 +11,5 @@ dependencies:
   - conda-forge::libiconv=1.17
   - pytorch::pytorch=2.1
   - pytorch::torchaudio>=2
+  - conda-forge::fsspec
   - git
