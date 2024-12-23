@@ -37,6 +37,22 @@ jobs:
 
     runs-on: ubuntu-latest-4core
     steps:
+      - uses: shaunco/ssh-agent@git-repo-mapping
+        with:
+          ssh-private-key: |
+            ${{ secrets.KLAY_DATA_ACCESS_TOKEN }}
+            ${{ secrets.AGC_ACCESS_TOKEN }}
+            ${{ secrets.KLAY_AUDIOTOOLS_ACCESS_TOKEN }}
+          repo-mappings: |
+            github.com/klay-music/klay-data
+            github.com/klay-music/agc
+            github.com/klay-music/klay-audiotools
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Update submodule
+        run: |
+          git submodule update --init
       - name: Checkout
         uses: actions/checkout@v3
       - name: Set up Docker Buildx
