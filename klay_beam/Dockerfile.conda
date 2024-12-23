@@ -105,7 +105,7 @@ COPY . ./klay_beam
 RUN python3 -m pip install \
   apache-beam[gcp]==${BEAM_VERSION} \
   './klay_beam[code-style, tests, type-check]'
-RUN python3 -m pip install './submodules/klay-data'
+RUN python3 -m pip install './klay_beam/submodules/klay-data'
 
 RUN cd klay_beam && pytest tests/
 
