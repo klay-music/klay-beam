@@ -1,0 +1,3 @@
+[submodule "klay_beam/submodules/klay-data"]
+	path = klay_beam/submodules/klay-data
+	url = git@github.com:klay-music/klay-data.git
