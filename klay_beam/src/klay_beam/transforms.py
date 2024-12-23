@@ -354,20 +354,24 @@ class LoadNpy(beam.DoFn):
 
 
 class LoadJson(beam.DoFn):
-    def process(self, file: beam_io.ReadableFile):
-        logging.info(f"Reading JSON file: {file.metadata.path}")
-        with file.open() as f:
+    def process(self, readable_file: beam_io.ReadableFile):  # type: ignore
+        logging.info(f"Reading JSON file: {readable_file.metadata.path}")
+        with readable_file.open() as f:
             data = json.loads(f.read().decode("utf-8"))
         yield data
 
 
 class MatchFiles(beam.PTransform):
-    def __init__(self, dataset_name: str, bucket_name: str = "klay-datasets-pretraining"):
+    def __init__(
+        self, dataset_name: str, bucket_name: str = "klay-datasets-pretraining"
+    ):
         super().__init__()
 
         self.dataset_name = dataset_name
         self.bucket_name = bucket_name
-        self.match_pattern = f"gs://klay-beam-lists/klay-beam-lists/tracks/{dataset_name}.json"
+        self.match_pattern = (
+            f"gs://klay-beam-lists/klay-beam-lists/tracks/{dataset_name}.json"
+        )
 
     def _list_files(self, data):
         files = [f for files in data.values() for f in files]
@@ -388,8 +392,7 @@ class MatchFiles(beam.PTransform):
     def expand(self, p):
         return (
             p
-            | "Match Manifest Files"
-            >> beam_io.MatchFiles(self.match_pattern)
+            | "Match Manifest Files" >> beam_io.MatchFiles(self.match_pattern)
             | "Read Manifest Matches" >> beam_io.ReadMatches()
             | "Read JSON" >> beam.ParDo(LoadJson())
             | "List Files" >> beam.ParDo(self._list_files)
