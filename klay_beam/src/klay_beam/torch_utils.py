@@ -5,8 +5,8 @@ import logging
 def torch_check() -> Tuple[bool, Optional[ImportError]]:
     torch_available, torch_import_error = False, None
     try:
-        import torch
-        import torchaudio
+        import torch  # noqa
+        import torchaudio  # noqa
 
         torch_available = True
     except ImportError as e:

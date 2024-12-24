@@ -9,22 +9,19 @@ readme = "README.md"
 license = { file = "LICENSE" }
 dynamic = ["version"]
 dependencies = [
-  "apache-beam[gcp]>=2.55.0",
-  "boto3",
+  "apache-beam[gcp]==2.61",
+  "boto3==1.35",
   "pydub==0.25.1",
-  "soundfile>=0.12.1",
-  # Feature extraction deps from semantic-model@f388e4:
-  "librosa>=0.9",
+  "soundfile==0.12.1",
+  "librosa==0.10",
 ]
 requires-python = ">=3.8"
 
 [project.optional-dependencies]
-code-style = ["black>=22.9.0", "flake8>=5"]
+code-style = ["black==24.10", "flake8==7.1"]
 tests = ["pytest", "scipy"]
-type-check = ["mypy>=0.990", "pydantic>=1.10", "types-setuptools"]
-# Torchaudio loading of in-memory (file-like) audio  is supported at least since
-# 0.8.0: https://pytorch.org/audio/0.8.0/backend.html#load
-pytorch = ["torchaudio>=0.8.0", "torch>=1.0.0"]
+type-check = ["mypy==1.14", "pydantic==2.10", "types-setuptools"]
+pytorch = ["torchaudio>=2", "torch>=2"]
 
 [tool.setuptools.dynamic]
 version = {attr = "klay_beam.__version__"}
