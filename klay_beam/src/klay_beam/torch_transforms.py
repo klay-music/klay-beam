@@ -11,8 +11,8 @@ from .torch_utils import TORCH_AVAILABLE, ensure_torch_available
 
 
 if TORCH_AVAILABLE:
-    import torch
-    import torchaudio
+    import torch  # noqa: F401
+    import torchaudio  # noqa: F401
 
 
 class LoadWithTorchaudio(beam.DoFn):

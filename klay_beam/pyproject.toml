@@ -9,7 +9,8 @@ readme = "README.md"
 license = { file = "LICENSE" }
 dynamic = ["version"]
 dependencies = [
-  "apache-beam[gcp]",
+  "apache-beam[gcp]>=2.55.0",
+  "boto3",
   "pydub==0.25.1",
   "soundfile>=0.12.1",
   # Feature extraction deps from semantic-model@f388e4:

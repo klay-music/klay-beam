@@ -31,7 +31,7 @@ if [[ -z ${KLAY_BEAM_VERSION} ]]; then
 fi
 
 : ${PY_VERSION:=3.9}
-: ${BEAM_VERSION:=2.53.0}
+: ${BEAM_VERSION:=2.55.0}
 
 VERSIONS=""
 

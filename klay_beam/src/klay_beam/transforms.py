@@ -1,15 +1,16 @@
-import pathlib
-import io
-from typing import Optional, Type, Union, List, Tuple
-from packaging import version as packaging_version
 import apache_beam as beam
 from apache_beam.io import filesystems
 import apache_beam.io.fileio as beam_io
+import io
+import json
+import logging
+import librosa
+from packaging import version as packaging_version
+import pathlib
 import pydub
 import soundfile as sf
 import numpy as np
-import logging
-import librosa
+from typing import Optional, Type, Union, List, Tuple
 
 from apache_beam.io.filesystem import FileMetadata
 from apache_beam.io.filesystems import FileSystems
@@ -270,25 +271,6 @@ class SkipCompleted(beam.DoFn):
         return []
 
 
-class MultiMatchFiles(beam.PTransform):
-    """Like beam.io.fileio.MatchFiles, but takes a list of patterns and returns
-    a single PCollection of FileMetadata objects.
-
-    Deprecated in klay_beam v0.13.0. Instead, use this instead:
-
-    ```
-    pipeline | beam.Create([patterns]) | beam.io.fileio.MatchAll()
-    ```
-    """
-
-    def __init__(self, patterns: list[str]):
-        raise NotImplementedError(
-            f"Matching {patterns} failed. "
-            "MultiMatchFiles was removed in klay_beam v0.13.0. Use "
-            "`beam.Create([patterns]) | beam.io.fileio.MatchAll()` instead."
-        )
-
-
 class LoadWithLibrosa(beam.DoFn):
     """Use librosa to load audio files to numpy arrays."""
 
@@ -354,3 +336,65 @@ class LoadWithLibrosa(beam.DoFn):
         )
 
         return [(readable_file.metadata.path, audio_array, sr)]
+
+
+class LoadNpy(beam.DoFn):
+    """Load .npy files."""
+
+    def process(self, readable_file: beam_io.ReadableFile):  # type: ignore
+        """
+        Given an Apache Beam ReadableFile, return a `(input_filename, feats)` tuple where
+            - `input_filename` is a string
+            - `feats` is an np.ndarray
+        """
+        logging.info("Loading: {}".format(readable_file.metadata.path))
+        with readable_file.open(mime_type="application/octet-stream") as file_like:
+            feats = np.load(file_like)
+        return [(readable_file.metadata.path, feats)]
+
+
+class LoadJson(beam.DoFn):
+    def process(self, readable_file: beam_io.ReadableFile):  # type: ignore
+        logging.info(f"Reading JSON file: {readable_file.metadata.path}")
+        with readable_file.open() as f:
+            data = json.loads(f.read().decode("utf-8"))
+        yield data
+
+
+class MatchFiles(beam.PTransform):
+    def __init__(
+        self, dataset_name: str, bucket_name: str = "klay-datasets-pretraining"
+    ):
+        super().__init__()
+
+        self.dataset_name = dataset_name
+        self.bucket_name = bucket_name
+        self.match_pattern = (
+            f"gs://klay-beam-lists/klay-beam-lists/tracks/{dataset_name}.json"
+        )
+
+    def _list_files(self, data):
+        files = [f for files in data.values() for f in files]
+        logging.info(f"Found {len(files)} files in dataset: {self.dataset_name}")
+        for r in files:
+            yield r
+
+    def _match_file(self, filename):
+        filepath = f"gs://{self.bucket_name}/{filename}"
+
+        for match in beam.io.filesystems.FileSystems.match([filepath])[0].metadata_list:
+            yield match
+
+    def _log_readable_file(self, readable_file):
+        logging.info(f"Matched file: {readable_file.metadata.path}")
+        return readable_file
+
+    def expand(self, p):
+        return (
+            p
+            | "Match Manifest Files" >> beam_io.MatchFiles(self.match_pattern)
+            | "Read Manifest Matches" >> beam_io.ReadMatches()
+            | "Read JSON" >> beam.ParDo(LoadJson())
+            | "List Files" >> beam.ParDo(self._list_files)
+            | "Match Files" >> beam.ParDo(self._match_file)
+        )

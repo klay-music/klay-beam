@@ -7,6 +7,9 @@ dependencies:
   - pip
   - python=3.10
   - conda-forge::ffmpeg>=4.2,<5
+  - conda-forge::xorg-libxau=1.0
+  - conda-forge::libiconv=1.17
   - pytorch::pytorch=2.1
   - pytorch::torchaudio>=2
+  - conda-forge::fsspec
   - git

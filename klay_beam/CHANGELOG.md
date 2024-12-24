@@ -1,3 +1,9 @@
+# v0.13.8
+- Add `klay-data` to docker build by default
+- Update to `apache_beam[gcp]==2.55.0`
+- Include `boto3` in dependencies
+- Add new transforms: `LoadNpy`, `LoadJson`, `MatchFiles`
+
 # v0.13.7
 
 - Skipped 0.13.6 due to invalid changes to `main`
