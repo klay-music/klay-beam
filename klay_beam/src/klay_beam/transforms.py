@@ -370,7 +370,7 @@ class MatchFiles(beam.PTransform):
         self.dataset_name = dataset_name
         self.bucket_name = bucket_name
         self.match_pattern = (
-            f"gs://klay-beam-lists/klay-beam-lists/tracks/{dataset_name}.json"
+            f"gs://klay-beam-lists/tracks/{dataset_name}.json"
         )
 
     def _list_files(self, data):
@@ -392,7 +392,9 @@ class MatchFiles(beam.PTransform):
     def expand(self, p):
         return (
             p
-            | "Match Manifest Files" >> beam_io.MatchFiles(self.match_pattern)
+            | "Match Manifest Files" >> beam_io.MatchFiles(
+                self.match_pattern, empty_match_treatment=beam_io.EmptyMatchTreatment.DISALLOW
+            )
             | "Read Manifest Matches" >> beam_io.ReadMatches()
             | "Read JSON" >> beam.ParDo(LoadJson())
             | "List Files" >> beam.ParDo(self._list_files)
