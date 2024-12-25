@@ -1,4 +1,4 @@
-# v0.13.9
+# v0.14.0
 - Add `klay-data` to docker build by default
 - Update to `apache_beam[gcp]==2.61.0`
 - Include `boto3` in dependencies
