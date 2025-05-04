@@ -1,0 +1,23 @@
+name: demucs-dev
+
+# This describes the development and launch environment.
+#
+# IMPORTANT: If you change the dependencies here, you should also make sure the
+# default Docker image (which is likely pined in the bin/run_job_<name>.py
+# script) also reflects your changes.
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.10
+  - numpy=1.23
+  - ffmpeg>=4.2,<5
+  # Pin pytorch to guarantee the same version in Docker/Dataflow runtime
+  - pytorch::pytorch=2.0
+  - pytorch::torchaudio=2.0
+  - pip
+
+  - pip:
+    - -e '..[code-style, tests, type-check]'
