@@ -7,7 +7,7 @@ steps:
 
   - name: 'gcr.io/cloud-builders/docker'
     id: publish-image
-    args: ['push', '${_CONTROLLER_IMG}']
+    args: ['push', '${_IMG}']
     waitFor:
       - build-image
 
