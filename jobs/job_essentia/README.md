@@ -1,61 +1,6 @@
-# job_essentia_features
+# job_essentia
 
 Job for extracting `essentia` classifier features from an audio signal.
-
-This job will:
-
-1. Recursively search a `--source_audio_path` for files ending with
-   `--match_suffix`.
-2. Load the audio file, resample to 16kHz
-3. Run classification(s) and return tuple of filepath and feature array
-4. Save results as `*.<feature_name>.npy` files adjacent to the audio files
-
-All available features are defined in the `EssentiaFeatures` enum class in `transforms.py`.
-
-## Development
-
-```bash
-# Create the development environment
-conda env create -f ../environments/dev.yml
-conda activate essentia-features-dev
-
-# Download the models
-./bin/download-models.sh
-```
-
-### Launch
-```
-python bin/run_job_essentia_features.py \
-    --runner Direct
-    --source_audio_path '/path/to/test/audio/' \
-    --match_suffix .instrumental.stem.mp3 \
-    --audio_suffix .mp3 \
-    --features voice_instrumental,mood_happy,mtt
-```
-
-```
-# Run remote job on test dataset
-python bin/run_job_essentia_features.py \
-    --runner DataflowRunner \
-    --project klay-beam-tests \
-    --service_account_email dataset-dataflow-worker@klay-beam-tests.iam.gserviceaccount.com \
-    --region us-central1 \
-    --max_num_workers 100 \
-    --autoscaling_algorithm THROUGHPUT_BASED \
-    --experiments use_runner_v2 \
-    --sdk_location container \
-    --temp_location gs://klay-beam-scratch-storage/tmp/extract-vocal-classifier/ \
-    --source_audio_path 'gs://klay-dataflow-test-001/pretraining' \
-    --job_name 'job-essentia-features' \
-    --machine_type n1-standard-8 \
-    --setup_file ./setup.py \
-    --match_suffix .instrumental.stem.mp3 \
-    --audio_suffix .mp3 \
-    --features voice_instrumental,mood_happy,mtt
-
-# Options for --autoscaling-algorithm
-    THROUGHPUT_BASED, NONE
-```
 
 # Docker Images
 

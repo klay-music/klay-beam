@@ -1,9 +1,3 @@
-# We build a custom docker container for job_essentia_features so that we don't have to download
-# the models at each worker start-up
-#
-# Example usage:
-# docker build -t us-docker.pkg.dev/klay-home/klay-docker/klay-beam-essentia-features .
-
 FROM klaymusic/klay-beam:0.13.7-py3.9-beam2.53.0-torch2.0
 
 WORKDIR /klay/app

@@ -19,7 +19,7 @@ docker-push:
 	docker push $(DOCKER_IMAGE_NAME)
 
 make run-dataflow:
-	python bin/run_job_essentia_features.py \
+	python bin/run_workflow.py \
 	    --runner DataflowRunner \
 	    --project klay-training \
 	    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
@@ -28,7 +28,7 @@ make run-dataflow:
 	    --autoscaling_algorithm THROUGHPUT_BASED \
 	    --experiments use_runner_v2,no_use_multiple_sdk_containers \
 	    --sdk_location container \
-	    --temp_location gs://klay-beam-scratch-storage/tmp/extract-essentia-features/ \
+	    --temp_location gs://klay-beam-scratch-storage/tmp/extract-essentia/ \
 	    --source_audio_path $(source_audio_path) \
 	    --job_name $(job_name) \
 	    --machine_type n1-standard-16 \
