@@ -4,7 +4,7 @@
 FROM klaymusic/klay-beam:0.13.7-py3.10-beam2.53.0-torch2.1-cuda12.1
 
 WORKDIR /klay/app
-COPY . ./job_demucs
+COPY ./jobs/job_demucs ./job_demucs
 
 # demucs needs git
 RUN apt-get update && \
