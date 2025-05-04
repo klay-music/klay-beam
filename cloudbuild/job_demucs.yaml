@@ -11,6 +11,10 @@ steps:
     waitFor:
       - build-image
 
+  - name: 'gcr.io/cloud-builders/docker'
+    id: tag-image
+    args: ['tag', '${_IMG}:latest', '${_IMG}:${TAG_NAME}']
+
 timeout: 3600s  # 1 hour
 
 images: ['${_IMG}']
