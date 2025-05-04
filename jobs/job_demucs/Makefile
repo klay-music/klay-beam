@@ -38,4 +38,4 @@ run-dataflow:
 	  --max_num_workers $(max_num_workers) \
 	  --audio_suffix $(audio_suffix) \
 	  --match_pattern $(match_pattern) \
-		--only_if_vocals
+		# --only_if_vocals
