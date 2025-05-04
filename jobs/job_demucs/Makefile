@@ -12,19 +12,12 @@ pre-test: code-style type-check
 tests:
 	pytest tests/
 
-# If you change the image name, you should also change the DEFAULT_IMAGE in the
-# launch script.
-docker:
-	docker build -t $(DOCKER_IMAGE_NAME) .
-
-docker-push:
-	docker push $(DOCKER_IMAGE_NAME)
-
 run-local:
 	python bin/run_workflow.py \
 		--runner Direct \
 		--audio_suffix $(audio_suffix) \
 		--match_pattern $(match_pattern) \
+		--only_if_vocals
 
 run-dataflow:
 	python bin/run_workflow.py \
@@ -45,4 +38,4 @@ run-dataflow:
 	  --max_num_workers $(max_num_workers) \
 	  --audio_suffix $(audio_suffix) \
 	  --match_pattern $(match_pattern) \
-	  --only_if_vocals \
+		--only_if_vocals
