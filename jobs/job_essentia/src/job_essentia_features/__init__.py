@@ -1,7 +1,6 @@
-import os
-
 __version__ = "0.1.4"
 
+import os
 if (PKG_VERSION := os.environ.get("VERSION", None)) is not None:
     assert PKG_VERSION == __version__
 
