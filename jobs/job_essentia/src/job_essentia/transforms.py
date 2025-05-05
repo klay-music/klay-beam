@@ -188,7 +188,7 @@ class ExtractEssentiaFeatures(beam.DoFn):
             out_filename += suffix
             # extract
             try:
-                if feat_name != "audioset_yamnet":
+                if feat_name == "audioset_yamnet":
                     classifier = self.classifiers[feat_name]
                     preds = classifier(audio).transpose()
                     yield out_filename, preds
@@ -240,12 +240,12 @@ class ExtractEssentiaTempo(beam.DoFn):
 
 
 class LoadWebm(beam.DoFn):
-    """DoFn that turns a .webm audio file into (path, np.ndarray, sample_rate)."""
+    """DoFn that turns a .webm audio file into (path, torch.Tensor, sample_rate)."""
 
     @staticmethod
     def _load_webm(buf: bytes) -> tuple[np.ndarray, int]:
         """
-        Decode a WebM/Opus byte blob → float32 numpy array (samples, channels).
+        Decode a WebM/Opus byte blob → float32 torch tensor (channels, num_samples).
 
         args:
             buf : bytes  WebM/Opus byte blob
@@ -283,9 +283,9 @@ class LoadWebm(beam.DoFn):
             logging.error(f"Error decoding {path} : {exc}")
             return
 
-        audio = np.transpose(audio)
+        audio = np.transpose(audio).astype(np.float32)
         duration = audio.shape[1] / sr
         logging.info(
             f"Loaded {duration:.4f}s, {audio.shape[0]}-channel audio  ↪  {path}"
         )
-        yield readable_file.metadata.path, audio, sr
+        yield readable_file.metadata.path, torch.from_numpy(audio), sr
