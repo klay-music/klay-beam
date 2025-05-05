@@ -16,6 +16,30 @@ from klay_beam.path import remove_suffix
 
 
 MODEL_DIR = Path.cwd() / "models"
+ALL_FEATURES = [
+    "genre_discogs400",
+    "mtg_jamendo_genre",
+    "approachability",
+    "danceability",
+    "engagement",
+    "mood_aggressive",
+    "mood_happy",
+    "mood_party",
+    "mood_relaxed",
+    "mood_sad",
+    "mtg_jamendo_moodtheme",
+    "mtg_jamendo_instrument",
+    "mood_acoustic",
+    "mood_electronic",
+    "voice_instrumental",
+    "timbre",
+    "nsynth_instrument",
+    "nsynth_reverb",
+    "tonal_atonal",
+    "mtg_jamendo_top50tags",
+    "mtt",
+    "audioset_yamnet",
+]
 ESSENTIA_CLASSIFIERS = {
     "genre_discogs400": TensorflowPredict2D(
         graphFilename=str(MODEL_DIR / "genre_discogs400-discogs-effnet-1.pb"),
@@ -103,10 +127,12 @@ ESSENTIA_CLASSIFIERS = {
         output="activations",
     ),
 }
+assert sorted(ALL_FEATURES) == sorted(ESSENTIA_CLASSIFIERS.keys()), (
+    "All features must have a classifier in ESSENTIA_CLASSIFIERS."
+)
 DISCOGS_EFFNET_CLASSIFIERS = [
     f for f in ESSENTIA_CLASSIFIERS.keys() if f != "audioset_yamnet"
 ]
-ALL_FEATURES = list(ESSENTIA_CLASSIFIERS.keys())
 
 
 class ExtractEssentiaFeatures(beam.DoFn):

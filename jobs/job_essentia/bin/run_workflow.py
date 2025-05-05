@@ -45,15 +45,6 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--match_suffix",
-        required=True,
-        help="""
-        The suffix of the files that we want to match.
-        For example, .instrumental.stem.mp3
-        """,
-    )
-
-    parser.add_argument(
         "--audio_suffix",
         required=True,
         help="""
@@ -96,14 +87,8 @@ def run():
             "DOCKER_IMAGE_NAME"
         ]
 
-    # Pattern to recursively find audio files inside src_dir
-    if known_args.audio_suffix not in known_args.match_suffix:
-        raise ValueError(
-            f"{known_args.match_suffix} does not contain {known_args.audio_suffix}"
-        )
-
     src_dir = known_args.src_dir.rstrip("/") + "/"
-    match_pattern = src_dir + f"**{known_args.match_suffix}"
+    match_pattern = src_dir + f"**{known_args.audio_suffix}"
     extract_fn = ExtractEssentiaFeatures(known_args.audio_suffix, known_args.features)
 
     if known_args.features is None:

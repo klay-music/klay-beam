@@ -31,7 +31,7 @@ make run-dataflow:
 	    --machine_type n1-standard-16 \
 	    --number_of_worker_harness_threads=8 \
 	    --setup_file ./setup.py \
-	    --source_audio_path $(source_audio_path) \
+	    --src_dir $(src_dir) \
 	    --match_suffix $(match_suffix) \
 	    --audio_suffix $(audio_suffix) \
 	    --features $(features) \
