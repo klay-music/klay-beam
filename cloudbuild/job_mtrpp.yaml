@@ -1,4 +1,17 @@
 steps:
+  - name: 'gcr.io/cloud-builders/git'
+    id: checkout-submodules
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        git init .
+        git config -f .git/config submodule.submodules/klay-data.url https://source.developers.google.com/p/${PROJECT_ID}/r/github_klay-music_klay-data
+        git config -f .gitmodules submodule.submodules/klay-data.url https://source.developers.google.com/p/${PROJECT_ID}/r/github_klay-music_klay-data
+        git config -f .git/config submodule.submodules/klay-mtrpp.url https://source.developers.google.com/p/${PROJECT_ID}/r/github_klay-music_klay-mtrpp
+        git config -f .gitmodules submodule.submodules/klay-mtrpp.url https://source.developers.google.com/p/${PROJECT_ID}/r/github_klay-music_klay-mtrpp
+        git submodule update --init
+
   - name: 'gcr.io/cloud-builders/docker'
     id: build-image
     args: ['build', '-f', 'jobs/job_mtrpp/Dockerfile', '-t', '${_IMG}', '.']
