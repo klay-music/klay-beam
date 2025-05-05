@@ -195,7 +195,7 @@ def convert_audio(wav: "torch.Tensor", sr: int, target_sr: int, target_channels:
 
 
 def tensor_to_bytes(
-    audio_tuple: Tuple[str, Union["torch.Tensor", np.ndarray], int]
+    audio_tuple: Tuple[str, Union["torch.Tensor", np.ndarray], int],
 ) -> List[Tuple[str, bytes, int]]:
     fname, audio, sr = audio_tuple
     if isinstance(audio, torch.Tensor):
