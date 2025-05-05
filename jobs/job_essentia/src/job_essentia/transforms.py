@@ -40,99 +40,98 @@ ALL_FEATURES = [
     "mtt",
     "audioset_yamnet",
 ]
-ESSENTIA_CLASSIFIERS = {
-    "genre_discogs400": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "genre_discogs400-discogs-effnet-1.pb"),
-        input="serving_default_model_Placeholder",
-        output="PartitionedCall:0",
-    ),
-    "mtg_jamendo_genre": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mtg_jamendo_genre-discogs-effnet-1.pb")
-    ),
-    "approachability": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "approachability_2c-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "danceability": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "danceability-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "engagement": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "engagement_2c-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "mood_aggressive": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mood_aggressive-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "mood_happy": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mood_happy-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "mood_party": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mood_party-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "mood_relaxed": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mood_relaxed-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "mood_sad": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mood_sad-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "mtg_jamendo_moodtheme": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mtg_jamendo_moodtheme-discogs-effnet-1.pb")
-    ),
-    "mtg_jamendo_instrument": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mtg_jamendo_instrument-discogs-effnet-1.pb")
-    ),
-    "mood_acoustic": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mood_acoustic-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "mood_electronic": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mood_electronic-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "voice_instrumental": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "voice_instrumental-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "timbre": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "timbre-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "nsynth_instrument": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "nsynth_instrument-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "nsynth_reverb": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "nsynth_reverb-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "tonal_atonal": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "tonal_atonal-discogs-effnet-1.pb"),
-        output="model/Softmax",
-    ),
-    "mtg_jamendo_top50tags": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mtg_jamendo_top50tags-discogs-effnet-1.pb")
-    ),
-    "mtt": TensorflowPredict2D(
-        graphFilename=str(MODEL_DIR / "mtt-discogs-effnet-1.pb")
-    ),
-    "audioset_yamnet": TensorflowPredictVGGish(
-        graphFilename=str(MODEL_DIR / "audioset-yamnet-1.pb"),
-        input="melspectrogram",
-        output="activations",
-    ),
-}
-assert sorted(ALL_FEATURES) == sorted(ESSENTIA_CLASSIFIERS.keys()), (
-    "All features must have a classifier in ESSENTIA_CLASSIFIERS."
-)
-DISCOGS_EFFNET_CLASSIFIERS = [
-    f for f in ESSENTIA_CLASSIFIERS.keys() if f != "audioset_yamnet"
-]
+
+
+def construct_essentia_classifiers():
+    ESSENTIA_CLASSIFIERS = {
+        "genre_discogs400": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "genre_discogs400-discogs-effnet-1.pb"),
+            input="serving_default_model_Placeholder",
+            output="PartitionedCall:0",
+        ),
+        "mtg_jamendo_genre": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mtg_jamendo_genre-discogs-effnet-1.pb")
+        ),
+        "approachability": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "approachability_2c-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "danceability": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "danceability-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "engagement": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "engagement_2c-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "mood_aggressive": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mood_aggressive-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "mood_happy": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mood_happy-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "mood_party": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mood_party-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "mood_relaxed": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mood_relaxed-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "mood_sad": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mood_sad-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "mtg_jamendo_moodtheme": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mtg_jamendo_moodtheme-discogs-effnet-1.pb")
+        ),
+        "mtg_jamendo_instrument": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mtg_jamendo_instrument-discogs-effnet-1.pb")
+        ),
+        "mood_acoustic": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mood_acoustic-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "mood_electronic": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mood_electronic-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "voice_instrumental": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "voice_instrumental-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "timbre": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "timbre-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "nsynth_instrument": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "nsynth_instrument-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "nsynth_reverb": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "nsynth_reverb-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "tonal_atonal": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "tonal_atonal-discogs-effnet-1.pb"),
+            output="model/Softmax",
+        ),
+        "mtg_jamendo_top50tags": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mtg_jamendo_top50tags-discogs-effnet-1.pb")
+        ),
+        "mtt": TensorflowPredict2D(
+            graphFilename=str(MODEL_DIR / "mtt-discogs-effnet-1.pb")
+        ),
+        "audioset_yamnet": TensorflowPredictVGGish(
+            graphFilename=str(MODEL_DIR / "audioset-yamnet-1.pb"),
+            input="melspectrogram",
+            output="activations",
+        ),
+    }
+
+    return ESSENTIA_CLASSIFIERS
 
 
 class ExtractEssentiaFeatures(beam.DoFn):
@@ -147,8 +146,12 @@ class ExtractEssentiaFeatures(beam.DoFn):
             graphFilename=str(MODEL_DIR / self.embed_model_filename),
             output="PartitionedCall:1",
         )
+
+        # load classifiers
         self.classifiers = {
-            f: ESSENTIA_CLASSIFIERS[f] for f in self.features if f != "tempo"
+            f: construct_essentia_classifiers()[f]
+            for f in self.features
+            if f != "tempo"
         }
 
     @property
@@ -182,14 +185,14 @@ class ExtractEssentiaFeatures(beam.DoFn):
             out_filename += suffix
             # extract
             try:
-                if feat_name in DISCOGS_EFFNET_CLASSIFIERS:
+                if feat_name != "audioset_yamnet":
+                    classifier = self.classifiers[feat_name]
+                    preds = classifier(audio).transpose()
+                    yield out_filename, preds
+                else:
                     embeds = self.model(audio)
                     classifier = self.classifiers[feat_name]
                     preds = classifier(embeds).transpose()
-                    yield out_filename, preds
-                else:
-                    classifier = self.classifiers[feat_name]
-                    preds = classifier(audio).transpose()
                     yield out_filename, preds
             except Exception:
                 logging.error(traceback.format_exc())

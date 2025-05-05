@@ -1,11 +1,6 @@
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 
 import os
-
-if (PKG_VERSION := os.environ.get("VERSION", None)) is not None:
-    assert PKG_VERSION == __version__
-
-
 # IMPORTANT: Prevent submitit package from silencing Dataflow logs!
 #
 # demucs depends on "dora", which in turn depends on "submitit". Importing

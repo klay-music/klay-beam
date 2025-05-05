@@ -31,7 +31,6 @@ def parse_args():
 
     parser.add_argument(
         "--src_dir",
-        dest="input",
         required=True,
         help="""
         Specify the parent audio file directory. This can be a local path or a gs:// URI.
