@@ -19,14 +19,14 @@ docker-push:
 	docker push ${DOCKER_IMAGE_NAME}
 
 run-local:
-	python bin/run_job_mtrpp.py \
+	python bin/run_workflow.py \
 		--runner Direct \
 		--source_audio_path=$(source_audio_path) \
 		--match_suffix=$(match_suffix) \
 		--audio_suffix=$(audio_suffix)
 
 run-dataflow:
-	python bin/run_job_mtrpp.py \
+	python bin/run_workflow.py \
     --runner DataflowRunner \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \

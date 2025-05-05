@@ -58,7 +58,3 @@ module = [
   "apache_beam.*",
 ]
 ignore_missing_imports = true
-
-[tool.setuptools.include-package-data]
-# true means: also obey MANIFEST.in for the *sdist*. Harmless for wheels.
-include-package-data = true
