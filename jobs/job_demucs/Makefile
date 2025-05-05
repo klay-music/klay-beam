@@ -33,7 +33,7 @@ run-dataflow:
     --dataflow_service_options "worker_accelerator=type:nvidia-l4;count:1;install-nvidia-driver" \
     --disk_size_gb 50 \
     --setup_file ./setup.py \
-	  --number_of_worker_harness_threads=3 \
+	  --number_of_worker_harness_threads=2 \
     --job_name $(job_name) \
 	  --max_num_workers $(max_num_workers) \
 	  --audio_suffix $(audio_suffix) \
