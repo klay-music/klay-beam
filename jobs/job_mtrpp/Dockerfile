@@ -9,6 +9,10 @@ COPY jobs/job_mtrpp ./job_mtrpp
 COPY klay_beam/submodules/klay-data ./submodules/klay-data
 COPY klay_beam/submodules/klay-mtrpp ./submodules/klay-mtrpp
 
+# 2) install klay_data FROM THAT WHEEL ONLY  ─────────────────────────────
+RUN pip install --no-cache-dir --no-index ./submodules/klay_data
+RUN pip install --no-cache-dir --no-index ./submodules/klay_mtrpp
+
 # Install git
 RUN apt-get update && apt-get install -y git
 
@@ -16,5 +20,4 @@ RUN apt-get update && apt-get install -y git
 # RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
 
 # Download model
-RUN python3 -m pip install 'submodules/klay-data' 'submodules/klay-mtrpp'
 RUN python3 -c "from klay_data.extractors import MTRPPExtractor; MTRPPExtractor()"
