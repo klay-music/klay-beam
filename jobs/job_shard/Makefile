@@ -13,7 +13,7 @@ tests:
 	pytest tests/
 
 run-local:
-	python bin/run_pipeline.py \
+	python bin/run_workflow.py \
     --runner Direct \
 		--src_dir $(src_dir) \
 		--dest_dir $(dest_dir) \
@@ -23,7 +23,7 @@ run-local:
 		--max_dataset_size $(max_dataset_size)
 
 run-dataflow:
-	python bin/run_pipeline.py \
+	python bin/run_workflow.py \
     --runner DataflowRunner \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
