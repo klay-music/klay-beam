@@ -23,3 +23,13 @@ This repository bundles:
 
 See the [python package readme in `klay_beam`](./klay_beam/README.md) for more
 information.
+
+# Development
+## Versioning
+### Job Versioning
+The version of any job is specified in:
+- `.env`
+- `src/<pkg>/__init__.py::__version__`
+
+The version in `.env` is used for the docker image tag, and the version in
+`__init__.py` is used for the python package version. The two should be kept
