@@ -122,8 +122,8 @@ def run():
     input_dir = known_args.match_pattern.rsplit("/", 1)[0]
 
     skip_completed = SkipCompleted(
-        old_suffix=known_args.audio_suffix,
-        new_suffix=".vocals{target_audio_suffix}",
+        old_suffix=f".source{known_args.audio_suffix}",
+        new_suffix=f".vocals{TARGET_AUDIO_SUFFIX}",
         source_dir=input_dir,
         target_dir=input_dir,
         check_timestamp=False,
