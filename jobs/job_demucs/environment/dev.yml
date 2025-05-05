@@ -1,4 +1,4 @@
-name: demucs-dev
+name: job-demucs
 
 channels:
   - defaults
