@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job_shard"
+description = "Copy sharded files from one GCS bucket to another."
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+  "build",
+  "boto3",
+  "numpy<2",
+  "klay_beam==0.14.0",
+  "apache_beam[gcp]==2.61.0",
+]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+code-style = ["black>=22.9.0", "flake8>=5"]
+tests = ["pytest"]
+type-check = ["mypy>=0.990", "pydantic>=1.10"]
+
+[tool.setuptools.dynamic]
+version = {attr = "job_shard.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+job_stem_data_amp = ["*.typed"]
+
+[tool.mypy]
+warn_redundant_casts = true
+check_untyped_defs = true
+allow_redefinition = true
+warn_unreachable = true
+plugins = [
+  "pydantic.mypy",
+]
+
+[[tool.mypy.overrides]]
+module = [
+  "apache_beam.*",
+  "google.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+# Running pytest results in many warnings which are associated with google-cloud
+# apis. These warnings are not relevant to the code we are testing, filter then
+# from the output. See:
+# https://github.com/googleapis/google-cloud-python/issues/11184#issuecomment-1640884088
+filterwarnings = [
+    "ignore:Deprecated call to `pkg_resources\\.declare_namespace\\('.*'\\):DeprecationWarning",
+    "ignore::DeprecationWarning:google.rpc",
+]
