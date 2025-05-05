@@ -20,6 +20,7 @@ from klay_beam.transforms import (
 from klay_beam.torch_transforms import LoadWithTorchaudio, ResampleTorchaudioTensor
 
 from job_essentia.transforms import (
+    LoadWebm,
     ExtractEssentiaFeatures,
     ExtractEssentiaTempo,
     ALL_FEATURES,
@@ -86,12 +87,20 @@ def run():
             "DOCKER_IMAGE_NAME"
         ]
 
+    for f in known_args.features:
+        if f not in ALL_FEATURES:
+            raise ValueError(
+                f"Feature {f} is not supported.\nSupported features are: {ALL_FEATURES}"
+            )
+
     src_dir = known_args.src_dir.rstrip("/") + "/"
     match_pattern = src_dir + f"**{known_args.audio_suffix}"
     extract_fn = ExtractEssentiaFeatures(known_args.audio_suffix, known_args.features)
 
     if known_args.features is None:
         return
+
+    load_audio_fn = LoadWebm() if known_args.audio_suffix == ".webm" else LoadWithTorchaudio()
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
@@ -111,7 +120,7 @@ def run():
             )
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
-            | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
+            | "LoadAudio" >> beam.ParDo(load_audio_fn)
             | "Resample: 16k"
             >> beam.ParDo(
                 ResampleTorchaudioTensor(
