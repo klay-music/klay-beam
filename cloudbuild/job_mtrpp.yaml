@@ -1,29 +1,7 @@
 steps:
   - name: gcr.io/cloud-builders/git
     id: fetch-submodules
-    args: ['submodule', 'update', '--init', '--recursive', '--depth', '1']
-
-  - name: 'gcr.io/cloud-builders/git'
-    id: git-lfs-pull
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        set -euo pipefail
-        echo "🔧 Installing Git-LFS …"
-
-        # gcr.io/cloud-builders/git is Debian-based → apt is available
-        apt-get update -qq
-        apt-get install -y --no-install-recommends git-lfs
-
-        # one-time initialisation for this (ephemeral) VM
-        git lfs install --skip-repo
-
-        echo "📥 Fetching LFS objects for root repo + sub-modules …"
-        # if you skipped smudge during the earlier sub-module checkout, pull now
-        git lfs pull --include="*"
-
-        echo "✅ Git-LFS assets ready"
+    args: ['submodule', 'update', '--init', '--recursive']
 
   - name: python:3.10-slim
     id: build-klay-data-wheel
