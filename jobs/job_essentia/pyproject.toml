@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "job_essentia_features"
+name = "job_essentia"
 description = "Job for extracting DiscogsEffnet embeddings using essentia"
 readme = "README.md"
 dynamic = ["version"]
@@ -32,7 +32,7 @@ tests = ["pytest"]
 type-check = ["mypy>=0.990", "pydantic>=1.10"]
 
 [tool.setuptools.dynamic]
-version = {attr = "job_essentia_features.__version__"}
+version = {attr = "job_essentia.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -2,7 +2,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from job_essentia_features.transforms import (
+from job_essentia.transforms import (
     ExtractEssentiaFeatures,
     ExtractEssentiaTempo,
 )

@@ -22,7 +22,7 @@ that the updated package will be used when running the job via Dataflow:
 
 Here's how to create, push, and use an updated custom docker container:
 
-1. Update the job package version in `src/job_essentia_features/__init__.py`, for example to
+1. Update the job package version in `src/job_essentia/__init__.py`, for example to
    `__version__ = "0.1.1"`
 2. Update the tag version in the `DOCKER_IMAGE_NAME` environment variable defined in `.env`,
    for example `DOCKER_IMAGE_NAME=us-docker.pkg.dev/klay-home/klay-docker/klay-beam-t5:0.1.1`.

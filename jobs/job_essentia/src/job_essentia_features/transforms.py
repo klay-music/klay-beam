@@ -103,8 +103,11 @@ ESSENTIA_CLASSIFIERS = {
         output="activations",
     ),
 }
-DISCOGS_EFFNET_CLASSIFIERS = [f for f in ESSENTIA_CLASSIFIERS.keys() if f != "audioset_yamnet"]
+DISCOGS_EFFNET_CLASSIFIERS = [
+    f for f in ESSENTIA_CLASSIFIERS.keys() if f != "audioset_yamnet"
+]
 ALL_FEATURES = list(ESSENTIA_CLASSIFIERS.keys())
+
 
 class ExtractEssentiaFeatures(beam.DoFn):
     embed_model_filename = "discogs-effnet-bs64-1.pb"
@@ -118,7 +121,9 @@ class ExtractEssentiaFeatures(beam.DoFn):
             graphFilename=str(MODEL_DIR / self.embed_model_filename),
             output="PartitionedCall:1",
         )
-        self.classifiers = {f: ESSENTIA_CLASSIFIERS[f] for f in self.features if f != "tempo"}
+        self.classifiers = {
+            f: ESSENTIA_CLASSIFIERS[f] for f in self.features if f != "tempo"
+        }
 
     @property
     def suffixes(self) -> dict[str, str]:

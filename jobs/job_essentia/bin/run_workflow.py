@@ -19,7 +19,7 @@ from klay_beam.transforms import (
 )
 from klay_beam.torch_transforms import LoadWithTorchaudio, ResampleTorchaudioTensor
 
-from job_essentia_features.transforms import (
+from job_essentia.transforms import (
     ExtractEssentiaFeatures,
     ExtractEssentiaTempo,
     ALL_FEATURES,
