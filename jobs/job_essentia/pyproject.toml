@@ -8,19 +8,8 @@ description = "Job for extracting DiscogsEffnet embeddings using essentia"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
+  "av",
   "essentia-tensorflow",
-  # Job packages should pin versions for both:
-  # - apache-beam
-  # - klay-beam
-  #
-  # Both klay_beam and apache_beam are pre-installed in the docker container.
-  # Mismatched or incompatible versions between the launch and dockerized
-  # Dataflow runtime environments are likely to break the job or cause bugs that
-  # are subtle and difficult-to-detect.
-  #
-  # If you need to update either dependency, you should also update the default
-  # default docker image which is likely to specified in the the jobs launch
-  # script (bin/run_job_<name>.py).
   "apache-beam[gcp]==2.53.0",
   "klay-beam~=0.13",
 ]
