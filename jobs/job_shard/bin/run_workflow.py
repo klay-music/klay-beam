@@ -74,6 +74,15 @@ def parse_args():
         """,
     )
 
+    parser.add_argument(
+        "--min_shard_idx",
+        type=int,
+        default=0,
+        help="""
+        Minimum shard index to start from. Default is 0.
+        """,
+    )
+
     return parser.parse_known_args(None)
 
 
@@ -214,6 +223,7 @@ def run():
                     dest_dir=known_args.dest_dir,
                     audio_suffix=known_args.audio_suffix,
                     suffixes=known_args.suffixes,
+                    min_shard_idx=known_args.min_shard_idx,
                 )
             )
             | "CopyFiles" >> beam.ParDo(CopyBinaryFileFn())

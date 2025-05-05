@@ -20,7 +20,8 @@ run-local:
 		--audio_suffix $(audio_suffix) \
 		--suffixes $(suffixes) \
 		--num_files_per_shard $(num_files_per_shard) \
-		--max_dataset_size $(max_dataset_size)
+		--max_dataset_size $(max_dataset_size) \
+		--min_shard_idx $(min_shard_idx) \
 
 run-dataflow:
 	python bin/run_workflow.py \
@@ -43,3 +44,4 @@ run-dataflow:
 		--suffixes $(suffixes) \
 		--num_files_per_shard $(num_files_per_shard) \
 		--max_dataset_size $(max_dataset_size)
+		--min_shard_idx $(min_shard_idx) \

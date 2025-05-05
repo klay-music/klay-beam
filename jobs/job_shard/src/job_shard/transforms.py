@@ -32,6 +32,7 @@ class ShardCopy(beam.DoFn):
         dest_dir: str,
         audio_suffix: str,
         suffixes: list[str],
+        min_shard_idx: int = 0,
     ):
         if not suffixes:
             raise ValueError("suffixes must be non-empty")
@@ -40,6 +41,7 @@ class ShardCopy(beam.DoFn):
         self.dest_dir = dest_dir if dest_dir.endswith("/") else dest_dir + "/"
         self.audio_suffix = audio_suffix
         self.suffixes = suffixes
+        self.min_shard_idx = min_shard_idx
 
     def _rel_to_src(self, path: str) -> str:
         """Return path relative to the *source* directory."""
@@ -47,6 +49,7 @@ class ShardCopy(beam.DoFn):
 
     def _dst_path(self, rel_path: Path, shard_idx: int) -> str:
         """Compose full destination URI for a given shard."""
+        shard_idx += self.min_shard_idx
         shard_dir = f"shard-{shard_idx:04d}/"
 
         rel_source_path = rel_path.with_suffix(f".source{rel_path.suffix}")
