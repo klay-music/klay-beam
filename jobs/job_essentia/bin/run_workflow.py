@@ -30,7 +30,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--source_audio_path",
+        "--src_dir",
         dest="input",
         required=True,
         help="""
@@ -96,13 +96,13 @@ def run():
             "DOCKER_IMAGE_NAME"
         ]
 
-    # Pattern to recursively find audio files inside source_audio_path
+    # Pattern to recursively find audio files inside src_dir
     if known_args.audio_suffix not in known_args.match_suffix:
         raise ValueError(
             f"{known_args.match_suffix} does not contain {known_args.audio_suffix}"
         )
 
-    src_dir = known_args.input.rstrip("/") + "/"
+    src_dir = known_args.src_dir.rstrip("/") + "/"
     match_pattern = src_dir + f"**{known_args.match_suffix}"
     extract_fn = ExtractEssentiaFeatures(known_args.audio_suffix, known_args.features)
 
