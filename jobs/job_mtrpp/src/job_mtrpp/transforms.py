@@ -1,9 +1,12 @@
+import apache_beam as beam
+import apache_beam.io.fileio as beam_io
+import av
+import io
 import logging
-
+import numpy as np
+from pathlib import Path
 import torch
 from typing import Tuple
-
-import apache_beam as beam
 
 from klay_beam.path import remove_suffix
 from klay_beam.utils import get_device
@@ -41,6 +44,9 @@ class ExtractMTRPP(beam.DoFn):
         output_filename = remove_suffix(key, self.audio_suffix) + self.suffix
 
         # check if the audio is longer than the max duration
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x).to(self._device)
+
         chunks = x.split(int(self.max_duration * source_sr), dim=-1)
 
         embeds = []

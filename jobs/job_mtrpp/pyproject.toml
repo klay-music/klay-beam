@@ -8,22 +8,11 @@ description = "Beam job for extracting MTRPP embeddings"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
+  "av",
   "huggingface_hub",
   "numpy",
-  # Job packages should pin versions for both:
-  # - apache_beam
-  # - klay_beam
-  #
-  # Both klay_beam and apache_beam are pre-installed in the docker container.
-  # Mismatched or incompatible versions between the launch and dockerized
-  # Dataflow runtime environments are likely to break the job or cause bugs that
-  # are subtle and difficult-to-detect.
-  #
-  # If you need to update either dependency, you should also update the default
-  # default docker image which is likely to specified in the the jobs launch
-  # script (bin/run_job_<name>.py).
-  "apache_beam[gcp]==2.53",
-  "klay_beam[pytorch]==0.13.7",
+  "apache_beam[gcp]==2.61",
+  "klay_beam[pytorch]==0.14.0",
 ]
 requires-python = ">=3.10"
 
