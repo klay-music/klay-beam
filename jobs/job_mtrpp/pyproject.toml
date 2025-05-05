@@ -38,6 +38,12 @@ version = {attr = "job_mtrpp.__version__"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+klay_data = [
+  "data/*.npy",
+  "data/*.json",
+]
+
 [tool.mypy]
 warn_redundant_casts = true
 check_untyped_defs = true
@@ -52,3 +58,7 @@ module = [
   "apache_beam.*",
 ]
 ignore_missing_imports = true
+
+[tool.setuptools.include-package-data]
+# true means: also obey MANIFEST.in for the *sdist*. Harmless for wheels.
+include-package-data = true
