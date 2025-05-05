@@ -1,4 +1,4 @@
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 import os
 if (PKG_VERSION := os.environ.get("VERSION", None)) is not None:
