@@ -32,7 +32,7 @@ class ShardCopy(beam.DoFn):
         dest_dir: str,
         audio_suffix: str,
         suffixes: list[str],
-        min_shard_idx: int = 0,
+        min_shard_idx: int = 1,
     ):
         if not suffixes:
             raise ValueError("suffixes must be non-empty")
