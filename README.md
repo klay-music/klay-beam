@@ -27,9 +27,14 @@ information.
 # Development
 ## Versioning
 ### Job Versioning
-The version of any job is specified in:
-- `.env`
-- `src/<pkg>/__init__.py::__version__`
+The version of any job is updated using the following steps:
+```
+1. First edit the version in the files its defined
+  - `.env`
+  - `src/<pkg>/__init__.py::__version__`
 
-The version in `.env` is used for the docker image tag, and the version in
-`__init__.py` is used for the python package version. The two should be kept
+2. git add && git commit -m '<job_name>: <version>'
+3. git tag -a job-essentia-<version> -m '<job_name>: <version>'
+4. git push --tag
+```
+
