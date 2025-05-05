@@ -2,6 +2,7 @@ FROM klaymusic/klay-beam:0.13.7-py3.9-beam2.53.0-torch2.0
 
 WORKDIR /klay/app
 
+# Add all the model files from essentia
 ADD https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb ./models/
 ADD https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.pb ./models/
 ADD https://essentia.upf.edu/models/classification-heads/mtg_jamendo_genre/mtg_jamendo_genre-discogs-effnet-1.pb ./models/
@@ -26,3 +27,14 @@ ADD https://essentia.upf.edu/models/classification-heads/mtg_jamendo_top50tags/m
 ADD https://essentia.upf.edu/models/classification-heads/mtt/mtt-discogs-effnet-1.pb ./models/
 ADD https://essentia.upf.edu/models/tempo/tempocnn/deeptemp-k16-3.pb ./models/
 ADD https://essentia.upf.edu/models/audio-event-recognition/yamnet/audioset-yamnet-1.pb ./models/
+
+
+COPY ./jobs/job_essentia ./job_essentia
+RUN python3 -m pip install './job_essentia'
+RUN pip check
+
+# Download the models
+RUN python3 -c "import job_essentia.transforms as t; t.construct_essentia_classifiers()"
+
+
+ENTRYPOINT ["/opt/apache/beam/boot"]
