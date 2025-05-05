@@ -24,7 +24,7 @@ from klay_beam.torch_transforms import (
     ResampleTorchaudioTensor,
 )
 
-from job_mtrpp.transforms import ExtractMTRPP
+from job_mtrpp.transforms import ExtractMTRPP, LoadWebm
 
 
 DEFAULT_IMAGE = os.environ.get("DOCKER_IMAGE_NAME", None)
@@ -55,7 +55,7 @@ def parse_args():
     parser.add_argument(
         "--audio_suffix",
         required=True,
-        choices=[".mp3", ".wav", ".aif", ".aiff"],
+        choices=[".mp3", ".wav", ".aif", ".aiff", ".webm"],
         help="""
         Which audio file extension to remove when creating the output file?
         """,
@@ -106,6 +106,11 @@ def run():
         max_duration=known_args.max_duration,
     )
 
+    # If the input is a webm file, we need to load it with LoadWebm
+    load_audio_fn = (
+        LoadWebm() if known_args.audio_suffix == ".webm" else LoadWithTorchaudio()
+    )
+
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         audio_files = (
             p
@@ -125,7 +130,7 @@ def run():
             )
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
-            | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
+            | "LoadAudio" >> beam.ParDo(load_audio_fn)
         )
 
         (

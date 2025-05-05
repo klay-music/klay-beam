@@ -1,4 +1,4 @@
-name: job-mtrpp-dev
+name: job-mtrpp
 
 # This describes the development and launch environment.
 #
@@ -18,5 +18,5 @@ dependencies:
   - pytorch::torchvision
 
   - pip:
-    - -e '../../submodules/klay-data[mtrpp]'
+    - -e '../../klay_beam/submodules/klay-data'
     - -e '..[code-style, tests, type-check]'
