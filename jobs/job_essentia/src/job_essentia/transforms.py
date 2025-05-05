@@ -6,7 +6,9 @@ from essentia.standard import (
     TempoCNN,
     TensorflowPredictVGGish,
 )
+import av
 import logging
+import io
 import numpy as np
 from pathlib import Path
 import torch
