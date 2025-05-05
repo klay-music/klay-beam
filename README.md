@@ -23,3 +23,18 @@ This repository bundles:
 
 See the [python package readme in `klay_beam`](./klay_beam/README.md) for more
 information.
+
+# Development
+## Versioning
+### Job Versioning
+The version of any job is updated using the following steps:
+```
+1. First edit the version in the files its defined
+  - `.env`
+  - `src/<pkg>/__init__.py::__version__`
+
+2. git add && git commit -m '<job_name>: <version>'
+3. git tag -a job-essentia-<version> -m '<job_name>: <version>'
+4. git push --tag
+```
+

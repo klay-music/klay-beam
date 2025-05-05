@@ -1,0 +1,21 @@
+name: essentia-dev
+
+# This describes the development and launch environment.
+#
+# IMPORTANT: If you change the dependencies here, you should also make sure the
+# default Docker image (which is likely pined in the bin/run_job_<name>.py
+# script) also reflects your changes.
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.9
+  - pip
+  - ffmpeg>4.2,<5
+  - pytorch::pytorch>=2
+  - pytorch::torchaudio>=2
+
+  - pip:
+    - -e '..[code-style, tests, type-check]'
