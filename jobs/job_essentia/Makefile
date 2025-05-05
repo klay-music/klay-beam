@@ -32,7 +32,6 @@ make run-dataflow:
 	    --number_of_worker_harness_threads=8 \
 	    --setup_file ./setup.py \
 	    --src_dir $(src_dir) \
-	    --match_suffix $(match_suffix) \
 	    --audio_suffix $(audio_suffix) \
 	    --features $(features) \
 	    --job_name $(job_name) \
