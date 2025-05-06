@@ -46,4 +46,5 @@ RUN pip install --no-cache-dir ./submodules/klay-mtrpp
 
 # Download model
 ENV GOOGLE_CLOUD_PROJECT=klay-training
+RUN mkdir -p /root/.cache/klay-models/mtrpp
 RUN python3 -c "from klay_data.extractors import MTRPPExtractor; MTRPPExtractor()"
