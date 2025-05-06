@@ -45,7 +45,5 @@ RUN pip install --no-cache-dir ./submodules/klay-mtrpp
 # RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
 
 # Download model
-ENV GOOGLE_CLOUD_PROJECT=klay-training
-RUN mkdir -p /root/.cache/klay-models/mtrpp
-ADD jobs/job_mtrpp/model/hparams.yaml /root/.cache/klay-models/mtrpp/hparams.yaml
-RUN python3 -c "from klay_data.extractors import MTRPPExtractor; MTRPPExtractor()"
+# ENV GOOGLE_CLOUD_PROJECT=klay-training
+# RUN python3 -c "from klay_data.extractors import MTRPPExtractor; MTRPPExtractor()"
