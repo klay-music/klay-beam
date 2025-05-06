@@ -3,16 +3,6 @@ steps:
     id: fetch-submodules
     args: ['submodule', 'update', '--init', '--recursive']
 
-  - name: python:3.10-slim
-    id: build-klay-data-wheel
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        set -euo pipefail
-        pip install --quiet build
-        python -m build --wheel klay_beam/submodules/klay-data -o ./wheelhouse
-
   - name: 'gcr.io/cloud-builders/docker'
     id: build-image
     args: ['build', '-f', 'jobs/job_mtrpp/Dockerfile', '-t', '${_IMG}', '.']
