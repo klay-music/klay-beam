@@ -11,8 +11,8 @@ dependencies = [
   "av",
   "huggingface_hub",
   "numpy",
-  "apache_beam[gcp]==2.61",
-  "klay_beam[pytorch]==0.14.0",
+  "apache_beam[gcp]==2.53",
+  "klay_beam[pytorch]==0.13.7",
 ]
 requires-python = ">=3.10"
 
