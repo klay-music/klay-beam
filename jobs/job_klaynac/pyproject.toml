@@ -8,6 +8,7 @@ description = "Beam job for extracting KlayNAC or KlayNACVAE tokens"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
+  "av",
   "numpy<2",
   "apache_beam[gcp]==2.61",
   "klay_beam[pytorch]==0.14.0",

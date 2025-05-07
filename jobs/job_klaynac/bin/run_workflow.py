@@ -27,6 +27,7 @@ from klay_beam.torch_transforms import (
 from job_klaynac.transforms import (
     ExtractKlayNAC,
     CropAudioGTDuration,
+    LoadWebm,
 )
 
 
@@ -125,8 +126,11 @@ def run():
         audio_suffix=known_args.audio_suffix,
         extract_tokens=known_args.model_type == "discrete",
     )
-
     logging.info(f"Processing audio files from {match_pattern}.")
+
+    # Instantiate load_audio_fn
+    load_audio_fn = LoadWebm() if known_args.audio_suffix == ".webm" else LoadWithTorchaudio()
+
     # Run pipeline
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
         logging.info(f"GPU available: {torch.cuda.is_available()}")
