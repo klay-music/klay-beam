@@ -67,7 +67,7 @@ def parse_args():
     parser.add_argument(
         "--audio_suffix",
         required=True,
-        choices=[".mp3", ".wav", ".aif", ".aiff"],
+        choices=[".mp3", ".wav", ".aif", ".aiff", ".webm"],
         help="""
         Which audio file extension is being used? This is also the
         audio file extension that will be replaced with the new
@@ -118,7 +118,8 @@ def run():
         ]
 
     # Pattern to recursively find audio files inside source_audio_path
-    match_pattern = known_args.input + f"**{known_args.match_suffix}"
+    src_dir = known_args.input.rstrip("/") + "/"
+    match_pattern = src_dir + f"**{known_args.match_suffix}"
 
     extract_fn = ExtractKlayNAC(
         audio_suffix=known_args.audio_suffix,
@@ -153,11 +154,11 @@ def run():
 
         npy = (
             audio_files
-            | "Resample: 32000 Hz"
+            | "Resample: 48000 Hz"
             >> beam.ParDo(
                 ResampleTorchaudioTensor(
                     source_sr_hint=48_000,
-                    target_sr=32_000,
+                    target_sr=48_000,
                 )
             )
             | f"{extract_fn}" >> beam.ParDo(extract_fn)
