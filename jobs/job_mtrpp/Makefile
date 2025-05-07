@@ -23,7 +23,8 @@ run-local:
 		--runner Direct \
 		--source_audio_path=$(source_audio_path) \
 		--match_suffix=$(match_suffix) \
-		--audio_suffix=$(audio_suffix)
+		--audio_suffix=$(audio_suffix) \
+		--overwrite
 
 run-dataflow:
 	python bin/run_workflow.py \
@@ -44,4 +45,4 @@ run-dataflow:
 		--source_audio_path=$(source_audio_path) \
 		--match_suffix=$(match_suffix) \
 		--audio_suffix=$(audio_suffix) \
-		--number_of_worker_harness_threads=1
+		--number_of_worker_harness_threads=2
