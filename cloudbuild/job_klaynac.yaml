@@ -1,30 +1,29 @@
 steps:
-  - name: gcr.io/cloud-builders/git
-    id: git-creds
-    secretEnv: ['GH_PAT']
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        set -euo pipefail
-
-        echo "🔐 Setting up GitHub PAT for all HTTPS fetches"
-        # (A) Tell Git to inject the token whenever it sees https://github.com/
-        git config --global url."https://${GH_PAT}:x-oauth-basic@github.com/".insteadOf https://github.com/
-
-        # (B) For SSH-style URLs, convert them on the fly
-        git config --global url."https://${GH_PAT}:x-oauth-basic@github.com/".insteadOf git@github.com:
-        git config --global url."https://${GH_PAT}:x-oauth-basic@github.com/".insteadOf ssh://git@github.com/
-
-        # (Optional) silence "terminal prompts disabled" warnings
-        git config --global --add url."https://${GH_PAT}:x-oauth-basic@github.com/".pushInsteadOf no_push
-
-        echo "✅ GitHub credential helper configured"
-
-  - name: gcr.io/cloud-builders/git
+  - name: 'gcr.io/cloud-builders/git'
     id: fetch-submodules
-    entrypoint: bash
-    args: ['-c', 'git submodule update --init --recursive']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        git init .
+        git config -f .git/config submodule.klay_beam/submodules/klay-data.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-data
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-data.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-data
+        git config -f .git/config submodule.klay_beam/submodules/klay-mtrpp.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-mtrpp
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-mtrpp.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-mtrpp
+        git config -f .git/config submodule.klay_beam/submodules/klay-config.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-config
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-config.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-config
+        git config -f .git/config submodule.klay_beam/submodules/klay-nac.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-nac
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-nac.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-nac
+        git config -f .git/config submodule.klay_beam/submodules/klay-audiotools.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-audiotools
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-audiotools.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-audiotools
+
+        git submodule update --init \
+          klay_beam/submodules/klay-data \
+          klay_beam/submodules/klay-mtrpp \
+          klay_beam/submodules/klay-config \
+          klay_beam/submodules/klay-codecs \
+          klay_beam/submodules/klay-nac \
+          klay_beam/submodules/klay-audiotools
 
   - name: 'gcr.io/cloud-builders/docker'
     id: build-image
@@ -55,9 +54,3 @@ options:
 substitutions:
   _REPO: 'us-docker.pkg.dev/klay-home/klay-docker'
   _IMG: '${_REPO}/klay-beam-klaynac'
-
-
-availableSecrets:
-  secretManager:
-    - versionName: projects/klay-home/secrets/github-pat/versions/latest
-      env: 'GH_PAT'
