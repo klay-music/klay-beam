@@ -8,9 +8,10 @@ description = "Beam job for extracting lyrics from audio"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
+  "av",
   "numpy<2",
   "apache_beam[gcp]==2.61",
-  "ctranslate==4.4.0",
+  "ctranslate2==4.4.0",
   "klay_beam[pytorch]==0.14.0",
 ]
 requires-python = ">=3.10"
