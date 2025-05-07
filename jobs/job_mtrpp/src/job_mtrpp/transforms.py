@@ -6,6 +6,7 @@ import logging
 import numpy as np
 from pathlib import Path
 import torch
+import torchaudio
 from typing import Tuple
 
 from klay_beam.path import remove_suffix
@@ -37,8 +38,32 @@ class ExtractMTRPP(beam.DoFn):
     def suffix(self) -> str:
         return ".mtrpp.npy"
 
+    def _load_instrumental_audio(self, key: str) -> torch.Tensor:
+        instrumental_audio_file = (
+            remove_suffix(key, self.audio_suffix) + ".instrumental.mp3"
+        )
+
+        # load the instrumental audio file
+        matches = beam.io.filesystems.FileSystems.match([instrumental_audio_file])[
+            0
+        ].metadata_list
+
+        if not matches:
+            logging.info(f"Skipping {instrumental_audio_file}, file not found.")
+            return []
+
+        readable_file = beam_io.ReadableFile(matches[0])
+
+        with readable_file.open(mime_type="application/octet-stream") as file_like:
+            audio, sr = torchaudio.load(file_like)
+
+        return audio, sr
+
     def process(self, audio_tuple: Tuple[str, torch.Tensor, int]):
         key, x, source_sr = audio_tuple
+
+        # TODO: Decide if we want to load instrumental audio or not
+        # audio = self._load_instrumental_audio(key)
 
         # handle the output filename
         output_filename = remove_suffix(key, self.audio_suffix) + self.suffix
@@ -47,15 +72,8 @@ class ExtractMTRPP(beam.DoFn):
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x).to(self._device)
 
-        chunks = x.split(int(self.max_duration * source_sr), dim=-1)
-
-        embeds = []
-        for chunk in chunks:
-            chunk = chunk.to(self._device)
-            embeds.append(self.extractor(chunk, source_sr).squeeze(0))
-
-        logging.info(f"Extracting MTRPP embeddings for {key} on {self._device}")
-        embeds = torch.cat(embeds, dim=-1)  # [D, T]
+        embeds = self.extractor(x, source_sr).squeeze(0)
+        logging.info(f"Extracted MTRPP embeddings with shape {embeds.shape} for {key}")
         return [(output_filename, embeds.detach().cpu().numpy())]
 
 
