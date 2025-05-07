@@ -21,7 +21,7 @@ from klay_beam.torch_transforms import (
     LoadWithTorchaudio,
 )
 
-from job_whisper.transforms import ExtractWhisper
+from job_whisper.transforms import ExtractWhisper, LoadWebm
 
 
 def parse_args():
@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument(
         "--audio_suffix",
         required=True,
-        choices=[".mp3", ".wav", ".aif", ".aiff"],
+        choices=[".mp3", ".wav", ".aif", ".aiff", ".webm"],
         help="""
         Which audio file extension to search for when scanning input dir?
         """,
@@ -100,16 +100,18 @@ def run():
 
     extract_fn = ExtractWhisper(vad_onset=known_args.vad_onset, vad_offset=known_args.vad_offset)
 
+    load_audio_fn = LoadWebm() if known_args.audio_suffix == ".webm" else LoadWithTorchaudio()
+
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
-        audio_files = (
+        _ = (
             p
             # MatchFiles produces a PCollection of FileMetadata objects
-            | f"Match {known_args.match_pattern} Files" >>
+            | "Match Files" >>
             beam_io.MatchFiles(known_args.match_pattern)
             # Prevent "fusion". See:
             # https://cloud.google.com/dataflow/docs/pipeline-lifecycle#preventing_fusion
             | beam.Reshuffle()
-            | "SkipCompleted {extract_fn.suffix} files"
+            | f"SkipCompleted {extract_fn.suffix} files"
             >> beam.ParDo(
                 SkipCompleted(
                     old_suffix=known_args.audio_suffix,
@@ -120,11 +122,7 @@ def run():
             )
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
-            | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
-        )
-
-        (
-            audio_files
+            | "LoadAudio" >> beam.ParDo(load_audio_fn)
             | "ExtractWhisper" >> beam.ParDo(extract_fn)
             | "PersistFile" >> beam.Map(write_file)
         )
