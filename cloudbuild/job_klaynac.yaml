@@ -1,7 +1,20 @@
 steps:
-  - name: gcr.io/cloud-builders/git
+  - name: 'gcr.io/cloud-builders/git'
     id: fetch-submodules
-    args: ['submodule', 'update', '--init', '--recursive']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        git init .
+        git config -f .git/config submodule.submodules/klay-audiotools.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-audiotools
+        git config -f .gitmodules submodule.submodules/klay-audiotools.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-audiotools
+        git config -f .git/config submodule.submodules/klay-config.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-config
+        git config -f .gitmodules submodule.submodules/klay-config.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-config
+        git config -f .git/config submodule.submodules/klay-nac.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-nac
+        git config -f .gitmodules submodule.submodules/klay-nac.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-nac
+        git config -f .git/config submodule.submodules/klay-codecs.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-codecs
+        git config -f .gitmodules submodule.submodules/klay-codecs.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-codecs
+        git submodule update --init
 
   - name: 'gcr.io/cloud-builders/docker'
     id: build-image
