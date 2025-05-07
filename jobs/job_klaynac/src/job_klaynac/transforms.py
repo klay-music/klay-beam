@@ -40,7 +40,7 @@ class ExtractKlayNAC(beam.DoFn):
             self.nac = KlayNACVAE()
             self.nac.model.to(self._device)
             self.nac.model.eval()
-            logging.info("Using KlayNACVAE")
+            logging.info(f"Using KlayNACVAE with config: {self.nac.config}")
 
     def __str__(self):
         return f"Extract-{self.model_name}"
