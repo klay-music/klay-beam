@@ -26,7 +26,7 @@ docker-push:
 	docker push $(DOCKER_IMAGE_NAME)
 
 run-local:
-	python bin/run_job_extract_klaynac.py \
+	python bin/run_workflow.py \
 		--runner Direct \
 		--model_type=discrete \
 		--audio_suffix=$(audio_suffix) \
@@ -34,7 +34,7 @@ run-local:
 		--match_suffix=$(match_suffix)
 
 run-dataflow:
-	python bin/run_job_extract_klaynac.py \
+	python bin/run_workflow.py \
     --runner DataflowRunner \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
@@ -51,6 +51,6 @@ run-dataflow:
 	--max_num_workers $(max_num_workers) \
 	--source_audio_path $(source_audio_path) \
 	--match_suffix=$(match_suffix) \
-	--model_type=$(model_type) \
-	--audio_suffix=.mp3 \
+	--model_type=continuous \
+	--audio_suffix=.webm \
 	--number_of_worker_harness_threads=1
