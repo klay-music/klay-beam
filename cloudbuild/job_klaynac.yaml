@@ -1,25 +1,63 @@
 steps:
-  - name: 'gcr.io/cloud-builders/git'
-    id: fetch-submodules
-    entrypoint: 'bash'
+  - name: gcr.io/cloud-builders/git
+    id: fetch-nested-submodules
+    entrypoint: bash
     args:
-      - '-c'
+      - -c
       - |
-        git init .
-        git config -f .git/config submodule.klay_beam/submodules/klay-data.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-data
-        git config -f .gitmodules submodule.klay_beam/submodules/klay-data.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-data
-        git config -f .git/config submodule.klay_beam/submodules/klay-data/submodules/klay-audiotools.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-audiotools
-        git config -f .gitmodules submodule.klay_beam/submodules/klay-data/submodules/klay-audiotools.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-audiotools
-        git config -f .git/config submodule.klay_beam/submodules/klay-data/submodules/klay-mtrpp.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-mtrpp
-        git config -f .gitmodules submodule.klay_beam/submodules/klay-data/submodules/klay-mtrpp.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-mtrpp
-        git config -f .git/config submodule.klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-config.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-config
-        git config -f .gitmodules submodule.klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-config.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-config
-        git config -f .git/config submodule.klay_beam/submodules/klay-codecs/submodules/klay-nac.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-nac
-        git config -f .gitmodules submodule.klay_beam/submodules/klay-codecs/submodules/klay-nac.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-nac
-        git config -f .git/config submodule.klay_beam/submodules/klay-codecs.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-codecs
-        git config -f .gitmodules submodule.klay_beam/submodules/klay-codecs.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-codecs
-        git submodule update --init --recursive klay_beam/submodules/klay-codecs klay_beam/submodules/klay-data
+        set -euo pipefail
 
+        # helper: klay-music/klay-audiotools  -> CSR URL
+        csr() {
+          local repo_path="$1"
+          echo "https://source.developers.google.com/p/klay-home/r/github_${repo_path//\//_}"
+        }
+
+        ################################################################
+        # 1) First-level sub-modules -----------------------------------
+        ################################################################
+        echo "▶ rewriting 1st-level modules"
+        git config -f .git/config submodule.submodules/klay-data.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-data
+        git config -f .gitmodules submodule.submodules/klay-data.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-data
+        git config -f .git/config submodule.submodules/klay-codecs.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-codecs
+        git config -f .gitmodules submodule.submodules/klay-codecs.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-codecs
+
+        git submodule update --init klay_beam/submodules/klay-data klay_beam/submodules/klay-codecs
+
+        ################################################################
+        # 2) Second-level: inside klay-data ----------------------------
+        ################################################################
+        echo "▶ rewriting 2nd-level modules (klay-data)"
+        git config -f .git/modules/klay_beam/submodules/klay-data/config \
+    submodule.submodules/klay-audiotools.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-audiotools
+        git config -f klay_beam/submodules/klay-data/.gitmodules \
+    submodule.submodules/klay-audiotools.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-audiotools
+
+        git submodule update --init klay_beam/submodules/klay-data/submodules/klay-audiotools
+
+        ################################################################
+        # 3) Second-level: inside klay-codecs --------------------------
+        ################################################################
+        echo "▶ rewriting 2nd-level modules (klay-codecs)"
+        git config -f .git/modules/klay_beam/submodules/klay-codecs/config \
+    submodule.submodules/klay-nac.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-nac
+        git config -f klay_beam/submodules/klay-codecs/.gitmodules \
+    submodule.submodules/klay-nac.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-nac
+
+        git submodule update --init klay_beam/submodules/klay-codecs/submodules/klay-nac
+
+        ################################################################
+        # 4) Third-level: inside klay-nac ------------------------------
+        ################################################################
+        echo "▶ rewriting 3rd-level modules (klay-nac)"
+        git config -f .git/modules/klay_beam/submodules/klay-codecs/modules/submodules/klay-nac/config \
+    submodule.submodules/klay-config.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-config
+        git config -f klay_beam/submodules/klay-codecs/submodules/klay-nac/.gitmodules \
+    submodule.submodules/klay-config.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-config
+
+        git submodule update --init klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-config
+
+        echo "✅ all nested sub-modules fetched from CSR"
   - name: 'gcr.io/cloud-builders/docker'
     id: build-image
     args: ['build', '-f', 'jobs/job_klaynac/Dockerfile', '-t', '${_IMG}', '.']
