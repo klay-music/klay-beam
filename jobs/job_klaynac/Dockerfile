@@ -27,9 +27,9 @@ WORKDIR /klay/app
 
 COPY jobs/job_klaynac ./job_klaynac
 
-COPY klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-data/submodules/klay-audiotools ./submodules/klay-audiotools
-COPY klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-config ./submodules/klay-config
-COPY klay_beam/submodules/klay-codecs/submodules/klay-nac ./submodules/klay-nac
+COPY klay_beam/submodules/klay-audiotools ./submodules/klay-audiotools
+COPY klay_beam/submodules/klay-config ./submodules/klay-config
+COPY klay_beam/submodules/klay-nac ./submodules/klay-nac
 COPY klay_beam/submodules/klay-codecs ./submodules/klay-codecs
 
 RUN python3 -m pip install \
