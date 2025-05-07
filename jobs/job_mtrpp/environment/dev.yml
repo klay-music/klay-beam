@@ -1,0 +1,22 @@
+name: job-mtrpp
+
+# This describes the development and launch environment.
+#
+# IMPORTANT: If you change the dependencies here, you should also make sure the
+# default Docker image (which is likely pined in the bin/run_job_<name>.py
+# script) also reflects your changes.
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - pip
+  - python=3.10
+  - pytorch::pytorch>=2.1
+  - pytorch::torchaudio
+  - pytorch::torchvision
+
+  - pip:
+    - -e '../../klay_beam/submodules/klay-data[mtrpp]'
+    - -e '..[code-style, tests, type-check]'
