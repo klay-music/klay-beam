@@ -18,6 +18,6 @@ dependencies:
   - pytorch::torchvision
 
   - pip:
-    - -e '../submodules/klay-data/submodules/klay-audiotools'
-    - -e '../submodules/klay-data[whisperx]'
+    - -e '../../../klay_beam/submodules/klay-audiotools'
+    - -e '../../../klay_beam/submodules/klay-data[whisper]'
     - -e '..[code-style, tests, type-check]'
