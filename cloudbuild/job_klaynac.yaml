@@ -1,7 +1,24 @@
 steps:
-  - name: gcr.io/cloud-builders/git
+  - name: 'gcr.io/cloud-builders/git'
     id: fetch-submodules
-    args: ['submodule', 'update', '--init', '--recursive']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        git init .
+        git config -f .git/config submodule.klay_beam/submodules/klay-data.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-data
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-data.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-data
+        git config -f .git/config submodule.klay_beam/submodules/klay-data/submodules/klay-audiotools.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-audiotools
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-data/submodules/klay-audiotools.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-audiotools
+        git config -f .git/config submodule.klay_beam/submodules/klay-data/submodules/klay-mtrpp.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-mtrpp
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-data/submodules/klay-mtrpp.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-mtrpp
+        git config -f .git/config submodule.klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-config.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-config
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-config.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-config
+        git config -f .git/config submodule.klay_beam/submodules/klay-codecs/submodules/klay-nac.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-nac
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-codecs/submodules/klay-nac.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-nac
+        git config -f .git/config submodule.klay_beam/submodules/klay-codecs.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-codecs
+        git config -f .gitmodules submodule.klay_beam/submodules/klay-codecs.url https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-codecs
+        git submodule update --init --recursive klay_beam/submodules/klay-codecs klay_beam/submodules/klay-data
 
   - name: 'gcr.io/cloud-builders/docker'
     id: build-image
