@@ -39,6 +39,3 @@ COPY jobs/job_whisper ./job_whisper
 
 # Install klay-data with whisperx. ctranslate2 is needed to make CUDA available.
 RUN python3 -m pip install './submodules/klay-audiotools' 'ctranslate2==4.4.0'
-
-# pre-download whisperx to avoid slow download during runtime
-RUN python3 -c 'import whisperx; whisperx.load_model("large-v3", device="cpu", compute_type="float32")'
