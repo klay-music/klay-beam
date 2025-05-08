@@ -47,6 +47,7 @@ jobs:
             ${{ secrets.KLAY_CODECS_ACCESS_TOKEN }}
             ${{ secrets.KLAY_CONFIG_ACCESS_TOKEN }}
             ${{ secrets.KLAY_NAC_ACCESS_TOKEN }}
+            ${{ secrets.KLAY_MTRPP_ACCESS_TOKEN }}
           repo-mappings: |
             github.com/klay-music/klay-data
             github.com/klay-music/agc
@@ -54,6 +55,7 @@ jobs:
             github.com/klay-music/klay-codecs
             github.com/klay-music/klay-config
             github.com/klay-music/klay-nac
+            github.com/klay-music/klay-mtrpp
       - uses: actions/checkout@v3
         with:
           submodules: recursive
