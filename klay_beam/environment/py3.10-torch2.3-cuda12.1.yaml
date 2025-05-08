@@ -2,6 +2,10 @@ name: klay-beam
 
 channels:
   - defaults
+<<<<<<< HEAD
+=======
+  - conda-forge
+>>>>>>> 4627301 (Add support for PyTorch 2.3 with CUDA 12.1 in Docker and Conda environment configurations.)
 
 dependencies:
   - pip
