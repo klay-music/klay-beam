@@ -9,6 +9,7 @@ readme = "README.md"
 license = { file = "LICENSE" }
 dynamic = ["version"]
 dependencies = [
+  "av",
   "apache-beam[gcp]==2.64",
   "boto3==1.35",
   "pydub==0.25.1",
