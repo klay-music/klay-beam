@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir build && \
 # ────────────────────────────────────────────────────────────────────────
 # Stage 2 – final image: install the wheel + run the app
 # ────────────────────────────────────────────────────────────────────────
-FROM klaymusic/klay-beam:0.14.1-py3.10-beam2.64.0-torch2.5-cuda12.1
+FROM klaymusic/klay-beam:0.14.1-py3.10-beam2.64.0-torch2.3-cuda12.1
 
 WORKDIR /klay/app
 
@@ -39,3 +39,16 @@ COPY jobs/job_whisper ./job_whisper
 
 # Install klay-data with whisperx. ctranslate2 is needed to make CUDA available.
 RUN python3 -m pip install './submodules/klay-audiotools' 'ctranslate2==4.4.0'
+
+# This is only allowed for torch>=2.3
+ENV TORCH_DISABLE_GLOBAL_LIBS=1
+
+# Smoke test: check that torch is installed and CUDA is available
+RUN python - <<'PY'
+import torch, ctypes, os, subprocess, inspect, pathlib
+cpu = pathlib.Path(inspect.getfile(torch)) / "lib" / "libtorch_cpu.so"
+print("Torch:", torch.__version__)
+print("libtorch_cpu links to:")
+subprocess.run(["ldd", cpu], check=False)
+print("✅  Import torch OK, CUDA:", torch.version.cuda)
+PY
