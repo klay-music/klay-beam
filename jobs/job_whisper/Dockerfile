@@ -1,7 +1,6 @@
-# ────────────────────────────────────────────────────────────────────────
-# Stage 1 – klay-data builder: pull LFS assets + build the wheel
-# ────────────────────────────────────────────────────────────────────────
-FROM python:3.10-slim AS klay-data-builder
+FROM klaymusic/klay-beam:0.14.1-py3.10-beam2.64.0-torch2.3-cuda12.1
+
+WORKDIR /klay/app
 
 # 1. OS packages needed to build and to run git-lfs
 RUN apt-get update -qq && \
@@ -20,24 +19,15 @@ RUN pip install --no-cache-dir build && \
     python -m build --wheel ./submodules/klay-data -o /klay-data-wheel
 
 
-# ────────────────────────────────────────────────────────────────────────
-# Stage 2 – final image: install the wheel + run the app
-# ────────────────────────────────────────────────────────────────────────
-FROM klaymusic/klay-beam:0.14.1-py3.10-beam2.64.0-torch2.3-cuda12.1
-
-WORKDIR /klay/app
-
-RUN apt-get update && \
-    apt-get install -y git
-
-# 2) install klay_data FROM THAT WHEEL ONLY  ─────────────────────────────
+# 4) install klay_data FROM THAT WHEEL ONLY  ─────────────────────────────
 COPY --from=klay-data-builder /klay-data-wheel /tmp/klay-data-wheel
 RUN pip install --no-cache-dir --find-links=/tmp/klay-data-wheel klay_data[whisper]
 
+# 5) Copy the rest of the app code into the image
 COPY klay_beam/submodules/klay-audiotools ./submodules/klay-audiotools
 COPY jobs/job_whisper ./job_whisper
 
-# Install klay-data with whisperx. ctranslate2 is needed to make CUDA available.
+# 6) Install klay-data with whisperx. ctranslate2 is needed to make CUDA available.
 RUN python3 -m pip install './submodules/klay-audiotools' 'ctranslate2==4.4.0'
 
 # This is only allowed for torch>=2.3
