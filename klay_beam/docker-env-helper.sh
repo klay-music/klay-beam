@@ -30,8 +30,8 @@ if [[ -z ${KLAY_BEAM_VERSION} ]]; then
     KLAY_BEAM_VERSION=$(./get_version.sh)
 fi
 
-: ${PY_VERSION:=3.9}
-: ${BEAM_VERSION:=2.61.0}
+: ${PY_VERSION:=3.10}
+: ${BEAM_VERSION:=2.64.0}
 
 VERSIONS=""
 

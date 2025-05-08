@@ -9,13 +9,13 @@ readme = "README.md"
 license = { file = "LICENSE" }
 dynamic = ["version"]
 dependencies = [
-  "apache-beam[gcp]==2.61",
+  "apache-beam[gcp]==2.64",
   "boto3==1.35",
   "pydub==0.25.1",
   "soundfile==0.12.1",
   "librosa==0.10",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 [project.optional-dependencies]
 code-style = ["black==24.10", "flake8==7.1"]
