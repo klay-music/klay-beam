@@ -1,9 +1,9 @@
 [submodule "klay_beam/submodules/klay-data"]
 	path = klay_beam/submodules/klay-data
-	url = https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-data
+	url = git@github.com:klay-music/klay-data.git
 [submodule "klay_beam/submodules/klay-mtrpp"]
 	path = klay_beam/submodules/klay-mtrpp
-	url = https://source.developers.google.com/p/klay-home/r/github_klay-music_klay-mtrpp
+  url = git@github.com:klay-music/klay-mtrpp.git
 [submodule "klay_beam/submodules/klay-codecs"]
 	path = klay_beam/submodules/klay-codecs
 	url = git@github.com:klay-music/klay-codecs.git
