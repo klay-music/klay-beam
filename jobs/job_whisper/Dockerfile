@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir build && \
 # ────────────────────────────────────────────────────────────────────────
 # Stage 2 – final image: install the wheel + run the app
 # ────────────────────────────────────────────────────────────────────────
-FROM klaymusic/klay-beam:0.13.7-py3.10-beam2.53.0-torch2.1-cuda12.1
+FROM klaymusic/klay-beam:0.14.1-py3.10-beam2.64.0-torch2.5-cuda12.1
 
 WORKDIR /klay/app
 
