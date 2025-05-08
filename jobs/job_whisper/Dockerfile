@@ -2,7 +2,7 @@ FROM klaymusic/klay-beam:0.14.1-py3.10-beam2.64.0-torch2.5-cuda12.1
 
 WORKDIR /klay/app
 
-# 1. OS packages needed to build and to run git-lfs
+# 1) OS package needed to build
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
         git git-lfs build-essential && \
@@ -15,21 +15,24 @@ RUN apt-get update -qq && \
 COPY klay_beam/submodules/klay-data ./submodules/klay-data
 
 # 3. Build the wheel _inside_ the image; no outside index needed
-RUN pip install build && \
-    python -m build --wheel ./submodules/klay-data -o ./klay-data-wheel
+
+RUN python3 -m pip install build && \
+    python3 -m build --wheel ./submodules/klay-data -o ./klay-data-wheel
 
 
-# 2) install klay_data FROM THAT WHEEL ONLY  ─────────────────────────────
-RUN pip install --find-links=./klay-data-wheel klay_data[whisper]
+# 4) install klay_data FROM THAT WHEEL ONLY  ─────────────────────────────
+RUN python3 -m pip install --find-links=./klay-data-wheel klay_data[whisper]
 
+# 5) Copy the rest of the app code into the image
 COPY klay_beam/submodules/klay-audiotools ./submodules/klay-audiotools
 COPY jobs/job_whisper ./job_whisper
 
-# Install klay-data with whisperx. ctranslate2 is needed to make CUDA available.
+# 6) Install klay-data with whisperx. ctranslate2 is needed to make CUDA available.
 RUN python3 -m pip install './submodules/klay-audiotools' 'ctranslate2==4.4.0'
 
 # This is only allowed for torch>=2.3
-ENV TORCH_DISABLE_GLOBAL_LIBS=1
+# ENV TORCH_DISABLE_GLOBAL_LIBS=1
+ENV LD_LIBRARY_PATH=/env/lib/python3.10/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH
 
 # Smoke test: check that torch is installed and CUDA is available
 RUN python -c "import torch"
