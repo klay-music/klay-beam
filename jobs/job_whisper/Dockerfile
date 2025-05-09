@@ -14,18 +14,13 @@ ENV LD_LIBRARY_PATH=/env/lib/python3.10/site-packages/nvidia/cudnn/lib:$LD_LIBRA
 ENV TORCH_DISABLE_GLOBAL_LIBS=1
 
 # 3. Build the wheel _inside_ the image; no outside index needed
-
+COPY klay_beam/submodules/klay-data ./submodules/klay-data
 RUN python3 -m pip install build && \
     python3 -m build --wheel ./submodules/klay-data -o ./klay-data-wheel
 
 
 # 4) install klay_data from that wheel only  ─────────────────────────────
 run python3 -m pip install --find-links=./klay-data-wheel klay_data[whisper]
-
-COPY klay_beam/submodules/klay-data        ./submodules/klay-data
-RUN python3 -m pip install build && \
-    python3 -m build --wheel ./submodules/klay-data -o ./klay-data-wheel
-RUN python3 -m pip install --find-links=./klay-data-wheel klay_data[whisper]
 
 COPY klay_beam/submodules/klay-audiotools  ./submodules/klay-audiotools
 COPY jobs/job_whisper                      ./job_whisper
