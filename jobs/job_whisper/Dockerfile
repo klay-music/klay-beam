@@ -13,6 +13,7 @@ RUN apt-get update -qq && \
 #    (the directory path below assumes your Cloud Build context already
 #    contains the sub-module checkout; adjust if different)
 COPY klay_beam/submodules/klay-data ./submodules/klay-data
+# point to VENV's local CUDA 11.8 python lib
 
 # 3. Build the wheel _inside_ the image; no outside index needed
 
