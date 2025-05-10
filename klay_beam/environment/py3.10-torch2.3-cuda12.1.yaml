@@ -10,4 +10,5 @@ dependencies:
   - pytorch::pytorch=2.3.1=py3.10_cuda12.1_cudnn8.9.2_0
   - pytorch::torchaudio>=2
   - nvidia::cuda-toolkit>=12
+  - conda-forge::libsndfile>=1.2.0
   - conda-forge::fsspec
