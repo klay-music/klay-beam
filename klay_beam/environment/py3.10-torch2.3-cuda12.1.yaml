@@ -7,7 +7,7 @@ dependencies:
   - pip
   - python=3.10
   - conda-forge::ffmpeg>4.2,<5
-  - pytorch::pytorch=2.5.1=py3.10_cuda12.1_cudnn9.1.0_0
+  - pytorch::pytorch=2.3.1=py3.10_cuda12.1_cudnn8.9.2_0
   - pytorch::torchaudio>=2
   - nvidia::cuda-toolkit>=12
   - conda-forge::libsndfile>=1.2.0

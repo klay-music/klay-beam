@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job_whisper"
+description = "Beam job for extracting lyrics from audio"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+  "av",
+  "numpy<2",
+  "apache_beam[gcp]==2.61",
+  "ctranslate2==4.4.0",
+  "klay_beam[pytorch]==0.14.0",
+]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+code-style = ["black>=22.9.0", "flake8>=5"]
+tests = ["pytest"]
+type-check = ["mypy>=0.990", "pydantic>=1.10"]
+
+[tool.setuptools.dynamic]
+version = {attr = "job_whisper.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+warn_redundant_casts = true
+check_untyped_defs = true
+allow_redefinition = true
+warn_unreachable = true
+plugins = [
+  "pydantic.mypy",
+]
+
+[[tool.mypy.overrides]]
+module = [
+  "apache_beam.*",
+]
+ignore_missing_imports = true
