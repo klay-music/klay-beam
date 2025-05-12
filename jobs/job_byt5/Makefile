@@ -23,13 +23,13 @@ docker-push:
 	docker push $(DOCKER_IMAGE_NAME)
 
 run-local:
-	python -m pdb bin/run_job_byt5.py \
+	pythoe bin/run_workflow.py \
 		--runner Direct \
 		--match_pattern=$(match_pattern)
 
 
 run-dataflow:
-	python bin/run_job_byt5.py \
+	python bin/run_workflow.py \
     --runner DataflowRunner \
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \

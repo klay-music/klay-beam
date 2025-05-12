@@ -33,6 +33,7 @@ class ExtractWhisperByT5(beam.DoFn):
         logging.info(f"Using device: {self.device}")
 
         self.extractor = ByT5TextExtractor(self.device)
+        self.extractor.setup()
 
     @property
     def suffix(self) -> str:
