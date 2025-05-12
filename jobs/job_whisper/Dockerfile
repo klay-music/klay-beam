@@ -1,6 +1,5 @@
 FROM klaymusic/klay-beam:0.14.1-py3.10-beam2.64.0-torch2.5-cuda12.1
 
-FROM klaymusic/klay-beam:0.14.1-py3.10-beam2.64.0-torch2.5-cuda12.1
 WORKDIR /klay/app
 
 RUN apt-get update -qq && \
