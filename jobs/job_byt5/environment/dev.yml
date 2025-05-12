@@ -1,0 +1,17 @@
+name: byt5-dev
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - pip
+  - python=3.10
+  - numpy<2
+  - pytorch::pytorch>=2.1
+  - pytorch::torchaudio
+
+  - pip:
+    - -e '../../../klay_beam/submodules/klay-data[type-check]'
+    - -e '../../../klay_beam/submodules/klay-data/submodules/klay-audiotools'
+    - -e '..[code-style, tests, type-check]'
