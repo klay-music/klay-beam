@@ -16,10 +16,10 @@ ENV TORCH_DISABLE_GLOBAL_LIBS=1
 COPY klay_beam/submodules/klay-data ./submodules/klay-data
 RUN python3 -m pip install build && \
     python3 -m build --wheel ./submodules/klay-data -o ./klay-data-wheel
-
+run python3 -m pip install --find-links=./klay-data-wheel klay_data[whisper]
 
 COPY klay_beam/submodules/klay-audiotools ./submodules/klay-audiotools
 COPY jobs/job_byt5 ./job_byt5
 RUN python3 -m pip install ./submodules/klay-audiotools ctranslate2==4.4.0
 
-RUN python3 -c "import torch, ctypes; ctypes.CDLL('libcudnn_ops_infer.so.8'); print('✅ torch import + cuDNN OK')"
+RUN python3 -c "import torch"# ", ctypes; ctypes.CDLL('libcudnn_ops_infer.so.8'); print('✅ torch import + cuDNN OK')"
