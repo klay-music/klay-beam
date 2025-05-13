@@ -1,4 +1,4 @@
-name: job-shard
+name: job-mds
 
 channels:
   - defaults
@@ -8,4 +8,5 @@ dependencies:
   - pip
 
   - pip:
+    - -e '../../../klay_beam/submodules/klay-data'
     - -e '..[code-style, tests, type-check]'
