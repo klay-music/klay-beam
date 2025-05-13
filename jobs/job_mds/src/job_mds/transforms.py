@@ -17,12 +17,13 @@ class FlattenTrack(beam.DoFn):
         yield from files
 
 
-class ShardCopy(beam.DoFn):
+class MdsCopy(beam.DoFn):
     """
     (shard_idx, List[audio_path]) → ( [src_dirs], [dst_paths] )
 
     Each *audio* path spawns one or more *feature* paths (one for every
-    suffix).  The output tuples are consumed by CopyBinaryFileFn.
+    suffix). These are then structured into MDS shards.
+    The output tuples are consumed by CopyBinaryFileFn.
     """
 
     def __init__(
