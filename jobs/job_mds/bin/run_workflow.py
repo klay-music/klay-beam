@@ -15,7 +15,7 @@ import logging
 import os
 
 from klay_beam.transforms import SkipCompleted
-from job_shard.transforms import ShardCopy, Enumerate
+from job_mds.transforms import MdsCopy, Enumerate
 
 
 def parse_args():
@@ -218,7 +218,7 @@ def run():
             batched
             | "BuildCopyPairs"
             >> beam.ParDo(
-                ShardCopy(
+                MdsCopy(
                     src_dir=src_root,
                     dest_dir=known_args.dest_dir,
                     audio_suffix=known_args.audio_suffix,

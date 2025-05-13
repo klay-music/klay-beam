@@ -1,6 +1,6 @@
-# job_shard
+# job_mds
 
-Shard files and copy them from one GCS location to another.
+Create MDS datasets and copy them from one GCS location to another.
 
 # Usage
 ```
@@ -16,7 +16,7 @@ make run-local \
 # Running on GCP Dataflow
 make run-dataflow \
     num_workers=10 \
-    job_name=job-shard \
+    job_name=job-mds \
     src_dir=gs://path/to/src_dir \
     dst_dir=gs://path/to/dst_dir \
     audio_suffix=.mp3 \

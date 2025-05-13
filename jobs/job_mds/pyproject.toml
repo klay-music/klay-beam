@@ -3,8 +3,8 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "job_shard"
-description = "Copy sharded files from one GCS bucket to another."
+name = "job_mds"
+description = "Create MDS datasets and copy them from one GCS bucket to another."
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
@@ -22,7 +22,7 @@ tests = ["pytest"]
 type-check = ["mypy>=0.990", "pydantic>=1.10"]
 
 [tool.setuptools.dynamic]
-version = {attr = "job_shard.__version__"}
+version = {attr = "job_mds.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
