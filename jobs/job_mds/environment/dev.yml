@@ -1,0 +1,11 @@
+name: job-shard
+
+channels:
+  - defaults
+
+dependencies:
+  - python=3.10
+  - pip
+
+  - pip:
+    - -e '..[code-style, tests, type-check]'
