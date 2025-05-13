@@ -1,78 +1,144 @@
 import apache_beam as beam
-from apache_beam.io.filesystems import FileSystems
 from apache_beam.coders import VarIntCoder
 from apache_beam.transforms import userstate
+from dataclasses import dataclass
+from typing import Any
+import numpy as np
+import json
+import io
+import math
+import uuid
+from streaming import MDSWriter
 import logging
 import os
-from pathlib import Path
 
-from klay_beam.path import remove_suffix
-
-
-class FlattenTrack(beam.DoFn):
-    """(track_name, Iterable[file_path]) → file_path"""
-
-    def process(self, kv):
-        _, files = kv
-        yield from files
+from klay_data import pipeline
 
 
-class MdsCopy(beam.DoFn):
-    """
-    (shard_idx, List[audio_path]) → ( [src_dirs], [dst_paths] )
+@dataclass(kw_only=True)
+class LoadFeatureBeam:
+    input_key: str
+    output_key: str
 
-    Each *audio* path spawns one or more *feature* paths (one for every
-    suffix). These are then structured into MDS shards.
-    The output tuples are consumed by CopyBinaryFileFn.
-    """
+    def __call__(self, data: dict[str, Any], **kwargs) -> dict[str, Any]:
+        path = data[self.input_key]
 
-    def __init__(
-        self,
-        *,
-        src_dir: str,
-        dest_dir: str,
-        audio_suffix: str,
-        suffixes: list[str],
-        min_shard_idx: int = 1,
-    ):
-        if not suffixes:
-            raise ValueError("suffixes must be non-empty")
+        # Check if the file exists before attempting to open. This is because Beam lazily opens
+        # files and we want a clear error if the file doesn't exist.
+        if not beam.io.filesystems.FileSystems.exists(path):
+            raise FileNotFoundError(f"File not found: {path}")
 
-        self.src_dir = src_dir if src_dir.endswith("/") else src_dir + "/"
-        self.dest_dir = dest_dir if dest_dir.endswith("/") else dest_dir + "/"
-        self.audio_suffix = audio_suffix
-        self.suffixes = suffixes
-        self.min_shard_idx = min_shard_idx
+        _, extension = os.path.splitext(path)
 
-    def _rel_to_src(self, path: str) -> str:
-        """Return path relative to the *source* directory."""
-        return path[len(self.src_dir) :]
-
-    def _dst_path(self, rel_path: Path, shard_idx: int) -> str:
-        """Compose full destination URI for a given shard."""
-        shard_idx += self.min_shard_idx
-        shard_dir = f"shard-{shard_idx:04d}/"
-
-        rel_source_path = rel_path.with_suffix(f".source{rel_path.suffix}")
-        return os.path.join(self.dest_dir, shard_dir, rel_source_path)
-
-    def process(self, element):
-        shard_idx, batch = element
-
-        for audio_path in batch:
-            for suffix in self.suffixes:
-                # Construct the feature path and check if it exists
-                src_feat_path = (
-                    remove_suffix(audio_path.path, self.audio_suffix) + suffix
+        match extension:
+            case ".npy":
+                with beam.io.filesystems.FileSystems.open(
+                    path, mime_type="application/octet-stream"
+                ) as f:
+                    content = np.load(io.BytesIO(f.read()))
+            case ".json":
+                with beam.io.filesystems.FileSystems.open(
+                    path, mime_type="text/plain"
+                ) as f:
+                    content = json.load(f)
+            case _:
+                raise ValueError(
+                    f"Unsupported file extension '{extension}' for path {path}"
                 )
-                if not FileSystems.match([src_feat_path]):
-                    logging.warning("Feature file not found: %s", src_feat_path)
-                    continue
 
-                # Construct the destination path
-                rel_path = self._rel_to_src(src_feat_path)
-                dst_feat_path = self._dst_path(Path(rel_path), shard_idx)
-                yield [src_feat_path], [dst_feat_path]
+        return {self.output_key: content}
+
+
+class ProcessURI(beam.DoFn):
+    def __init__(self, min_duration: int, frame_rate: int) -> None:
+        self.min_duration = min_duration
+        self.frame_rate = frame_rate
+        self.min_len = math.ceil(min_duration * self.frame_rate)
+        self.uri_processing_errors = beam.metrics.Metrics.counter(
+            ProcessURI.__name__, "uri_processing_errors"
+        )
+        self.uri_processed_successfully = beam.metrics.Metrics.counter(
+            ProcessURI.__name__, "uri_processed_successfully"
+        )
+        self.p = pipeline.Pipeline(
+            # Ensure audio is music.
+            LoadFeatureBeam(
+                input_key="audioset_yamnet.path", output_key="audioset_yamnet"
+            ),
+            pipeline.ValidateAudiosetYamnet(input_key="audioset_yamnet", feat_dim=521),
+            pipeline.FilterIsMusic(input_key="audioset_yamnet"),
+            # Load KlayNACVAE features.
+            LoadFeatureBeam(input_key="klaynacvae.path", output_key="klaynacvae"),
+            pipeline.ValidateKlayNACVAE(input_key="klaynacvae", feat_dim=128),
+            pipeline.FilterLength(input_key="klaynacvae", min_len=self.min_len),
+            # Load MTR++ features.
+            LoadFeatureBeam(input_key="mtrpp.path", output_key="mtrpp"),
+            pipeline.ValidateMTRPP(input_key="mtrpp", feat_dim=128),
+            # Optionally load Whisper features.
+            pipeline.Pipeline(
+                LoadFeatureBeam(input_key="whisper.path", output_key="whisper"),
+                is_optional=True,
+                # pipeline.WrapFeature(input_key="whisper", dataclass=pipeline.WhisperLyricsInfo),
+            ),
+            pipeline.MaybeSetFeature(input_key="whisper", value={}),
+            # pipeline.MaybeAddMissingWhisperLyrics(input_key="whisper"),
+            # pipeline.FlattenFeature(input_key="whisper", output_prefix="whisper.")
+        )
+
+    def process(self, uri: str, *_):
+        try:
+            basename = os.path.basename(uri)
+
+            # Construct the data dictionary with full paths
+            data = {
+                "whisper.path": f"{uri}/{basename}.vocals.whisper.json",
+                "mtrpp.path": f"{uri}/{basename}.source.mtrpp.npy",
+                "klaynacvae.path": f"{uri}/{basename}.source.klaynacvae-0.6.2.npy",
+                "audioset_yamnet.path": f"{uri}/{basename}.source.audioset_yamnet.npy",
+            }
+
+            result = pipeline.run(self.p, data=data)
+            self.uri_processed_successfully.inc()
+            yield result
+        except Exception as e:
+            logging.error(f"Skipping {uri}: {e}")
+            self.uri_processing_errors.inc()
+
+
+class WriteMDS(beam.DoFn):
+    def __init__(self, dest_dir: str) -> None:
+        self.dest_dir = dest_dir
+        self.columns = {
+            "klaynacvae": "ndarray:float32",
+            # "whisper.starts": "ndarray:float32",
+            # "whisper.ends": "ndarray:float32",
+            # "whisper.byt5_tokens": "ndarray:int32",
+            # "whisper.byt5_embeds": "ndarray:float32",
+            "whisper": "json",
+            "mtrpp": "ndarray:float32",
+        }
+        self.writer = None
+        self.worker_id = None
+
+    def setup(self):
+        # Create a unique subfolder for this worker
+        self.worker_id = str(uuid.uuid4())
+        worker_dir = os.path.join(self.dest_dir, f"worker_{self.worker_id}")
+        os.makedirs(worker_dir, exist_ok=True)
+
+        self.writer = MDSWriter(
+            out=worker_dir,
+            columns=self.columns,
+            compression="zstd",
+            hashes=["xxh3_64"],
+        )
+
+    def process(self, element, *_):
+        self.writer.write(element)
+        yield None
+
+    def teardown(self):
+        self.writer.finish()
 
 
 class _EnumerateDoFn(beam.DoFn):
