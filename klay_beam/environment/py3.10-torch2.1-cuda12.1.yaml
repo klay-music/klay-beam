@@ -6,6 +6,7 @@ channels:
 dependencies:
   - pip
   - python=3.10
+  - numpy<2
   - pytorch::pytorch=2.1=py3.10_cuda12.1_cudnn8.9.2_0
   - pytorch::torchaudio>2
   - nvidia::cuda-toolkit>=12
