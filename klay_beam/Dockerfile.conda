@@ -117,9 +117,20 @@ COPY . ./klay_beam
 RUN python3 -m pip install \
   apache-beam[gcp]==${BEAM_VERSION} \
   './klay_beam[code-style, tests, type-check]'
-RUN python3 -m pip install './klay_beam/submodules/klay-data'
+
+RUN python3 -m pip install build && \
+    python3 -m build --wheel ./klay_beam/submodules/klay-data -o ./klay-data-wheel
+RUN python3 -m pip install --find-links=./klay-data-wheel 'klay_data[whisper, essentia, torch]'
+RUN python3 -m pip install \
+  ./klay_beam/submodules/klay-audiotools \
+  ./klay_beam/submodules/klay-config \
+  ./klay_beam/submodules/klay-nac \
+  ./klay_beam/submodules/klay-codecs \
+  ./klay_beam/submodules/klay-mtrpp
 
 RUN cd klay_beam && pytest tests/
 
 # Verify that the image does not have conflicting dependencies.
 RUN pip check
+
+RUN python3 -c "import torch"
