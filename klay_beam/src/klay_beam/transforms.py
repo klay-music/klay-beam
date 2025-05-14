@@ -108,11 +108,11 @@ def numpy_to_mp3(
 # You can check this with `soundfile.__libsndfile_version__`. For details,
 # see: https://github.com/bastibe/python-soundfile/issues/130
 sf_current_version = packaging_version.parse(sf.__libsndfile_version__)
-sf_required_version = packaging_version.parse("1.2.0")
+sf_required_version = packaging_version.parse("1.2.2")
 sf_version_ok = sf_current_version >= sf_required_version
 
 
-def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True):
+def numpy_to_ogg(audio_data: np.ndarray, sr: int, safe=True, subtype="VORBIS"):
     """Convert the audio data to an in-memory ogg encoded file-like object using
     the soundfile library.
 
