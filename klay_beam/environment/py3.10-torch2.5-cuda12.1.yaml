@@ -9,4 +9,5 @@ dependencies:
   - pytorch::pytorch=2.5.1=py3.10_cuda12.1_cudnn9.1.0_0
   - pytorch::torchaudio>=2
   - nvidia::cuda-toolkit>=12
+  - conda-forge::ffmpeg>4.2,<5
   - conda-forge::fsspec
