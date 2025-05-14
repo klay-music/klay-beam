@@ -12,7 +12,7 @@ dependencies = [
   "numpy<2",
   "apache_beam[gcp]==2.64.0",
   "ctranslate2==4.4.0",
-  "klay_beam[pytorch]==0.14.2",
+  "klay_beam[pytorch]==0.14.1",
 ]
 requires-python = ">=3.10"
 

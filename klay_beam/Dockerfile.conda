@@ -67,6 +67,17 @@ RUN find -name '*.a' -delete && \
 
 # python:3.10-slim-bullseye comes from debian-11-slim (bullseye)
 FROM python:${PY_VERSION}-slim-bullseye
+
+RUN apt-get update -qq && \
+  DEBIAN_FRONTEND=noninteractive \
+  apt-get install -y --no-install-recommends \
+  libsndfile1 libsndfile1-dev \
+  libogg0 libvorbis0a libvorbisenc2 libopus0 \
+  libmpg123-0 \
+  libflac8 libspeex1 && \
+  ldconfig && \
+  rm -rf /var/lib/apt/lists/*
+
 ARG PY_VERSION
 ARG BEAM_VERSION
 
