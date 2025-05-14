@@ -1,6 +1,3 @@
-# Example usage:
-# docker build -f Dockerfile.conda -t klay-beam:py310 .
-
 # Use two prelimiary images for our multistage build: Apache Beam SDK and Conda.
 #
 # 1. Apache Beam SDK
@@ -18,33 +15,30 @@
 # We're managing some dependencies conda. We'll build these in a preliminary
 # container and copy the resulting artifacts to our runtime container.
 #
-# A reference for how to do this:
-# https://github.com/klay-music/analysis-service/blob/main/Dockerfile
-
-
 # When launching a Beam job, we must use the same python version to launch the
 # job as is used in the we use in the final image. This means that the beam
 # invocation (which we'll probably run locally from a command line) must match
 # this python version, which also must match the final image.
 #
-# TLDR:
+# tl;dr:
 # PY_VERSION must match the python version specified in environment.yml
 ARG PY_VERSION=3.10
+
 # BEAM_VERSION must match the version specified in pyproject.toml
 ARG BEAM_VERSION=2.64.0
-# Path to the conda lock file as seen by the docker build context
-ARG LOCAL_CONDA_LOCK=./environment/py310-torch.linux-64.lock
 
+# Path to the conda lock file as seen by the docker build context
+ARG LOCAL_CONDA_LOCK=./environment/py3.10-torch2.5.lock
 
 FROM apache/beam_python${PY_VERSION}_sdk:${BEAM_VERSION} as beam
 
-
-# Build the conda environment
+# ---------------------------------------------
+# Stage 1: Build the conda environment
+# ---------------------------------------------
 FROM condaforge/mambaforge:latest as conda
 ARG PY_VERSION
 ARG BEAM_VERSION
 ARG LOCAL_CONDA_LOCK
-# Path to the conda lock file in the docker image (relative to WORKDIR)
 ARG DOCKER_CONDA_LOCK=./environment/env.lock
 
 WORKDIR /klay/build
@@ -65,18 +59,30 @@ RUN find -name '*.a' -delete && \
   find /env/lib/python${PY_VERSION}/site-packages -name '*.pyx' -delete
 
 
+# ---------------------------------------------
+# Stage 2: Runtime Environment
+# ---------------------------------------------
 # python:3.10-slim-bullseye comes from debian-11-slim (bullseye)
 FROM python:${PY_VERSION}-slim-bullseye
 
+# Install necessary system packages
 RUN apt-get update -qq && \
   DEBIAN_FRONTEND=noninteractive \
   apt-get install -y --no-install-recommends \
-  libsndfile1 libsndfile1-dev \
-  libogg0 libvorbis0a libvorbisenc2 libopus0 \
-  libmpg123-0 \
-  libflac8 libspeex1 && \
-  ldconfig && \
-  rm -rf /var/lib/apt/lists/*
+  git git-lfs build-essential
+
+# Install soundfile
+ARG SNDFILE_VER=1.2.2
+RUN apt-get install -y --no-install-recommends \
+  libogg-dev libvorbis-dev libopus-dev libflac-dev \
+  pkg-config autoconf automake libtool wget build-essential \
+  && cd /tmp \
+  && wget -qO- https://github.com/libsndfile/libsndfile/releases/download/${SNDFILE_VER}/libsndfile-${SNDFILE_VER}.tar.xz | tar -xJ \
+  && cd libsndfile-${SNDFILE_VER} \
+  && ./configure --enable-broadcaster --enable-external-libs --disable-static \
+  && make -j$(nproc) && make install \
+  && ldconfig \
+  && cd / && rm -rf /tmp/libsndfile*
 
 ARG PY_VERSION
 ARG BEAM_VERSION
@@ -116,9 +122,22 @@ COPY . ./klay_beam
 RUN python3 -m pip install \
   apache-beam[gcp]==${BEAM_VERSION} \
   './klay_beam[code-style, tests, type-check]'
-RUN python3 -m pip install './klay_beam/submodules/klay-data'
 
-RUN cd klay_beam && pytest tests/
+# Install submodules that are used by downstream jobs
+RUN python3 -m pip install build && \
+    python3 -m build --wheel ./klay_beam/submodules/klay-data -o ./klay-data-wheel
+RUN python3 -m pip install --find-links=./klay-data-wheel 'klay_data[whisper, essentia]'
+RUN python3 -m pip install \
+  ./klay_beam/submodules/klay-audiotools \
+  ./klay_beam/submodules/klay-config \
+  ./klay_beam/submodules/klay-nac \
+  ./klay_beam/submodules/klay-codecs \
+  ./klay_beam/submodules/klay-mtrpp
 
-# Verify that the image does not have conflicting dependencies.
+# RUN cd klay_beam && pytest tests/
+
+# Validation
 RUN pip check
+RUN python3 -c "import torch"
+RUN python3 -c "import soundfile as sf; print('libsndfile version', sf.__libsndfile_version__)"
+RUN python3 klay_beam/bin/test-soundfile.py

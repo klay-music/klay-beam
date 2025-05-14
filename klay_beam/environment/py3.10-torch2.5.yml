@@ -2,13 +2,12 @@ name: klay-beam-py3.10-torch2.0
 
 channels:
   - defaults
-  - conda-forge
 
 dependencies:
   - pip
   - python=3.10
-  - conda-forge::ffmpeg>=4.2,<5
+  - numpy>=1.26,<2
   - pytorch::pytorch=2.5.1=py3.10_cpu_0
   - pytorch::torchaudio>=2
-  - conda-forge::fsspec
-  - git
+  - conda-forge::ffmpeg>4.2,<5
+  - conda-forge::fsspec=2025.3.0
