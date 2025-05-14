@@ -6,8 +6,5 @@ channels:
 dependencies:
   - pip
   - python=3.10
-  - numpy=1.24
-  - conda-forge::ffmpeg=4.4
-  - conda-forge::libsndfile>=1.2.0
   - pytorch::pytorch=1.11=py3.10_cuda11.3_cudnn8.2.0_0
   - pytorch::torchaudio

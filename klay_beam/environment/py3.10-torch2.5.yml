@@ -6,7 +6,6 @@ channels:
 dependencies:
   - pip
   - python=3.10
-  - conda-forge::ffmpeg>=4.2,<5
   - pytorch::pytorch=2.5.1=py3.10_cpu_0
   - pytorch::torchaudio>=2
   - conda-forge::fsspec
