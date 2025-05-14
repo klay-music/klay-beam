@@ -6,9 +6,9 @@ channels:
 dependencies:
   - pip
   - python=3.10
-  - numpy<2
+  - numpy>=1.26,<2
   - pytorch::pytorch=2.1=py3.10_cuda12.1_cudnn8.9.2_0
   - pytorch::torchaudio>2
   - nvidia::cuda-toolkit>=12
   - conda-forge::ffmpeg>4.2,<5
-  - conda-forge::fsspec
+  - conda-forge::fsspec=2025.3.0
