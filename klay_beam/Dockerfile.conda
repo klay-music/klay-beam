@@ -71,6 +71,7 @@ FROM python:${PY_VERSION}-slim-bullseye
 RUN apt-get update -qq && \
   DEBIAN_FRONTEND=noninteractive \
   apt-get install -y --no-install-recommends \
+  git git-lfs build-essential \
   libsndfile1 libsndfile1-dev \
   libogg0 libvorbis0a libvorbisenc2 libopus0 \
   libmpg123-0 \
