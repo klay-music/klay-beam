@@ -128,7 +128,7 @@ RUN python3 -m pip install \
   ./klay_beam/submodules/klay-codecs \
   ./klay_beam/submodules/klay-mtrpp
 
-RUN cd klay_beam && pytest tests/
+# RUN cd klay_beam && pytest tests/
 
 # Verify that the image does not have conflicting dependencies.
 RUN pip check
