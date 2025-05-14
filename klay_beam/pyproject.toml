@@ -12,8 +12,9 @@ dependencies = [
   "av",
   "apache-beam[gcp]==2.64",
   "boto3==1.35",
+  "dill>=0.3.1.1,<0.3.2",
   "pydub==0.25.1",
-  "soundfile>=0.12.1",
+  "soundfile>=0.13.0",
   "librosa>=0.10",
 ]
 requires-python = ">=3.9"
