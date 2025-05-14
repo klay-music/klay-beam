@@ -18,6 +18,7 @@ run-local:
 		--src_dir $(src_dir) \
 		--dest_dir $(dest_dir) \
 		--audio_suffix $(audio_suffix) \
+		--features $(features)
 
 run-dataflow:
 	python bin/run_workflow.py \
@@ -37,3 +38,4 @@ run-dataflow:
 		--src_dir $(src_dir) \
 		--dest_dir $(dest_dir) \
 		--audio_suffix $(audio_suffix) \
+		--features $(features)

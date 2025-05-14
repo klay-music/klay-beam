@@ -10,7 +10,7 @@ from apache_beam.options.pipeline_options import (
 import logging
 import os
 
-from job_mds.transforms import Enumerate, ProcessURI, WriteMDS
+from job_mds.transforms import ProcessURI, WriteMDS, FEATURE_SUFFIX
 
 
 def parse_args():
@@ -43,6 +43,15 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--features",
+        required=True,
+        type=lambda s: s.split(","),
+        help="""
+        A comma separated list of features to process.
+        """,
+    )
+
+    parser.add_argument(
         "--min_duration",
         type=int,
         default=20,
@@ -60,7 +69,16 @@ def parse_args():
         """,
     )
 
-    return parser.parse_known_args(None)
+    known_args, pipeline_args = parser.parse_known_args(None)
+
+    # Validate features
+    for feature in known_args.features:
+        if feature not in FEATURE_SUFFIX:
+            raise argparse.ArgumentTypeError(
+                f"Invalid feature: {feature}. Must be one of {list(FEATURE_SUFFIX.keys())}"
+            )
+
+    return known_args, pipeline_args
 
 
 def run():
@@ -96,13 +114,23 @@ def run():
         )
 
         # -------------------------------------------------------------- #
-        # 2. Process the audio files and write MDS
+        # 2. Process the audio files and write MDS (one per worker)
         # -------------------------------------------------------------- #
+        suffixes = {k: v for k, v in FEATURE_SUFFIX.items() if k in known_args.features}
         _ = (
             audio_files
             | "ProcessURI"
-            >> beam.ParDo(ProcessURI(known_args.min_duration, known_args.frame_rate))
-            | "WriteMDS" >> beam.ParDo(WriteMDS(known_args.dest_dir))
+            >> beam.ParDo(
+                ProcessURI(
+                    min_duration=known_args.min_duration,
+                    frame_rate=known_args.frame_rate,
+                    suffixes=suffixes,
+                )
+            )
+            | "WriteMDS"
+            >> beam.ParDo(
+                WriteMDS(dest_dir=known_args.dest_dir, features=known_args.features)
+            )
         )
 
 

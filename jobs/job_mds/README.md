@@ -8,10 +8,8 @@ Create MDS datasets and copy them from one GCS location to another.
 make run-local \
     src_dir=gs://path/to/src_dir \
     dst_dir=gs://path/to/dst_dir \
-    audio_suffix=.mp3 \
-    suffixes="'.mp3' '.json'" \
-    num_files_per_shard=10 \
-    max_dataset_size=50
+    audio_suffix=.source.klaynacvae-0.6.2.npy \
+    features=audioset_yamnet,klaynacvae,mtrpp,whisper_byt5
 
 # Running on GCP Dataflow
 make run-dataflow \
@@ -19,10 +17,8 @@ make run-dataflow \
     job_name=job-mds \
     src_dir=gs://path/to/src_dir \
     dst_dir=gs://path/to/dst_dir \
-    audio_suffix=.mp3 \
-    suffixes="'.mp3' '.json'" \
-    num_files_per_shard=10 \
-    max_dataset_size=50
+    audio_suffix=.source.klaynacvae-0.6.2.npy \
+    features=audioset_yamnet,klaynacvae,mtrpp,whisper_byt5
 ```
 
 # Development
