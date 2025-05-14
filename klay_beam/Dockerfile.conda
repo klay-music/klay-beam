@@ -120,7 +120,7 @@ RUN python3 -m pip install \
 
 RUN python3 -m pip install build && \
     python3 -m build --wheel ./klay_beam/submodules/klay-data -o ./klay-data-wheel
-RUN python3 -m pip install --find-links=./klay-data-wheel 'klay_data[whisper, essentia, torch]'
+RUN python3 -m pip install --find-links=./klay-data-wheel 'klay_data[whisper, essentia]'
 RUN python3 -m pip install \
   ./klay_beam/submodules/klay-audiotools \
   ./klay_beam/submodules/klay-config \
