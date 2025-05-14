@@ -141,5 +141,5 @@ RUN python3 -m pip install \
 # Validation
 RUN pip check
 RUN python3 -c "import torch"
-RUN python3 -c "import soundfile as sf; print('libsndfile version', sf.library_version())"
+RUN python3 -c "import soundfile as sf; print('libsndfile version', sf.__libsndfile_version__)"
 RUN python3 klay_beam/bin/test-soundfile.py
