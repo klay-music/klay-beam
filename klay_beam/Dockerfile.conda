@@ -68,16 +68,24 @@ RUN find -name '*.a' -delete && \
 # python:3.10-slim-bullseye comes from debian-11-slim (bullseye)
 FROM python:${PY_VERSION}-slim-bullseye
 
+# Install necessary system packages
 RUN apt-get update -qq && \
   DEBIAN_FRONTEND=noninteractive \
   apt-get install -y --no-install-recommends \
-  git git-lfs build-essential \
-  libsndfile1 libsndfile1-dev \
-  libogg0 libvorbis0a libvorbisenc2 libopus0 \
-  libmpg123-0 \
-  libflac8 libspeex1 && \
-  ldconfig && \
-  rm -rf /var/lib/apt/lists/*
+  git git-lfs build-essential
+
+# Install soundfile
+ARG SNDFILE_VER=1.2.2
+RUN apt-get install -y --no-install-recommends \
+  libogg-dev libvorbis-dev libopus-dev libflac-dev \
+  pkg-config autoconf automake libtool wget build-essential \
+  && cd /tmp \
+  && wget -qO- https://github.com/libsndfile/libsndfile/releases/download/${SNDFILE_VER}/libsndfile-${SNDFILE_VER}.tar.xz | tar -xJ \
+  && cd libsndfile-${SNDFILE_VER} \
+  && ./configure --enable-broadcaster --enable-external-libs --disable-static \
+  && make -j$(nproc) && make install \
+  && ldconfig \
+  && cd / && rm -rf /tmp/libsndfile*
 
 ARG PY_VERSION
 ARG BEAM_VERSION
@@ -130,8 +138,8 @@ RUN python3 -m pip install \
 
 # RUN cd klay_beam && pytest tests/
 
-# Verify that the image does not have conflicting dependencies.
+# Validation
 RUN pip check
-
 RUN python3 -c "import torch"
+RUN python3 -c "import soundfile as sf; print('libsndfile version', sf.library_version())"
 RUN python3 klay_beam/bin/test-soundfile.py
