@@ -134,3 +134,4 @@ RUN python3 -m pip install \
 RUN pip check
 
 RUN python3 -c "import torch"
+RUN python3 klay_beam/bin/test-soundfile.py
