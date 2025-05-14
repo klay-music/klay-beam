@@ -1,0 +1,14 @@
+name: transcode-dev
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.10
+  - pytorch::pytorch>=2
+  - pytorch::torchaudio>=2
+  - pip
+
+  - pip:
+    - -e '..[code-style, tests, type-check]'
