@@ -28,8 +28,8 @@ make run-dataflow:
 	    --experiments use_runner_v2,no_use_multiple_sdk_containers \
 	    --sdk_location container \
 	    --temp_location gs://klay-beam-scratch-storage/tmp/extract-essentia/ \
-	    --machine_type n1-standard-4 \
-	    --number_of_worker_harness_threads=8 \
+	    --machine_type n4-standard-4 \
+	    --number_of_worker_harness_threads=6 \
 	    --setup_file ./setup.py \
 	    --src_dir $(src_dir) \
 	    --audio_suffix $(audio_suffix) \
