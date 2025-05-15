@@ -34,6 +34,7 @@ run-dataflow:
     --setup_file ./setup.py \
 		--number_of_worker_harness_threads 32 \
     --max_num_workers $(max_num_workers) \
+    --disk_size_gb 50 \
     --job_name $(job_name) \
 		--src_dir $(src_dir) \
 		--dest_dir $(dest_dir) \
