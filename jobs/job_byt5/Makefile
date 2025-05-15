@@ -13,18 +13,20 @@ tests:
 	pytest tests/
 
 docker:
-	docker build -t ${DOCKER_IMAGE_NAME} .
+	git submodule update --init --recursive
+	rm -fr submodules; mkdir -p submodules
+	cp -r ../submodules/klay-data ./submodules/klay-data
+	docker buildx build --platform linux/amd64 -t $(DOCKER_IMAGE_NAME) .
+	rm -fr submodules
 
 docker-push:
-	docker push ${DOCKER_IMAGE_NAME}
+	docker push $(DOCKER_IMAGE_NAME)
 
 run-local:
-	python bin/run_workflow.py \
+	pythoe bin/run_workflow.py \
 		--runner Direct \
-		--source_audio_path=$(source_audio_path) \
-		--match_suffix=$(match_suffix) \
-		--audio_suffix=$(audio_suffix) \
-		--overwrite
+		--match_pattern=$(match_pattern)
+
 
 run-dataflow:
 	python bin/run_workflow.py \
@@ -35,14 +37,12 @@ run-dataflow:
     --autoscaling_algorithm THROUGHPUT_BASED \
     --experiments use_runner_v2,no_use_multiple_sdk_containers \
     --sdk_location=container \
-    --temp_location gs://klay-beam-scratch-storage/tmp/mtrpp/ \
+    --temp_location gs://klay-beam-scratch-storage/tmp/byt5/ \
     --machine_type g2-standard-4 \
     --dataflow_service_options "worker_accelerator=type:nvidia-l4;count:1;install-nvidia-driver" \
     --disk_size_gb 50 \
     --setup_file ./setup.py \
+	--number_of_worker_harness_threads=2 \
     --job_name $(job_name) \
-		--max_num_workers $(max_num_workers) \
-		--source_audio_path=$(source_audio_path) \
-		--match_suffix=$(match_suffix) \
-		--audio_suffix=$(audio_suffix) \
-		--number_of_worker_harness_threads=1
+	--max_num_workers $(max_num_workers) \
+	--match_pattern $(match_pattern)
