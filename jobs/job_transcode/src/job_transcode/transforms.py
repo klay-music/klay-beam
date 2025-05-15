@@ -5,14 +5,97 @@ import io
 import logging
 import numpy as np
 from pathlib import Path
+import subprocess
+import sys
 
 from klay_beam.path import remove_suffix
 from klay_beam.transforms import (
-    numpy_to_mp3,
     numpy_to_wav,
-    numpy_to_ogg,
     numpy_to_file,
 )
+
+
+FFMPEG_BIN = "ffmpeg"
+
+
+def numpy_to_vorbis(audio: np.ndarray, sr: int, q: float = 2.0) -> io.BytesIO:
+    ch = audio.shape[0]
+    raw = audio.T.astype(np.float32, copy=False).tobytes()
+    cmd = [
+        FFMPEG_BIN,
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-f",
+        "f32le",
+        "-ar",
+        str(sr),
+        "-ac",
+        str(ch),
+        "-i",
+        "pipe:0",
+        "-vn",
+        # vorbis is experimental so we need to use -strict -2
+        "-c:a",
+        "vorbis",
+        "-strict",
+        "-2",
+        "-q:a",
+        str(q),
+        "-f",
+        "ogg",
+        "pipe:1",
+    ]
+    try:
+        res = subprocess.run(
+            cmd, input=raw, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+        )
+    except subprocess.CalledProcessError as exc:
+        sys.stderr.write(exc.stderr.decode(errors="ignore"))
+        raise
+
+    buf = io.BytesIO(res.stdout)
+    buf.seek(0)
+    return buf
+
+
+def numpy_to_mp3(audio: np.ndarray, sr: int, kbps: int = 192) -> io.BytesIO:
+    """Encode (channels, samples) float32 ndarray → MP3 via FFmpeg/libmp3lame."""
+    ch = audio.shape[0]
+    raw = audio.T.astype(np.float32, copy=False).tobytes()
+    cmd = [
+        FFMPEG_BIN,
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-f",
+        "f32le",
+        "-ar",
+        str(sr),
+        "-ac",
+        str(ch),
+        "-i",
+        "pipe:0",
+        "-vn",
+        "-c:a",
+        "libmp3lame",
+        "-b:a",
+        f"{kbps}k",
+        "-f",
+        "mp3",
+        "pipe:1",
+    ]
+    try:
+        res = subprocess.run(
+            cmd, input=raw, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+        )
+    except subprocess.CalledProcessError as exc:
+        sys.stderr.write(exc.stderr.decode(errors="ignore"))
+        raise
+
+    buf = io.BytesIO(res.stdout)
+    buf.seek(0)
+    return buf
 
 
 def crop_or_skip_audio(audio: np.ndarray, crop_length: int):
@@ -140,4 +223,4 @@ class TranscodeFn(beam.DoFn):
         elif self.target_audio_suffix == ".wav":
             yield new_key, numpy_to_wav(audio, sr)
         elif self.target_audio_suffix == ".ogg":
-            yield new_key, numpy_to_ogg(audio, sr)
+            yield new_key, numpy_to_vorbis(audio, sr)
