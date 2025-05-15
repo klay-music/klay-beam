@@ -1,0 +1,11 @@
+name: klay-beam
+
+channels:
+  - defaults
+
+dependencies:
+  - pip
+  - python=3.10
+  - numpy>=1.26,<2
+  - conda-forge::ffmpeg>4.2,<5
+  - conda-forge::fsspec=2025.3.0
