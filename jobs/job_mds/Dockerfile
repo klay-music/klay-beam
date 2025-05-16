@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────
 # Stage 2 – final image: install the wheel + run the app
 # ────────────────────────────────────────────────────────────────────────
-FROM klaymusic/klay-beam:0.14.4-py3.10-beam2.64.0-torch2.5
+FROM klaymusic/klay-beam:0.14.5-py3.10-beam2.64.0-torch2.5
 
 WORKDIR /klay/app
 
@@ -22,4 +22,4 @@ RUN pip install --no-cache-dir build && \
     python -m build --wheel ./submodules/klay-data -o /tmp/klay-data-wheel
 
 # 2) install klay_data FROM THAT WHEEL ONLY  ─────────────────────────────
-RUN pip install --no-cache-dir --find-links=/tmp/klay-data-wheel klay_data
+RUN pip install --find-links=/tmp/klay-data-wheel klay_data
