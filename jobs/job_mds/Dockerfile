@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────
 # Stage 2 – final image: install the wheel + run the app
 # ────────────────────────────────────────────────────────────────────────
-FROM klaymusic/klay-beam:0.14.4-py3.10-beam2.64.0-torch2.5
+FROM klaymusic/klay-beam:0.14.5-py3.10-beam2.64.0-torch2.5
 
 WORKDIR /klay/app
 
