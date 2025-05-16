@@ -130,8 +130,10 @@ class SeparateSources(beam.DoFn):
         durationSeconds = sample_count / sr
 
         if channel_count != 2:
-            logging.info(f"Converting from {channel_count} channel(s) to stereo: {key}")
-            audio_tensor = convert_audio(audio_tensor, sr, 44_100, 2)
+            logging.error(
+                f"Expected stereo audio. Found {channel_count} channels. ({key})"
+            )
+            return []
 
         input_filename = move(key, self.source_dir, self.target_dir)
 
@@ -197,30 +199,6 @@ class FilterVocalAudio(beam.DoFn):
                 f"Skipping {file_metadata.path} because it does not contain vocals."
             )
             return []
-
-
-def create_new_filenames(input_filename: str, stem_groups: list[str]) -> dict[str, str]:
-    stem_groups = sorted(stem_groups)
-    parts = input_filename.split(".")
-    new_filenames = {}
-
-    if len(parts) == 2:
-        # example input: 00012_01_clip.mp3
-        name, _ = parts
-
-        for stem_group in stem_groups:
-            new_filenames[stem_group] = f"{name}.{stem_group}.mp3"
-    elif len(parts) == 5:
-        # example input: 00012_01_clip.0.source.stem.mp3
-        name, orig_idx, orig_stem_group, _, _ = parts
-
-        for i, stem_group in enumerate(stem_groups):
-            idx = int(orig_idx) + i + 1
-            new_filenames[stem_group] = f"{name}.{idx}.{stem_group}.stem.mp3"
-    else:
-        raise ValueError(f"Invalid input filename: {input_filename}")
-
-    return new_filenames
 
 
 class LoadNpy(beam.DoFn):
