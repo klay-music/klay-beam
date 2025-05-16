@@ -22,4 +22,4 @@ RUN pip install --no-cache-dir build && \
     python -m build --wheel ./submodules/klay-data -o /tmp/klay-data-wheel
 
 # 2) install klay_data FROM THAT WHEEL ONLY  ─────────────────────────────
-RUN pip install --find-links=/tmp/klay-data-wheel klay_data
+RUN pip install --no-cache-dir --find-links=/tmp/klay-data-wheel klay_data
