@@ -29,7 +29,7 @@ from job_demucs.transforms import (
 )
 
 
-TARGET_AUDIO_SUFFIX = ".mp3"
+TARGET_AUDIO_SUFFIX = ".ogg"
 
 
 def parse_args():
