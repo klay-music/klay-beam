@@ -8,6 +8,8 @@ import logging
 import numpy as np
 from pathlib import Path
 import re
+import subprocess
+import sys
 import time
 from typing import Tuple
 import torchaudio
@@ -523,3 +525,44 @@ class LoadWebm(beam.DoFn):
             f"Loaded {duration:.4f}s, {audio.shape[0]}-channel audio  ↪  {path}"
         )
         yield readable_file.metadata.path, audio, sr
+
+
+def numpy_to_vorbis(audio: np.ndarray, sr: int, q: float = 2.0) -> io.BytesIO:
+    ch = audio.shape[0]
+    raw = audio.T.astype(np.float32, copy=False).tobytes()
+    cmd = [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-f",
+        "f32le",
+        "-ar",
+        str(sr),
+        "-ac",
+        str(ch),
+        "-i",
+        "pipe:0",
+        "-vn",
+        # vorbis is experimental so we need to use -strict -2
+        "-c:a",
+        "vorbis",
+        "-strict",
+        "-2",
+        "-q:a",
+        str(q),
+        "-f",
+        "ogg",
+        "pipe:1",
+    ]
+    try:
+        res = subprocess.run(
+            cmd, input=raw, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+        )
+    except subprocess.CalledProcessError as exc:
+        sys.stderr.write(exc.stderr.decode(errors="ignore"))
+        raise
+
+    buf = io.BytesIO(res.stdout)
+    buf.seek(0)
+    return buf

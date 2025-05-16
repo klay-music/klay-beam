@@ -15,7 +15,6 @@ from apache_beam.options.pipeline_options import (
 
 from klay_beam.transforms import (
     write_file,
-    numpy_to_mp3,
 )
 from klay_beam.torch_transforms import ResampleTorchaudioTensor
 
@@ -26,6 +25,7 @@ from job_demucs.transforms import (
     LoadWithTorchaudioDebug,
     LoadWebm,
     SkipCompleted,
+    numpy_to_vorbis,
 )
 
 
@@ -115,9 +115,9 @@ def run():
             "DOCKER_IMAGE_NAME"
         ]
 
-    def to_mp3(element):
+    def to_ogg(element):
         key, numpy_audio, sr = element
-        return key, numpy_to_mp3(numpy_audio, sr)
+        return key, numpy_to_vorbis(numpy_audio, sr)
 
     input_dir = known_args.match_pattern.rsplit("/", 1)[0]
 
@@ -173,7 +173,7 @@ def run():
                     output_numpy=True,
                 )
             )
-            | "CreateMp3File" >> beam.Map(to_mp3)
+            | "CreateOGGFile" >> beam.Map(to_ogg)
             | "PersistFile" >> beam.Map(write_file)
         )
 
