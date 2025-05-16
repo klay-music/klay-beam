@@ -19,7 +19,9 @@ COPY klay_beam/submodules/klay-data ./submodules/klay-data
 
 # 3. Build the wheel _inside_ the image; no outside index needed
 RUN python3 -m pip install --no-cache-dir build pipdeptree && \
-    python3 -m build --wheel ./submodules/klay-data -o /tmp/klay-data-wheel
+    python3 -m build --wheel ./submodules/klay-data -o ./klay-data-wheel
 
 # 2) install klay_data FROM THAT WHEEL ONLY  ─────────────────────────────
-RUN python3 -m pip install --no-cache-dir --find-links=/tmp/klay-data-wheel klay_data
+RUN python3 -m pip install --no-cache-dir --find-links=./klay-data-wheel 'klay_data[torch]'
+
+RUN python3 -m pipdeptree
