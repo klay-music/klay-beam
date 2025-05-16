@@ -18,8 +18,8 @@ RUN apt-get update -qq && \
 COPY klay_beam/submodules/klay-data ./submodules/klay-data
 
 # 3. Build the wheel _inside_ the image; no outside index needed
-RUN pip install --no-cache-dir build && \
-    python -m build --wheel ./submodules/klay-data -o /tmp/klay-data-wheel
+RUN python3 -m pip install --no-cache-dir build pipdeptree && \
+    python3 -m build --wheel ./submodules/klay-data -o /tmp/klay-data-wheel
 
 # 2) install klay_data FROM THAT WHEEL ONLY  ─────────────────────────────
-RUN pip install --find-links=/tmp/klay-data-wheel klay_data
+RUN python3 -m pip install --no-cache-dir --find-links=/tmp/klay-data-wheel klay_data
