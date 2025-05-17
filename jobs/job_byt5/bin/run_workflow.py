@@ -37,6 +37,14 @@ def parse_args():
         """,
     )
 
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="""
+        If set, the pipeline will overwrite existing files in the output directory.
+        """,
+    )
+
     return parser.parse_known_args(None)
 
 
@@ -81,7 +89,8 @@ def run():
                 SkipCompleted(
                     old_suffix=extract_fn.whisper_suffix,
                     new_suffix=extract_fn.suffix,
-                    check_timestamp=False,
+                    check_timestamp=True,
+                    overwrite=known_args.overwrite,
                 )
             )
             # ReadMatches produces a PCollection of ReadableFile objects
