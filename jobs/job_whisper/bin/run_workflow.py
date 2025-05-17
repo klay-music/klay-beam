@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument(
         "--audio_suffix",
         required=True,
-        choices=[".mp3", ".wav", ".aif", ".aiff", ".webm"],
+        choices=[".mp3", ".wav", ".aif", ".aiff", ".webm", ".ogg"],
         help="""
         Which audio file extension to search for when scanning input dir?
         """,

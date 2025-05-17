@@ -68,7 +68,7 @@ def parse_args():
     parser.add_argument(
         "--audio_suffix",
         required=True,
-        choices=[".mp3", ".wav", ".aif", ".aiff", ".webm"],
+        choices=[".mp3", ".wav", ".aif", ".aiff", ".webm", ".ogg"],
         help="""
         Which audio file extension is being used? This is also the
         audio file extension that will be replaced with the new
@@ -152,7 +152,7 @@ def run():
             )
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
-            | "LoadAudio" >> beam.ParDo(LoadWithTorchaudio())
+            | "LoadAudio" >> beam.ParDo(load_audio_fn)
             | "CropAudio" >> beam.ParDo(CropAudioGTDuration(known_args.max_duration))
         )
 

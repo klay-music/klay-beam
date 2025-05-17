@@ -8,6 +8,8 @@ import logging
 import numpy as np
 from pathlib import Path
 import re
+import subprocess
+import sys
 import time
 from typing import Tuple
 import torchaudio
@@ -128,8 +130,10 @@ class SeparateSources(beam.DoFn):
         durationSeconds = sample_count / sr
 
         if channel_count != 2:
-            logging.info(f"Converting from {channel_count} channel(s) to stereo: {key}")
-            audio_tensor = convert_audio(audio_tensor, sr, 44_100, 2)
+            logging.error(
+                f"Expected stereo audio. Found {channel_count} channels. ({key})"
+            )
+            return []
 
         input_filename = move(key, self.source_dir, self.target_dir)
 
@@ -195,30 +199,6 @@ class FilterVocalAudio(beam.DoFn):
                 f"Skipping {file_metadata.path} because it does not contain vocals."
             )
             return []
-
-
-def create_new_filenames(input_filename: str, stem_groups: list[str]) -> dict[str, str]:
-    stem_groups = sorted(stem_groups)
-    parts = input_filename.split(".")
-    new_filenames = {}
-
-    if len(parts) == 2:
-        # example input: 00012_01_clip.mp3
-        name, _ = parts
-
-        for stem_group in stem_groups:
-            new_filenames[stem_group] = f"{name}.{stem_group}.mp3"
-    elif len(parts) == 5:
-        # example input: 00012_01_clip.0.source.stem.mp3
-        name, orig_idx, orig_stem_group, _, _ = parts
-
-        for i, stem_group in enumerate(stem_groups):
-            idx = int(orig_idx) + i + 1
-            new_filenames[stem_group] = f"{name}.{idx}.{stem_group}.stem.mp3"
-    else:
-        raise ValueError(f"Invalid input filename: {input_filename}")
-
-    return new_filenames
 
 
 class LoadNpy(beam.DoFn):
@@ -523,3 +503,44 @@ class LoadWebm(beam.DoFn):
             f"Loaded {duration:.4f}s, {audio.shape[0]}-channel audio  ↪  {path}"
         )
         yield readable_file.metadata.path, audio, sr
+
+
+def numpy_to_vorbis(audio: np.ndarray, sr: int, q: float = 2.0) -> io.BytesIO:
+    ch = audio.shape[0]
+    raw = audio.T.astype(np.float32, copy=False).tobytes()
+    cmd = [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-f",
+        "f32le",
+        "-ar",
+        str(sr),
+        "-ac",
+        str(ch),
+        "-i",
+        "pipe:0",
+        "-vn",
+        # vorbis is experimental so we need to use -strict -2
+        "-c:a",
+        "vorbis",
+        "-strict",
+        "-2",
+        "-q:a",
+        str(q),
+        "-f",
+        "ogg",
+        "pipe:1",
+    ]
+    try:
+        res = subprocess.run(
+            cmd, input=raw, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+        )
+    except subprocess.CalledProcessError as exc:
+        sys.stderr.write(exc.stderr.decode(errors="ignore"))
+        raise
+
+    buf = io.BytesIO(res.stdout)
+    buf.seek(0)
+    return buf
