@@ -11,7 +11,7 @@ dependencies = [
   "build",
   "boto3",
   "numpy<2",
-  "klay_beam==0.14.4",
+  "klay_beam==0.14.6",
   "apache_beam[gcp]==2.64.0",
   "mosaicml-streaming",
 ]
