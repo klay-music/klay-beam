@@ -1,0 +1,12 @@
+name: job-mds
+
+channels:
+  - defaults
+
+dependencies:
+  - python=3.10
+  - pip
+
+  - pip:
+    - -e '../../../klay_beam/submodules/klay-data'
+    - -e '..[code-style, tests, type-check]'
