@@ -66,26 +66,25 @@ RUN find -name '*.a' -delete && \
 FROM python:${PY_VERSION}-slim-bookworm
 
 # Install necessary system packages
-RUN apt-get update -qq && \
-  DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y --no-install-recommends \
-  git git-lfs build-essential
-
-# remove distro’s 1.3.6 before installing ours
-RUN apt-get purge -y 'libvorbis[0-9]*' 'libogg[0-9]*' || true
+# - make sure the tool-chain and runtime are at their newest Bookworm versions
+# - core build tool-chain + audio libs
 ARG SNDFILE_VER=1.2.2
-
-# Install soundfile
-RUN apt-get install -y --no-install-recommends \
-  libogg-dev libvorbis-dev libopus-dev libflac-dev \
-  pkg-config autoconf automake libtool wget build-essential \
-  && cd /tmp \
-  && wget -qO- https://github.com/libsndfile/libsndfile/releases/download/${SNDFILE_VER}/libsndfile-${SNDFILE_VER}.tar.xz | tar -xJ \
-  && cd libsndfile-${SNDFILE_VER} \
-  && ./configure --enable-broadcaster --enable-external-libs --disable-static \
-  && make -j$(nproc) && make install \
-  && ldconfig \
-  && cd / && rm -rf /tmp/libsndfile*
+RUN set -eux; \
+    apt-get update && \
+    apt-get -y dist-upgrade && \
+    apt-get install -y --no-install-recommends \
+      gcc g++ libstdc++6 \
+        libogg-dev libvorbis-dev libopus-dev libflac-dev \
+        pkg-config autoconf automake libtool wget build-essential ca-certificates && \
+    strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep -q 'GLIBCXX_3.4.29' && \
+    cd /tmp && \
+    wget -qO- https://github.com/libsndfile/libsndfile/releases/download/${SNDFILE_VER}/libsndfile-${SNDFILE_VER}.tar.xz \
+      | tar -xJ && \
+    cd libsndfile-${SNDFILE_VER} && \
+    ./configure --enable-broadcaster --enable-external-libs --disable-static && \
+    make -j"$(nproc)" && make install && \
+    ldconfig && \
+    cd / && rm -rf /tmp/libsndfile*
 
 ARG PY_VERSION
 ARG BEAM_VERSION
