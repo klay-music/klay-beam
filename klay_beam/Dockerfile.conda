@@ -62,8 +62,8 @@ RUN find -name '*.a' -delete && \
 # ---------------------------------------------
 # Stage 2: Runtime Environment
 # ---------------------------------------------
-# python:3.10-slim-bullseye comes from debian-11-slim (bullseye)
-FROM python:${PY_VERSION}-slim-bullseye
+# python:3.10-slim-bullseye comes from debian-12-slim (bookworm)
+FROM python:${PY_VERSION}-slim-bookworm
 
 # Install necessary system packages
 RUN apt-get update -qq && \
