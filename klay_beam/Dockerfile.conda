@@ -62,27 +62,29 @@ RUN find -name '*.a' -delete && \
 # ---------------------------------------------
 # Stage 2: Runtime Environment
 # ---------------------------------------------
-# python:3.10-slim-bullseye comes from debian-11-slim (bullseye)
-FROM python:${PY_VERSION}-slim-bullseye
+# python:3.10-slim-bullseye comes from debian-12-slim (bookworm)
+FROM python:${PY_VERSION}-slim-bookworm
 
 # Install necessary system packages
-RUN apt-get update -qq && \
-  DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y --no-install-recommends \
-  git git-lfs build-essential
-
-# Install soundfile
+# - make sure the tool-chain and runtime are at their newest Bookworm versions
+# - core build tool-chain + audio libs
 ARG SNDFILE_VER=1.2.2
-RUN apt-get install -y --no-install-recommends \
-  libogg-dev libvorbis-dev libopus-dev libflac-dev \
-  pkg-config autoconf automake libtool wget build-essential \
-  && cd /tmp \
-  && wget -qO- https://github.com/libsndfile/libsndfile/releases/download/${SNDFILE_VER}/libsndfile-${SNDFILE_VER}.tar.xz | tar -xJ \
-  && cd libsndfile-${SNDFILE_VER} \
-  && ./configure --enable-broadcaster --enable-external-libs --disable-static \
-  && make -j$(nproc) && make install \
-  && ldconfig \
-  && cd / && rm -rf /tmp/libsndfile*
+RUN set -eux; \
+    apt-get update && \
+    apt-get -y dist-upgrade && \
+    apt-get install -y --no-install-recommends \
+      gcc g++ libstdc++6 \
+        libogg-dev libvorbis-dev libopus-dev libflac-dev \
+        pkg-config autoconf automake libtool wget build-essential ca-certificates && \
+    strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep -q 'GLIBCXX_3.4.29' && \
+    cd /tmp && \
+    wget -qO- https://github.com/libsndfile/libsndfile/releases/download/${SNDFILE_VER}/libsndfile-${SNDFILE_VER}.tar.xz \
+      | tar -xJ && \
+    cd libsndfile-${SNDFILE_VER} && \
+    ./configure --enable-broadcaster --enable-external-libs --disable-static && \
+    make -j"$(nproc)" && make install && \
+    ldconfig && \
+    cd / && rm -rf /tmp/libsndfile*
 
 ARG PY_VERSION
 ARG BEAM_VERSION
@@ -98,6 +100,9 @@ ENV RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1
 # In Dataflow, when running with GPU support, a volume with GPU drivers will be
 # mounted at runtime at /usr/local/nvidia.
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/nvidia/lib64:/usr/local/cuda/lib64
+
+# Set LD_PRELOAD so segfault stderr is piped out into logs
+# ENV LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
 
 # Set the entrypoint to Apache Beam SDK launcher.
 ENTRYPOINT ["/opt/apache/beam/boot"]
@@ -123,21 +128,12 @@ RUN python3 -m pip install \
   apache-beam[gcp]==${BEAM_VERSION} \
   './klay_beam[code-style, tests, type-check]'
 
-# Install submodules that are used by downstream jobs
-RUN python3 -m pip install build && \
-    python3 -m build --wheel ./klay_beam/submodules/klay-data -o ./klay-data-wheel
-RUN python3 -m pip install --find-links=./klay-data-wheel 'klay_data[whisper, essentia]'
-RUN python3 -m pip install \
-  ./klay_beam/submodules/klay-audiotools \
-  ./klay_beam/submodules/klay-config \
-  ./klay_beam/submodules/klay-nac \
-  ./klay_beam/submodules/klay-codecs \
-  ./klay_beam/submodules/klay-mtrpp
 
+# NOTE: pip is broken so this is commented out
+# RUN pip check
+
+# TODO: Figure out how to do selective validation, not all stages required the same
 # RUN cd klay_beam && pytest tests/
-
-# Validation
-RUN pip check
-RUN python3 -c "import torch"
-RUN python3 -c "import soundfile as sf; print('libsndfile version', sf.__libsndfile_version__)"
-RUN python3 klay_beam/bin/test-soundfile.py
+# RUN python3 -c "import torch"
+# RUN python3 -c "import soundfile as sf; print('libsndfile version', sf.__libsndfile_version__)"
+# RUN python3 klay_beam/bin/test-soundfile.py

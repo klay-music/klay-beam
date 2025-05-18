@@ -1,4 +1,4 @@
-name: klay-beam-py3.10-torch2.0
+name: klay-beam
 
 channels:
   - defaults
@@ -7,7 +7,7 @@ dependencies:
   - pip
   - python=3.10
   - numpy>=1.26,<2
-  - pytorch::pytorch=2.5.1=py3.10_cpu_0
+  - pytorch::pytorch=2.1=py3.10_cpu_0
   - pytorch::torchaudio>=2
   - pytorch::torchvision
   - conda-forge::ffmpeg>4.2,<5

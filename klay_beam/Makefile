@@ -12,6 +12,8 @@ pre-test: code-style type-check
 tests:
 	pytest tests/
 
-# Make .lock files when the corresponding .yml file changes
-%.lock : %.yml
-	./make-conda-lock-file.sh $<
+conda-lock-all:
+	for file in environment/*.yml; do \
+		conda-lock --kind explicit -f $${file} -p linux-64 \
+		&& mv conda-linux-64.lock $${file%.yml}.lock; \
+	done
