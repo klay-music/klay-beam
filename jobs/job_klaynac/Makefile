@@ -53,5 +53,4 @@ run-dataflow:
 	--match_suffix=$(match_suffix) \
 	--model_type=continuous \
 	--audio_suffix=$(audio_suffix) \
-	--number_of_worker_harness_threads=1 \
-	--overwrite
+	--number_of_worker_harness_threads=1

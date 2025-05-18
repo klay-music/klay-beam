@@ -2,6 +2,24 @@
 
 Neural audio encoding with KlayNAC or KlayNACVAE.
 
+# Usage
+```
+# Running locally / debugging
+make run-local \
+    source_audio_path=gs://path/to/src_dir \
+    audio_suffix=.ogg \
+    match_suffix=.ogg
+
+# Running on GCP Dataflow
+make run-dataflow \
+    max_num_workers=10 \
+    job_name=job-klaynac \
+    source_audio_path=gs://path/to/src_dir \
+    audio_suffix=.ogg \
+    match_suffix=.ogg
+```
+
+
 # Development
 ## Quick Start
 Install dependencies (we highly recommend creating and activating a virtual
