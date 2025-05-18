@@ -24,15 +24,15 @@ make run-dataflow:
 	    --project klay-training \
 	    --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
 	    --region us-central1 \
-	    --autoscaling_algorithm THROUGHPUT_BASED \
+			--flexrs_goal=COST_OPTIMIZED \
 	    --experiments use_runner_v2,no_use_multiple_sdk_containers \
 	    --sdk_location container \
 	    --temp_location gs://klay-beam-scratch-storage/tmp/extract-essentia/ \
-	    --machine_type n4-standard-4 \
-	    --number_of_worker_harness_threads=6 \
+	    --machine_type t2d-standard-2 \
+	    --number_of_worker_harness_threads=3 \
 	    --setup_file ./setup.py \
 	    --src_dir $(src_dir) \
 	    --audio_suffix $(audio_suffix) \
 	    --features $(features) \
 	    --job_name $(job_name) \
-	    --max_num_workers $(max_num_workers) \
+	    --max_num_workers $(max_num_workers)
