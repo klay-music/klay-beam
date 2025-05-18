@@ -1,6 +1,25 @@
-# job_transcode
+# job_shard
 
-Copy files from one GCS location to another.
+Transcode files between different audio formats.
+
+# Usage
+```
+# Running locally / debugging
+make run-local \
+    src_dir=gs://path/to/src_dir \
+    audio_suffix=.webm \
+    target_audio_suffix=.ogg \
+    target_sample_rate=48000
+
+# Running on GCP Dataflow
+make run-dataflow \
+    max_num_workers=10 \
+    job_name=job-transcode \
+    src_dir=gs://path/to/src_dir \
+    audio_suffix=.webm \
+    target_audio_suffix=.ogg \
+    target_sample_rate=48000
+```
 
 # Development
 ## Quick Start
