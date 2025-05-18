@@ -1,12 +1,11 @@
-name: klaynac-dev
+name: job-klaynac
 
 channels:
   - defaults
-  - conda-forge
 
 dependencies:
   - python=3.10
-  - numpy=1.23
+  - numpy=>1.23,<2
   - conda-forge::ffmpeg>=4.2,<5
   - pytorch::pytorch>=2=py3.10_cuda12.1_cudnn8.9.2_0
   - pytorch::torchaudio
@@ -14,8 +13,8 @@ dependencies:
   - nvidia::cuda-toolkit>=12
 
   - pip:
-    - -e '../submodules/klay-codecs/submodules/klay-nac/submodules/klay-data/submodules/klay-audiotools'
-    - -e '../submodules/klay-codecs/submodules/klay-nac[type-check, code-style, tests]'
-    - -e '../submodules/klay-codecs/submodules/klay-nac/submodules/klay-config'
-    - -e '../submodules/klay-codecs[code-style, tests, type-check]'
+    - -e '../../../klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-data/submodules/klay-audiotools'
+    - -e '../../../klay_beam/submodules/klay-codecs/submodules/klay-nac[type-check, code-style, tests]'
+    - -e '../../../klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-config'
+    - -e '../../../klay_beam/submodules/klay-codecs[code-style, tests, type-check]'
     - -e '..[code-style, tests, type-check]'
