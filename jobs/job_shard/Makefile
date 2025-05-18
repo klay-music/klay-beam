@@ -21,7 +21,7 @@ run-local:
 		--suffixes $(suffixes) \
 		--num_files_per_shard $(num_files_per_shard) \
 		--max_dataset_size $(max_dataset_size) \
-		--min_shard_idx $(min_shard_idx) \
+		--min_shard_idx 0
 
 run-dataflow:
 	python bin/run_workflow.py \
@@ -33,7 +33,7 @@ run-dataflow:
     --experiments use_runner_v2,no_use_multiple_sdk_containers \
     --sdk_location container \
     --temp_location gs://klay-beam-scratch-storage/tmp/job_copy/ \
-    --machine_type n2-standard-4 \
+    --machine_type n4-standard-2 \
     --setup_file ./setup.py \
 		--number_of_worker_harness_threads 32 \
     --max_num_workers $(max_num_workers) \
@@ -44,4 +44,4 @@ run-dataflow:
 		--suffixes $(suffixes) \
 		--num_files_per_shard $(num_files_per_shard) \
 		--max_dataset_size $(max_dataset_size) \
-		--min_shard_idx $(min_shard_idx) \
+		--min_shard_idx 0

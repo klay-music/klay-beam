@@ -156,6 +156,15 @@ def run():
     if known_args.max_dataset_size < known_args.num_files_per_shard:
         known_args.num_files_per_shard = known_args.max_dataset_size
 
+    # Check if a shard already exists in the destination directory
+    if known_args.dest_dir:
+        shard_files = FileSystems.match([f"{known_args.dest_dir}/shard-*"])
+        if shard_files:
+            raise ValueError(
+                "Destination directory already contains shard files. "
+                "Please choose a different destination directory."
+            )
+
     # Fully-qualified glob for MatchFiles
     src_root = known_args.src_dir.rstrip("/") + "/"
     match_pattern = src_root + f"**{known_args.audio_suffix}"
@@ -164,20 +173,7 @@ def run():
         # -------------------------------------------------------------- #
         # 1. Find candidate audio files, skip the ones already copied
         # -------------------------------------------------------------- #
-        audio_files = (
-            p
-            | beam_io.MatchFiles(match_pattern)
-            | beam.Reshuffle()
-            | "SkipCompleted"
-            >> beam.ParDo(
-                SkipCompleted(
-                    old_suffix=known_args.audio_suffix,
-                    new_suffix=known_args.suffixes,
-                    source_dir=src_root,
-                    target_dir=known_args.dest_dir,
-                )
-            )
-        )
+        audio_files = p | beam_io.MatchFiles(match_pattern) | beam.Reshuffle()
 
         # -------------------------------------------------------------- #
         # 2. Optionally cap the data set size (first N elements)
