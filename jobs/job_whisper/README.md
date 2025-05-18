@@ -2,6 +2,30 @@
 
 Beam job for extracting lyrics from audio.
 
+# Usage
+
+The commands used for running the workflow are defined in the `Makefile`.
+- `make run-local` is used to run the job locally. This is useful for debugging.
+- `make run-dataflow` is used to run the job on the cloud using Dataflow.
+
+For example:
+
+```sh
+# Run workflow locally
+make run-local \
+  match_pattern="gs://klay-datasets-test/**.vocals.ogg" \
+  audio_suffix=.ogg
+
+# Run workflow on Dataflow
+make run-dataflow \
+    job_name=job-whisper \
+    max_num_workers=10 \
+    match_pattern="gs://klay-datasets-test/**.vocals.ogg" \
+    audio_suffix=.ogg
+```
+
+
+
 # Development
 ## Quick Start
 Install dependencies (we highly recommend creating and activating a virtual
