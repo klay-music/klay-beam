@@ -34,14 +34,14 @@ run-dataflow:
     --project klay-training \
     --service_account_email dataset-dataflow-worker@klay-training.iam.gserviceaccount.com \
     --region us-central1 \
-    --autoscaling_algorithm THROUGHPUT_BASED \
+		--flexrs_goal=COST_OPTIMIZED \
     --experiments use_runner_v2,no_use_multiple_sdk_containers \
     --sdk_location=container \
     --temp_location gs://klay-beam-scratch-storage/tmp/byt5/ \
     --machine_type t2d-standard-2 \
 		--disk_size_gb 50 \
     --setup_file ./setup.py \
-	--number_of_worker_harness_threads=2 \
+	--number_of_worker_harness_threads=4 \
     --job_name $(job_name) \
 	--max_num_workers $(max_num_workers) \
 	--match_pattern $(match_pattern)
