@@ -36,9 +36,9 @@ run-dataflow:
     --temp_location gs://klay-beam-scratch-storage/tmp/whisper/ \
     --machine_type g2-standard-4 \
     --dataflow_service_options "worker_accelerator=type:nvidia-l4;count:1;install-nvidia-driver" \
-    --disk_size_gb 50 \
+    --disk_size_gb 60 \
     --setup_file ./setup.py \
-	--number_of_worker_harness_threads=2 \
+	--number_of_worker_harness_threads=1 \
     --job_name $(job_name) \
 	--max_num_workers $(max_num_workers) \
 	--audio_suffix $(audio_suffix) \
