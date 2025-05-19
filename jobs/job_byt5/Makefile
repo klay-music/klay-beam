@@ -41,7 +41,7 @@ run-dataflow:
     --machine_type t2d-standard-2 \
 		--disk_size_gb 50 \
     --setup_file ./setup.py \
-	--number_of_worker_harness_threads=4 \
+	--number_of_worker_harness_threads=2 \
     --job_name $(job_name) \
 	--max_num_workers $(max_num_workers) \
 	--match_pattern $(match_pattern)
