@@ -4,6 +4,11 @@ WORKDIR /klay/app
 
 RUN apt-get update && apt-get install git -y
 
+# ---------- cuDNN runtime for CUDA 12.1 ---------------------------
+RUN python3 -m pip install --no-cache-dir nvidia-cudnn-cu12==8.9.6.50
+ENV LD_LIBRARY_PATH=/env/lib/python3.10/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH
+ENV TORCH_DISABLE_GLOBAL_LIBS=1
+
 COPY klay_beam/submodules/klay-data ./submodules/klay-data
 RUN python3 -m pip install build && \
     python3 -m build --wheel ./submodules/klay-data -o ./klay-data-wheel
