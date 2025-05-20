@@ -14,3 +14,4 @@ COPY jobs/job_whisper ./job_whisper
 RUN python3 -m pip install ./submodules/klay-audiotools ctranslate2==4.4.0
 
 RUN python3 -c "import torch"
+RUN python3 -m "from klay_data.extractors import WhisperExtractor; WhisperExtractor()"
