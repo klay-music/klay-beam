@@ -1,4 +1,4 @@
-name: transcode-dev
+name: job-transcode
 
 channels:
   - defaults

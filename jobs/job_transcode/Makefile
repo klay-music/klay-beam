@@ -18,8 +18,7 @@ run-local:
 		--src_dir $(src_dir) \
 		--audio_suffix $(audio_suffix) \
 		--target_audio_suffix $(target_audio_suffix) \
-		--target_sample_rate $(target_sample_rate) \
-		--crop_duration $(crop_duration)
+		--target_sample_rate $(target_sample_rate)
 
 run-dataflow:
 	python bin/run_workflow.py \

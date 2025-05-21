@@ -73,7 +73,8 @@ RUN set -eux; \
     apt-get update && \
     apt-get -y dist-upgrade && \
     apt-get install -y --no-install-recommends \
-      gcc g++ libstdc++6 \
+        git \
+        gcc g++ libstdc++6 \
         libogg-dev libvorbis-dev libopus-dev libflac-dev \
         pkg-config autoconf automake libtool wget build-essential ca-certificates && \
     strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep -q 'GLIBCXX_3.4.29' && \

@@ -7,7 +7,7 @@ Create MDS datasets and copy them from one GCS location to another.
 # Running locally / debugging
 make run-local \
     src_dir=gs://path/to/src_dir \
-    dst_dir=gs://path/to/dst_dir \
+    dest_dir=gs://path/to/dst_dir \
     audio_suffix=.source.klaynacvae-0.6.2.npy \
     features=audioset_yamnet,klaynacvae,mtrpp,whisper_byt5
 
@@ -16,7 +16,7 @@ make run-dataflow \
     num_workers=10 \
     job_name=job-mds \
     src_dir=gs://path/to/src_dir \
-    dst_dir=gs://path/to/dst_dir \
+    dest_dir=gs://path/to/dst_dir \
     audio_suffix=.source.klaynacvae-0.6.2.npy \
     features=audioset_yamnet,klaynacvae,mtrpp,whisper_byt5
 ```

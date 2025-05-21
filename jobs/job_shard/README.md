@@ -7,7 +7,7 @@ Shard files and copy them from one GCS location to another.
 # Running locally / debugging
 make run-local \
     src_dir=gs://path/to/src_dir \
-    dst_dir=gs://path/to/dst_dir \
+    dest_dir=gs://path/to/dst_dir \
     audio_suffix=.mp3 \
     suffixes="'.mp3' '.json'" \
     num_files_per_shard=10 \
@@ -15,10 +15,10 @@ make run-local \
 
 # Running on GCP Dataflow
 make run-dataflow \
-    num_workers=10 \
+    max_num_workers=10 \
     job_name=job-shard \
     src_dir=gs://path/to/src_dir \
-    dst_dir=gs://path/to/dst_dir \
+    dest_dir=gs://path/to/dst_dir \
     audio_suffix=.mp3 \
     suffixes="'.mp3' '.json'" \
     num_files_per_shard=10 \

@@ -20,8 +20,8 @@ make run-local \
 make run-dataflow \
     job_name=job-demucs-mystic-fox-full-test \
     max_num_workers=100 \
-    match_pattern="gs://klay-datasets-test-000/mystic-fox-full/1**.source.stem.mp3" \
-    audio_suffix=.source.stem.mp3
+    match_pattern="gs://klay-datasets-test/**.source.ogg" \
+    audio_suffix=.ogg
 ```
 
 ## Common Issues

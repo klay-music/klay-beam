@@ -96,8 +96,7 @@ def run():
         ]
 
     # Fully-qualified glob for MatchFiles
-    # src_root = known_args.src_dir.rstrip("/") + "/"
-    src_root = known_args.src_dir
+    src_root = known_args.src_dir.rstrip("/") + "/"
     match_pattern = src_root + f"**{known_args.audio_suffix}"
     logging.info(f"{match_pattern=}")
 
