@@ -77,15 +77,23 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--max_duration",
-        required=False,
-        default=300.0,
+        "--window_duration",
+        default=205.0,
         type=float,
         help="""
-        To avoid out-of-memory errors you can specify a max_duration for audio
-        files. We skip any files greater than this duration
+        The window duration in seconds. This is used for the sliding window.
         """,
     )
+
+    parser.add_argument(
+        "--hop_duration",
+        default=200.0,
+        type=float,
+        help="""
+        The hop duration in seconds. This is used for the sliding window.
+        """,
+    )
+
     parser.add_argument(
         "--overwrite",
         action="store_true",
@@ -125,6 +133,8 @@ def run():
     extract_fn = ExtractKlayNAC(
         audio_suffix=known_args.audio_suffix,
         extract_tokens=known_args.model_type == "discrete",
+        window_duration=known_args.window_duration,
+        hop_duration=known_args.hop_duration,
     )
     logging.info(f"Processing audio files from {match_pattern}.")
 
@@ -155,7 +165,6 @@ def run():
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(load_audio_fn)
-            | "CropAudio" >> beam.ParDo(CropAudioGTDuration(known_args.max_duration))
         )
 
         npy = (
