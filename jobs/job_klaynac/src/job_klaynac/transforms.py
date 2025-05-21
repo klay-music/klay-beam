@@ -91,6 +91,9 @@ class ExtractKlayNAC(beam.DoFn):
         # Ensure that we are naming the file correctly.
         output_filename = remove_suffix(key, self.audio_suffix)
         output_filename += self.suffix
+        if self._device != torch.device("cpu"):
+            x = x.to(self._device)
+
         logging.info(
             f"Processing audio with shape ({x.shape}): {output_filename} on {self._device}"
         )
