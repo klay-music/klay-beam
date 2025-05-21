@@ -17,6 +17,7 @@ from klay_beam.transforms import (
     SkipCompleted,
     write_file,
     numpy_to_file,
+    LoadWebm,
 )
 
 from klay_beam.torch_transforms import (
@@ -27,7 +28,6 @@ from klay_beam.torch_transforms import (
 from job_klaynac.transforms import (
     ExtractKlayNAC,
     CropAudioGTDuration,
-    LoadWebm,
 )
 
 
@@ -77,15 +77,23 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--max_duration",
-        required=False,
-        default=300.0,
+        "--window_duration",
+        default=195.0,
         type=float,
         help="""
-        To avoid out-of-memory errors you can specify a max_duration for audio
-        files. We skip any files greater than this duration
+        The window duration in seconds. This is used for the sliding window.
         """,
     )
+
+    parser.add_argument(
+        "--hop_duration",
+        default=190.0,
+        type=float,
+        help="""
+        The hop duration in seconds. This is used for the sliding window.
+        """,
+    )
+
     parser.add_argument(
         "--overwrite",
         action="store_true",
@@ -125,11 +133,15 @@ def run():
     extract_fn = ExtractKlayNAC(
         audio_suffix=known_args.audio_suffix,
         extract_tokens=known_args.model_type == "discrete",
+        window_duration=known_args.window_duration,
+        hop_duration=known_args.hop_duration,
     )
     logging.info(f"Processing audio files from {match_pattern}.")
 
     # Instantiate load_audio_fn
-    load_audio_fn = LoadWebm() if known_args.audio_suffix == ".webm" else LoadWithTorchaudio()
+    load_audio_fn = (
+        LoadWebm() if known_args.audio_suffix == ".webm" else LoadWithTorchaudio()
+    )
 
     # Run pipeline
     with beam.Pipeline(argv=pipeline_args, options=pipeline_options) as p:
@@ -153,7 +165,6 @@ def run():
             # ReadMatches produces a PCollection of ReadableFile objects
             | beam_io.ReadMatches()
             | "LoadAudio" >> beam.ParDo(load_audio_fn)
-            | "CropAudio" >> beam.ParDo(CropAudioGTDuration(known_args.max_duration))
         )
 
         npy = (
