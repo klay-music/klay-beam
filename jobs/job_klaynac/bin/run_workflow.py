@@ -78,7 +78,7 @@ def parse_args():
 
     parser.add_argument(
         "--window_duration",
-        default=185.0,
+        default=195.0,
         type=float,
         help="""
         The window duration in seconds. This is used for the sliding window.
@@ -87,7 +87,7 @@ def parse_args():
 
     parser.add_argument(
         "--hop_duration",
-        default=180.0,
+        default=190.0,
         type=float,
         help="""
         The hop duration in seconds. This is used for the sliding window.
