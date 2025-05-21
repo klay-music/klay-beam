@@ -139,7 +139,7 @@ def test_make_fade_curves_b():
 @pytest.mark.parametrize("idx,total", [(0, 3), (1, 3), (2, 3), (0, 1)])
 def test_make_envelope_edges(idx, total):
     win_len, ov = 10, 4
-    env = make_envelope(idx, total, win_len, ov, torch.device("cpu"))[:, 0]
+    env = make_envelope(idx, total, win_len, ov, torch.device("cpu"))[0, :]
 
     # first window: leading ones
     if idx == 0:
@@ -158,7 +158,7 @@ def test_make_envelope_edges(idx, total):
 
 
 def test_make_frames_T_lt_window_length():
-    audio = torch.zeros(10, 2)
+    audio = torch.zeros(2, 10)
     win_len = 20
     hop = 5
     got = make_frames(audio, win_len, hop)
@@ -174,12 +174,12 @@ def test_make_frames_T_lt_window_length():
     ],
 )
 def test_make_frames_shapes(total_len, win_len, hop):
-    audio = torch.zeros(total_len, 2)
+    audio = torch.zeros(2, total_len)
     frames = make_frames(audio, win_len, hop)
     for fr in frames:
-        assert fr.shape == (win_len, 2)
+        assert fr.shape == (2, win_len)
     # last window shorter than overlap should be dropped
-    if total_len - (frames[-1].shape[0] + (len(frames) - 1) * hop) < (win_len - hop):
+    if total_len - (frames[-1].shape[1] + (len(frames) - 1) * hop) < (win_len - hop):
         # ensured by function logic
         pass
 
@@ -188,13 +188,13 @@ def test_make_frames_shapes(total_len, win_len, hop):
 def test_overlap_add_constant_reconstruction(win_len, hop, n_frames):
     D = 1
     total = hop * (n_frames - 1) + win_len
-    frames = [torch.ones(win_len, D) for _ in range(n_frames)]
+    frames = [torch.ones(D, win_len) for _ in range(n_frames)]
     out = overlap_add(frames, hop, total)
-    assert out.shape == (total, D)
+    assert out.shape == (D, total)
     assert torch.allclose(out, torch.ones_like(out), atol=1e-6)
 
 
 def test_overlap_add_mismatched_length_raises():
     with pytest.raises(Exception):
-        a = [torch.zeros(8, 1), torch.zeros(7, 1)]  # diff length
+        a = [torch.zeros(1, 8), torch.zeros(1, 7)]  # diff length
         overlap_add(a, 6, 20)

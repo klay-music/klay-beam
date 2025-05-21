@@ -120,7 +120,9 @@ class ExtractKlayNAC(beam.DoFn):
                 output_array = overlap_add(
                     embed_frames,
                     hop_length=self.embed_hop_length,
-                    total_length=x.shape[-1],
+                    total_length=int(
+                        ((x.shape[-1] / source_sr) * self.nac.config.frame_rate)
+                    ),
                 )
 
                 if self._device != torch.device("cpu"):
@@ -167,19 +169,19 @@ def secs_to_samples(seconds: float, rate: int) -> int:
 def make_frames(audio: Tensor, window_length: int, hop_length: int) -> list[Tensor]:
     """Slice audio into overlapping windows of size *hop*.
 
-    The dimensions of each frame are (T, D), where T is the number of samples in the window.
+    The dimensions of each frame are (D, T), where T is the number of samples in the window.
 
     Args:
-        audio: Tensor of shape (T, D) to be sliced into windows.
+        audio: Tensor of shape (D, T) to be sliced into windows.
         hop: Size of each window in samples.
     """
-    T, _ = audio.shape
+    _, T = audio.shape
 
     if T < window_length:
         return [audio]
 
     starts = list(range(0, T - window_length + 1, hop_length))
-    windows = list([audio[s : s + window_length] for s in starts])
+    windows = list([audio[:, s : s + window_length] for s in starts])
 
     overlap = window_length - hop_length
     if len(windows[-1]) < overlap:
@@ -189,19 +191,19 @@ def make_frames(audio: Tensor, window_length: int, hop_length: int) -> list[Tens
 
 
 def overlap_add(tensors: list[Tensor], hop_length: int, total_length: int) -> Tensor:
-    """Linear overlap add along the *time* axis of tensors shaped (T,D) with asymmetric ramps.
+    """Linear overlap add along the *time* axis of tensors shaped (D, T) with asymmetric ramps.
 
     Args:
-        tensors: List of tensors to be overlapped and added, each shaped (T, D).
+        tensors: List of tensors to be overlapped and added, each shaped (D, T).
         hop: Size of each window in samples.
     """
     if len(tensors) == 1:
         return tensors[0]
 
-    window_length, D = tensors[0].shape
+    D, window_length = tensors[0].shape
     overlap = window_length - hop_length
 
-    out = torch.zeros(total_length, D, device=tensors[0].device)
+    out = torch.zeros(D, total_length, device=tensors[0].device)
 
     for idx, frame in enumerate(tensors):
         envelope = make_envelope(
@@ -209,7 +211,7 @@ def overlap_add(tensors: list[Tensor], hop_length: int, total_length: int) -> Te
         )
         start = idx * hop_length
         end = start + window_length
-        out[start:end] += frame * envelope
+        out[:, start:end] += frame * envelope
 
     return out
 
@@ -227,7 +229,7 @@ def make_envelope(
         device: Device on which to create the tensor.
 
     Returns:
-        A tensor of shape (length, 1) representing the envelope for the current frame.
+        A tensor of shape (1, length) representing the envelope for the current frame.
     """
     fade_in, fade_out = make_fade_curves(overlap, device)
     w = torch.ones(length, device=device)
@@ -239,7 +241,7 @@ def make_envelope(
         # not last → ramp down
         w[-overlap:] = fade_out
 
-    return w.unsqueeze(1)
+    return w.unsqueeze(0)
 
 
 def make_fade_curves(overlap: int, device: torch.device) -> tuple[Tensor, Tensor]:
