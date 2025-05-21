@@ -18,11 +18,15 @@ from job_klaynac.transforms import (
 
 
 @mock.patch("job_klaynac.transforms.DUMMY_MODE", new_value=True)
-def test_ExtractKlayNACVAE(mock_dummy_mode):
+@pytest.mark.parametrize(
+    "duration, window_duration, hop_duration",
+    [
+        (4, 3, 2),
+        (5, 2, 1),
+    ],
+)
+def test_ExtractKlayNACVAE(mock_dummy_mode, duration, window_duration, hop_duration):
     # Create an pseudo audio element with one second of 48kHz audio.
-    duration = 4
-    window_duration = 2
-    hop_duration = 1
     sample_rate = 48_000
     num_channels = 2
     embed_dim = 128
@@ -176,8 +180,12 @@ def test_make_frames_T_lt_window_length():
 def test_make_frames_shapes(total_len, win_len, hop):
     audio = torch.zeros(2, total_len)
     frames = make_frames(audio, win_len, hop)
-    for fr in frames:
-        assert fr.shape == (2, win_len)
+    for i, fr in enumerate(frames):
+        if i == len(frames) - 1:
+            assert fr.shape[1] <= win_len
+        else:
+            assert fr.shape[1] == win_len
+
     # last window shorter than overlap should be dropped
     if total_len - (frames[-1].shape[1] + (len(frames) - 1) * hop) < (win_len - hop):
         # ensured by function logic

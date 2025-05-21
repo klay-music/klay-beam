@@ -116,6 +116,9 @@ class ExtractKlayNAC(beam.DoFn):
 
                     embed_frames.append(embeds[0].detach().cpu())
 
+                if not embed_frames:
+                    raise ValueError("No frames were extracted.")
+
                 # Overlap-add the frames
                 output_array = overlap_add(
                     embed_frames,
@@ -180,11 +183,11 @@ def make_frames(audio: Tensor, window_length: int, hop_length: int) -> list[Tens
     if T < window_length:
         return [audio]
 
-    starts = list(range(0, T - window_length + 1, hop_length))
+    starts = np.arange(0, T, hop_length).tolist()
     windows = list([audio[:, s : s + window_length] for s in starts])
 
     overlap = window_length - hop_length
-    if len(windows[-1]) < overlap:
+    if windows[-1].shape[-1] < overlap:
         # If the last window is shorter than the overlap, we drop the last window
         windows = windows[:-1]
     return windows
@@ -202,12 +205,16 @@ def overlap_add(tensors: list[Tensor], hop_length: int, total_length: int) -> Te
 
     D, window_length = tensors[0].shape
     overlap = window_length - hop_length
-
     out = torch.zeros(D, total_length, device=tensors[0].device)
 
     for idx, frame in enumerate(tensors):
+        if frame.shape[-1] != window_length:
+            envelope_length = frame.shape[-1]
+        else:
+            envelope_length = window_length
+
         envelope = make_envelope(
-            idx, len(tensors), window_length, overlap, frame.device
+            idx, len(tensors), envelope_length, overlap, frame.device
         )
         start = idx * hop_length
         end = start + window_length
