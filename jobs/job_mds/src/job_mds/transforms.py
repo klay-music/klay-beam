@@ -200,6 +200,7 @@ class WriteMDS(beam.DoFn):
             columns=self.columns,
             compression="zstd",
             hashes=["xxh3_64"],
+            size_limit=1 << 28,  # 256 MB
         )
 
     def process(self, element, *_):
