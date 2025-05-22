@@ -192,7 +192,7 @@ class WriteMDS(beam.DoFn):
     def setup(self):
         # Create a unique subfolder for this worker
         self.worker_id = str(uuid.uuid4())
-        worker_dir = os.path.join(self.dest_dir, f"worker_{self.worker_id}")
+        worker_dir = os.path.join(self.dest_dir, self.worker_id)
         os.makedirs(worker_dir, exist_ok=True)
 
         self.writer = MDSWriter(
