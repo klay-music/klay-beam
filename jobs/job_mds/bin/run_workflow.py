@@ -138,8 +138,8 @@ def run():
 
         # Print counter values
         metrics = result.metrics().query()
-        for counter in metrics['counters']:
-            logging.info(f"Counter {counter.name}: {counter.committed}")
+        for counter in metrics["counters"]:
+            logging.info(str(counter))
 
 
 if __name__ == "__main__":
