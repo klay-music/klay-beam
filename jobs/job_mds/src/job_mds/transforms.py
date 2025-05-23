@@ -8,6 +8,7 @@ import math
 import os
 import uuid
 from streaming import MDSWriter
+from time import sleep
 from typing import Any
 
 from klay_data.pipeline import (
@@ -212,6 +213,27 @@ class WriteMDS(beam.DoFn):
 
     def finish_bundle(self):
         if not self._closed:
-            logging.info(f"Finished writing MDS for worker {self.worker_id} -> finish.")
-            self.writer.finish()
+            logging.info(f"Finishing MDSWrite bundle for worker {self.worker_id}.")
+            retry_count = 0
+            while True:
+                if retry_count > 5:
+                    logging.error(
+                        f"Failed to finish MDS for worker {self.worker_id} after 5 attempts."
+                    )
+                    break
+                try:
+                    self.writer.finish()
+                except FileNotFoundError:
+                    logging.warning(
+                        f"Attempt {retry_count}: File write incomplete for worker {self.worker_id},"
+                        f" retrying in {retry_count * 10}s..."
+                    )
+                    retry_count += 1
+                    sleep(retry_count * 10)
+                except Exception as e:
+                    logging.error(
+                        f"Failed to finish MDS for worker {self.worker_id}: {e}"
+                    )
+                    break
+
             self._closed = True
