@@ -1,14 +1,14 @@
 import apache_beam as beam
 from dataclasses import dataclass
-from typing import Any
 import numpy as np
-import json
 import io
+import json
+import logging
 import math
+import os
 import uuid
 from streaming import MDSWriter
-import logging
-import os
+from typing import Any
 
 from klay_data.pipeline import (
     Pipeline,
@@ -176,6 +176,7 @@ class ProcessURI(beam.DoFn):
         except Exception as e:
             logging.error(f"Skipping {uri}: {e}")
             self.uri_processing_errors.inc()
+            return
 
 
 class WriteMDS(beam.DoFn):
@@ -186,8 +187,8 @@ class WriteMDS(beam.DoFn):
         self.columns = {
             k: v for k, v in FEATURE_MDS_TYPE.items() if k.split(".")[0] in features
         }
-        self.writer = None
         self.worker_id = None
+        self._closed = False
 
     def setup(self):
         # Create a unique subfolder for this worker
@@ -201,11 +202,16 @@ class WriteMDS(beam.DoFn):
             compression="zstd",
             hashes=["xxh3_64"],
             size_limit=1 << 28,  # 256 MB
+            max_workers=1,
         )
 
     def process(self, element, *_):
+        logging.info(f"Writing MDS for worker {self.worker_id}, element: {element}")
         self.writer.write(element)
         yield None
 
-    def teardown(self):
-        self.writer.finish()
+    def finish_bundle(self):
+        if not self._closed:
+            logging.info(f"Finished writing MDS for worker {self.worker_id} -> finish.")
+            self.writer.finish()
+            self._closed = True
