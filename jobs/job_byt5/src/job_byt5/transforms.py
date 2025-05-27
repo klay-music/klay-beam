@@ -52,6 +52,7 @@ class ExtractWhisperByT5(beam.DoFn):
         output_filepath += self.suffix
 
         # extract tokens
+        logging.info(f"Extracting ByT5 embeddings from {filepath}")
         lyrics = WhisperLyrics.from_dict(lyrics_dict)
 
         if len(lyrics) == 0:
@@ -59,7 +60,6 @@ class ExtractWhisperByT5(beam.DoFn):
 
         embeds, tokens, start_array, end_array = lyrics.to_byt5(self.extractor)
         assert embeds.shape[-1] == len(tokens) == len(start_array) == len(end_array)
-        logging.info(f"Extracted ByT5 embeddings of shape {embeds.shape} from {filepath}")
 
         yield output_filepath, {
             "byt5_embeds": embeds,
