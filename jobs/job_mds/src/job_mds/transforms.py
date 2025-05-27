@@ -1,14 +1,15 @@
 import apache_beam as beam
 from dataclasses import dataclass
-from typing import Any
 import numpy as np
-import json
 import io
+import json
+import logging
 import math
+import os
 import uuid
 from streaming import MDSWriter
-import logging
-import os
+from time import sleep
+from typing import Any
 
 from klay_data.pipeline import (
     Pipeline,
@@ -176,6 +177,7 @@ class ProcessURI(beam.DoFn):
         except Exception as e:
             logging.error(f"Skipping {uri}: {e}")
             self.uri_processing_errors.inc()
+            return
 
 
 class WriteMDS(beam.DoFn):
@@ -186,13 +188,13 @@ class WriteMDS(beam.DoFn):
         self.columns = {
             k: v for k, v in FEATURE_MDS_TYPE.items() if k.split(".")[0] in features
         }
-        self.writer = None
         self.worker_id = None
+        self._closed = False
 
     def setup(self):
         # Create a unique subfolder for this worker
         self.worker_id = str(uuid.uuid4())
-        worker_dir = os.path.join(self.dest_dir, f"worker_{self.worker_id}")
+        worker_dir = os.path.join(self.dest_dir, self.worker_id)
         os.makedirs(worker_dir, exist_ok=True)
 
         self.writer = MDSWriter(
@@ -200,11 +202,38 @@ class WriteMDS(beam.DoFn):
             columns=self.columns,
             compression="zstd",
             hashes=["xxh3_64"],
+            size_limit=1 << 28,  # 256 MB
+            max_workers=1,
         )
 
     def process(self, element, *_):
+        logging.info(f"Writing MDS for worker {self.worker_id}, element: {element}")
         self.writer.write(element)
         yield None
 
-    def teardown(self):
-        self.writer.finish()
+    def finish_bundle(self):
+        if not self._closed:
+            logging.info(f"Finishing MDSWrite bundle for worker {self.worker_id}.")
+            retry_count = 0
+            while True:
+                if retry_count > 5:
+                    logging.error(
+                        f"Failed to finish MDS for worker {self.worker_id} after 5 attempts."
+                    )
+                    break
+                try:
+                    self.writer.finish()
+                except FileNotFoundError:
+                    logging.warning(
+                        f"Attempt {retry_count}: File write incomplete for worker {self.worker_id},"
+                        f" retrying in {retry_count * 10}s..."
+                    )
+                    retry_count += 1
+                    sleep(retry_count * 10)
+                except Exception as e:
+                    logging.error(
+                        f"Failed to finish MDS for worker {self.worker_id}: {e}"
+                    )
+                    break
+
+            self._closed = True

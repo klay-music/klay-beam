@@ -132,6 +132,15 @@ def run():
             )
         )
 
+        # Get the pipeline result
+        result = p.run()
+        result.wait_until_finish()
+
+        # Print counter values
+        metrics = result.metrics().query()
+        for counter in metrics["counters"]:
+            logging.info(str(counter))
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
