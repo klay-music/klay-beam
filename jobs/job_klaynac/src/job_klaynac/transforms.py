@@ -176,7 +176,8 @@ def make_frames(audio: Tensor, window_length: int, hop_length: int) -> list[Tens
 
     Args:
         audio: Tensor of shape (D, T) to be sliced into windows.
-        hop: Size of each window in samples.
+        window_length: Length of each window in samples.
+        hop_length: Hop size in samples.
     """
     _, T = audio.shape
 
@@ -199,6 +200,7 @@ def overlap_add(tensors: list[Tensor], hop_length: int, total_length: int) -> Te
     Args:
         tensors: List of tensors to be overlapped and added, each shaped (D, T).
         hop: Size of each window in samples.
+        total_length: Total length of the output tensor.
     """
     if len(tensors) == 1:
         return tensors[0]
