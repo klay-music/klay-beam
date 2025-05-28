@@ -1,18 +1,4 @@
-# `klay_beam` – Engineering README
-
-
-## 📜 Preface
-
-This README is the **canonical, audit‑ready** introduction to the Klay Beam platform. It is intentionally verbose so that:
-
-* **New engineers** ramp up without spelunking in Slack threads.
-* **Auditors** can validate data‑flow guarantees and dependency hygiene.
-* **Ops** can debug production pipelines at 03:00 without paging devs.
-
-> If you add a feature or change a process, **update this file in the same PR** so we never drift. Compliance depends on it.
-
-
-## ️🎛️ Overview
+# `klay_beam`
 
 Klay Beam is our in‑house framework for *massively* parallel audio processing. It marries three layers:
 
@@ -22,9 +8,9 @@ Klay Beam is our in‑house framework for *massively* parallel audio processing
 | **Docker**       | Hermetic runtimes for local tests *and* remote workers; the identical image‑SHA runs everywhere, eliminating “works‑on‑my‑machine” drift. |
 | **GCP Dataflow** | Spot‑provisioned Compute Engine VMs that pull the Beam container, hydrate it, and execute the pipeline shards in parallel.                |
 
-> **Why Beam?** One SDK targets local threads, an on‑prem Mesos cluster, *or* fully‑managed Dataflow—no rewrite required.
+> **Why Beam?** One SDK targets local threads and fully‑managed Dataflow—no rewrite required.
 
-### ️🏁 Data lifecycle (10 000‑ft)
+### ️🏁 Data lifecycle
 
 1. **Ingest** – `MatchFiles` emits `FileMetadata` for every object that matches a glob.
 2. **Transform** – loaders decode audio → tensors; `PTransform`s perform DSP, ML inference, feature extraction.
@@ -56,10 +42,7 @@ A **job** is a self‑contained Beam pipeline with a single business goal (e.g. 
 | File/Dir                                | Purpose                                                                                                  |
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `Dockerfile`                            | Adds *only* the deltas (models, extra wheels, GPU drivers) on top of the base image.                     |
-| `Makefile`                              | Canonical interface for humans *and* CI. Targets:                                                        |
-| • `code-style` · `type-check` · `tests` |                                                                                                          |
-| • `docker` · `docker-push`              |                                                                                                          |
-| • `run-local` · `run-dataflow`          |                                                                                                          |
+| `Makefile`                              | Interface for humans *and* CI.                                                                           |
 | `bin/`                                  | Thin CLI wrappers (usually `run_workflow.py`) that assemble `PipelineOptions` and launch the Beam graph. |
 | `environment/`                          | *Optional* **conda‑lock** for heavyweight native deps that cannot be `pip`‑installed.                    |
 | `src/`                                  | Package code (`import job_whisper …`).                                                                   |
@@ -193,11 +176,9 @@ Every published image tag encodes:
 1. **Reproduce locally** with the exact container:
 
    ```bash
+   docker run -it --entrypoint /bin/bash gcr.io/<region>/klay-beam:<tag>
    ```
 
-docker run -it --entrypoint /bin/bash gcr.io/<region>/klay-beam:<tag>
-
-```
 2. **Inspect logs** – Cloud Logging, filter `labels.dataflow.googleapis.com/step_id`.
 
 ## Common issues & fixes
@@ -209,7 +190,3 @@ docker run -it --entrypoint /bin/bash gcr.io/<region>/klay-beam:<tag>
 | `ErrImagePull` | Image tag typo or not pushed yet | Verify image exists in Artifact Registry and tag matches lock hash. |
 | `ModuleNotFoundError` for private lib | Dockerfile forgets to COPY submodule | Add `COPY --from=builder /submodules/…` or `pip install -e`. |
 | Beam creates new venv | Missing `RUN_PYTHON_SDK_IN_DEFAULT_ENVIRONMENT=1` | Ensure env var in image. |
-
----
-
-> Remember: **every README is a compliance artifact**. Keep it current so auditors stay happy and *nobody dies* 🤞
