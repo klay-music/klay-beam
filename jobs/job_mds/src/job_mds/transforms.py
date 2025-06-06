@@ -28,11 +28,12 @@ from klay_data.pipeline import (
 
 # Define all the suffixes for the features that may be included in the input.
 FEATURE_SUFFIX = {
-    "audioset_yamnet": ".source.audioset_yamnet.npy",
-    "klaynacvae": ".source.klaynacvae-0.6.2.npy",
-    "mtrpp": ".source.mtrpp.npy",
-    "whisper_byt5": ".vocals.whisper-byt5.npz",
-    "whisper": ".vocals.whisper.json",
+    "audioset_yamnet": ".0.source.stem.audioset_yamnet.npy",
+    "klaynacvae": ".0.source.stem.klaynacvae-0.5.0.npy",
+    "mtrpp": ".0.source.stem.mtrpp.npy",
+    "whisper_byt5": ".4.vocals.stem.whisper-byt5.npz",
+    "whisper": ".4.vocals.stem.whisper.json",
+    "vocal_stem": ".4.vocals.stem.mp3",
 }
 
 
@@ -46,6 +47,7 @@ FEATURE_MDS_TYPE = {
     "whisper_byt5.ends": "ndarray:float32",
     "whisper_byt5.starts": "ndarray:float32",
     "whisper": "json",
+    "vocal_stem": "bytes",
 }
 
 
@@ -78,6 +80,11 @@ class LoadFeatureBeam:
                     path, mime_type="text/plain"
                 ) as f:
                     content = json.load(f)
+            case ".mp3":
+                with beam.io.filesystems.FileSystems.open(
+                    path, mime_type="audio/mpeg"
+                ) as f:
+                    content = f.read()
             case _:
                 raise ValueError(
                     f"Unsupported file extension '{extension}' for path {path}"
@@ -157,6 +164,15 @@ class ProcessURI(beam.DoFn):
             FlattenFeature(input_key="whisper_byt5", output_prefix="whisper_byt5."),
         )
 
+        # Optionally load vocal stem.
+        stages["vocal_stem"] = Pipeline(
+            Pipeline(
+                LoadFeatureBeam(input_key="vocal_stem.path", output_key="vocal_stem"),
+                is_optional=True,
+            ),
+            MaybeSetFeature(input_key="vocal_stem", value=b""),
+        )
+
         # NOTE! This code is carefully written so that the order of stages in `self.pipeline` is the
         # same as the order defined in the code above. In particular, `include_stage` is the same
         # order as `stages``. This is essential because, e.g. music filtering should happen first.
@@ -164,6 +180,15 @@ class ProcessURI(beam.DoFn):
         self.pipeline = Pipeline(*[v for k, v in stages.items() if include_stage[k]])
 
     def process(self, uri: str, *_):
+        """Process a URI.
+
+        Args:
+            uri: The URI of the audio file to process. This does not contain the file name, only
+                the name of the folder, e.g. gs://klay-datasets-test/shard-0000/gxLdBEQBAOU.
+
+        Returns:
+            A dictionary containing the processed features.
+        """
         try:
             # Construct paths to features. These are loaded by LoadFeatureBeam stages.
             basename = os.path.basename(uri)
@@ -207,7 +232,7 @@ class WriteMDS(beam.DoFn):
         )
 
     def process(self, element, *_):
-        logging.info(f"Writing MDS for worker {self.worker_id}, element: {element}")
+        # logging.info(f"Writing MDS for worker {self.worker_id}, element: {element}")
         self.writer.write(element)
         yield None
 

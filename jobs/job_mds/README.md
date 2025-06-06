@@ -13,7 +13,7 @@ make run-local \
 
 # Running on GCP Dataflow
 make run-dataflow \
-    num_workers=10 \
+    max_num_workers=10 \
     job_name=job-mds \
     src_dir=gs://path/to/src_dir \
     dest_dir=gs://path/to/dst_dir \

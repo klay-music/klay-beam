@@ -96,9 +96,12 @@ def run():
         ]
 
     # Fully-qualified glob for MatchFiles
-    src_root = known_args.src_dir.rstrip("/") + "/"
+    src_root = known_args.src_dir  # .rstrip("/") + "/"
     match_pattern = src_root + f"**{known_args.audio_suffix}"
     logging.info(f"{match_pattern=}")
+
+    suffixes = {k: v for k, v in FEATURE_SUFFIX.items() if k in known_args.features}
+    logging.info(f"{suffixes=}")
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_opts) as p:
         # -------------------------------------------------------------- #
@@ -110,12 +113,12 @@ def run():
             | beam.Reshuffle()
             | beam_io.ReadMatches()
             | "GetURI" >> beam.Map(lambda x: os.path.dirname(x.metadata.path))
+            | "LogURIs" >> beam.Map(lambda x: logging.info(f"Matched URI: {x}") or x)
         )
 
         # -------------------------------------------------------------- #
         # 2. Process the audio files and write MDS (one per worker)
         # -------------------------------------------------------------- #
-        suffixes = {k: v for k, v in FEATURE_SUFFIX.items() if k in known_args.features}
         _ = (
             audio_files
             | "ProcessURI"
@@ -131,15 +134,6 @@ def run():
                 WriteMDS(dest_dir=known_args.dest_dir, features=known_args.features)
             )
         )
-
-        # Get the pipeline result
-        result = p.run()
-        result.wait_until_finish()
-
-        # Print counter values
-        metrics = result.metrics().query()
-        for counter in metrics["counters"]:
-            logging.info(str(counter))
 
 
 if __name__ == "__main__":
