@@ -113,6 +113,7 @@ def run():
             | beam.Reshuffle()
             | beam_io.ReadMatches()
             | "GetURI" >> beam.Map(lambda x: os.path.dirname(x.metadata.path))
+            | "LogURIs" >> beam.Map(lambda x: logging.info(f"Matched URI: {x}") or x)
         )
 
         # -------------------------------------------------------------- #
@@ -133,15 +134,6 @@ def run():
                 WriteMDS(dest_dir=known_args.dest_dir, features=known_args.features)
             )
         )
-
-        # Get the pipeline result
-        result = p.run()
-        result.wait_until_finish()
-
-        # Print counter values
-        metrics = result.metrics().query()
-        for counter in metrics["counters"]:
-            logging.info(str(counter))
 
 
 if __name__ == "__main__":
