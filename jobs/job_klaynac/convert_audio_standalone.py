@@ -16,6 +16,7 @@ import torch
 from torch import Tensor
 import torchaudio
 import time
+from torch.utils.data import Dataset, DataLoader
 
 # Import the KlayNAC models
 import klay_codecs
@@ -310,6 +311,31 @@ def find_audio_files(input_path: str, match_suffix: str) -> List[str]:
     return sorted(files)
 
 
+class AudioDataset(Dataset):
+    def __init__(self, audio_files: List[str], sample_rate: int, max_duration: Optional[float] = None):
+        self.audio_files = audio_files
+        self.sample_rate = sample_rate
+        self.max_duration = max_duration
+
+    def __len__(self):
+        return len(self.audio_files)
+
+    def __getitem__(self, idx):
+        audio_file = self.audio_files[idx]
+        waveform, sr = torchaudio.load(audio_file)
+        
+        if sr != self.sample_rate:
+            resampler = torchaudio.transforms.Resample(orig_freq=sr, new_freq=self.sample_rate)
+            waveform = resampler(waveform)
+        
+        if self.max_duration is not None:
+            max_samples = int(self.max_duration * self.sample_rate)
+            if waveform.shape[-1] > max_samples:
+                waveform = waveform[..., :max_samples]
+        
+        return audio_file, waveform
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Convert audio files using KlayNAC/KlayNACVAE"
@@ -397,104 +423,58 @@ def main():
         max_duration=args.max_duration,
     )
 
-    # Process files
+    # Create dataset and dataloader
+    dataset = AudioDataset(audio_files, processor.nac.config.sample_rate, args.max_duration)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=1,  # Process one file at a time
+        num_workers=2,  # Use 2 worker processes for loading
+        prefetch_factor=2  # Each worker will prefetch 2 samples
+    )
+
     success_count = 0
     error_count = 0
     total_audio_duration = 0.0
     start_time = time.time()
 
-    # Timing statistics
-    time_loading = 0.0
-    time_processing = 0.0
-    time_model = 0.0
-    time_saving = 0.0
-
-    for i, audio_file in enumerate(audio_files):
-        logging.info(f"Processing file {i+1}/{len(audio_files)}: {audio_file}")
-
-        # Generate output path
-        if args.output_dir:
-            output_path = os.path.join(
-                args.output_dir,
-                os.path.basename(remove_suffix(audio_file, args.audio_suffix))
-                + processor.suffix,
-            )
-        else:
-            output_path = (
-                remove_suffix(audio_file, args.audio_suffix) + processor.suffix
-            )
-
-        if os.path.exists(output_path) and not args.overwrite:
-            logging.info(f"Skipping {audio_file}, output already exists: {output_path}")
-            continue
-
+    for audio_file, audio in dataloader:
+        audio_file = audio_file[0]  # Unbatch
+        audio = audio[0]  # Unbatch
+        
         try:
-            # Load audio
-            t0 = time.time()
-            audio, sr = processor.load_audio(audio_file)
-            t1 = time.time()
-            time_loading += t1 - t0
-
-            # Track audio duration
-            duration = audio.shape[-1] / sr
-            if processor.max_duration is not None:
-                duration = min(duration, processor.max_duration)
-            total_audio_duration += duration
-
-            # Preprocess audio
-            t0 = time.time()
-            audio, sr = processor.process_audio(audio, sr)
-            t1 = time.time()
-            time_processing += t1 - t0
+            output_path = processor.get_output_path(audio_file, args.output_dir, args.output_suffix)
+            if os.path.exists(output_path) and not args.overwrite:
+                logging.info(f"Skipping {audio_file}, output already exists: {output_path}")
+                continue
 
             logging.info(f"Processing audio -> {output_path}")
-
-            # Apply model
-            t0 = time.time()
-            output_array = processor.apply_model(audio, sr)
-            t1 = time.time()
-            time_model += t1 - t0
-
+            
+            # Process with model
+            audio = audio.to(processor.device)
+            output_array = processor.apply_model(audio, processor.nac.config.sample_rate)
+            
             # Save output
-            t0 = time.time()
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             np.save(output_path, output_array)
-            logging.info(
-                f"Saved embeddings with shape {output_array.shape} to {output_path}"
-            )
-            t1 = time.time()
-            time_saving += t1 - t0
-
+            logging.info(f"Saved embeddings with shape {output_array.shape} to {output_path}")
+            
+            duration = audio.shape[-1] / processor.nac.config.sample_rate
+            total_audio_duration += duration
             success_count += 1
+
         except Exception as e:
-            logging.error(f"Error processing {audio_file}: {e}")
+            logging.error(f"Error processing {audio_file}: {str(e)}")
             error_count += 1
 
     total_time = time.time() - start_time
     throughput = total_audio_duration / total_time if total_time > 0 else 0
 
-    # Calculate percentages
-    pct_loading = 100 * time_loading / total_time if total_time > 0 else 0
-    pct_processing = 100 * time_processing / total_time if total_time > 0 else 0
-    pct_model = 100 * time_model / total_time if total_time > 0 else 0
-    pct_saving = 100 * time_saving / total_time if total_time > 0 else 0
-    pct_other = 100 - (pct_loading + pct_processing + pct_model + pct_saving)
-
-    logging.info(
-        f"Processing complete! Success: {success_count}, Errors: {error_count}"
-    )
+    logging.info(f"Processing complete! Success: {success_count}, Errors: {error_count}")
     logging.info(
         f"Throughput Summary:\n"
         f"Total audio duration: {total_audio_duration:.2f} seconds\n"
         f"Total processing time: {total_time:.2f} seconds\n"
-        f"Processing speed: {throughput:.2f}x realtime\n"
-        f"\n"
-        f"Time breakdown:\n"
-        f"Loading audio:     {time_loading:.2f}s ({pct_loading:.1f}%)\n"
-        f"Processing audio:  {time_processing:.2f}s ({pct_processing:.1f}%)\n"
-        f"Applying model:    {time_model:.2f}s ({pct_model:.1f}%)\n"
-        f"Saving output:     {time_saving:.2f}s ({pct_saving:.1f}%)\n"
-        f"Other:            {total_time - (time_loading + time_processing + time_model + time_saving):.2f}s ({pct_other:.1f}%)"
+        f"Processing speed: {throughput:.2f}x realtime"
     )
 
 
