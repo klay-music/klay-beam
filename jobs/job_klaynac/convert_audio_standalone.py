@@ -90,6 +90,20 @@ def make_envelope(
     return w.unsqueeze(0)
 
 
+def log_gpu_memory(prefix: str = ""):
+    """Log current GPU memory usage with an optional prefix."""
+    if torch.cuda.is_available():
+        allocated = torch.cuda.memory_allocated() / 1e9
+        reserved = torch.cuda.memory_reserved() / 1e9
+        max_allocated = torch.cuda.max_memory_allocated() / 1e9
+        logging.info(
+            f"{prefix}GPU Memory: "
+            f"Current={allocated:.2f}GB, "
+            f"Reserved={reserved:.2f}GB, "
+            f"Peak={max_allocated:.2f}GB"
+        )
+
+
 def overlap_add(tensors: List[Tensor], hop_length: int, total_length: int) -> Tensor:
     """Linear overlap add along the time axis with asymmetric ramps."""
     if len(tensors) == 1:
@@ -97,20 +111,33 @@ def overlap_add(tensors: List[Tensor], hop_length: int, total_length: int) -> Te
 
     D, window_length = tensors[0].shape
     overlap = window_length - hop_length
-    out = torch.zeros(D, total_length, device=tensors[0].device)
+    device = tensors[0].device
+    
+    # Pre-allocate output tensor on same device as input
+    out = torch.zeros(D, total_length, device=device)
+    
+    # Pre-compute fade curves for efficiency
+    fade_in, fade_out = make_fade_curves(overlap, device)
 
+    # Process frames in place
     for idx, frame in enumerate(tensors):
         if frame.shape[-1] != window_length:
             envelope_length = frame.shape[-1]
         else:
             envelope_length = window_length
 
-        envelope = make_envelope(
-            idx, len(tensors), envelope_length, overlap, frame.device
-        )
+        # Create envelope (reuse fade curves)
+        w = torch.ones(envelope_length, device=device)
+        if idx > 0:
+            w[:overlap] = fade_in
+        if idx < len(tensors) - 1:
+            w[-overlap:] = fade_out
+        w = w.unsqueeze(0)  # Add channel dimension
+
+        # Apply envelope and add to output
         start = idx * hop_length
         end = start + window_length
-        out[:, start:end] += frame * envelope
+        out[:, start:end] += frame * w
 
     return out
 
@@ -181,20 +208,18 @@ class KlayNACProcessor:
         audio, sr = torchaudio.load(audio_path)
         return audio, sr
 
-    def process_audio(
-        self,
-        audio: Tensor,
-        sr: int,
-    ) -> Tuple[Tensor, int]:
+    def process_audio(self, audio: Tensor, sr: int) -> Tuple[Tensor, int]:
         """Preprocess audio for model input."""
         # Resample if necessary
         if sr != self.nac.config.sample_rate:
             resampler = torchaudio.transforms.Resample(
                 orig_freq=sr, new_freq=self.nac.config.sample_rate
             )
+            resampler = resampler.to(self.device)
+            audio = audio.to(self.device)
             audio = resampler(audio)
             sr = self.nac.config.sample_rate
-
+        
         # Crop audio if max_duration is specified
         if self.max_duration is not None:
             max_samples = int(self.max_duration * sr)
@@ -203,15 +228,16 @@ class KlayNACProcessor:
                     f"Cropping audio from {audio.shape[-1]/sr:.2f}s to {self.max_duration}s"
                 )
                 audio = audio[..., :max_samples]
-
-        # Move audio to device
-        if self.device != torch.device("cpu"):
+        
+        # Move audio to device if not already there
+        if audio.device != self.device:
             audio = audio.to(self.device)
 
         return audio, sr
 
     def apply_model(self, audio: Tensor, sr: int) -> np.ndarray:
         """Apply the KlayNAC model to process audio frames."""
+        log_gpu_memory("Before processing: ")
         logging.info(f"Audio shape: {audio.shape}, duration: {audio.shape[-1]/sr:.2f}s")
 
         # Create frames
@@ -223,39 +249,51 @@ class KlayNACProcessor:
         # Process frames
         with torch.no_grad():
             for i, audio_frame in enumerate(audio_frames):
+                # Move frame to GPU just before processing
+                audio_frame = audio_frame.to(self.device)
+                
                 if self.extract_tokens:
                     raise NotImplementedError(
                         "Token extraction is not supported. Use 'continuous' mode instead."
                     )
                 else:
                     embeds, _ = self.nac.audio_to_embeds(audio_frame.unsqueeze(0))
-
-                embed_frames.append(embeds[0].detach().cpu())
+                    # Move embeddings back to CPU immediately to free GPU memory
+                    embed_frames.append(embeds[0].cpu())
+                    # Clear GPU cache periodically
+                    if i % 50 == 0:
+                        torch.cuda.empty_cache()
 
                 if i % 10 == 0:
                     logging.info(f"Processed frame {i+1}/{len(audio_frames)}")
+                    log_gpu_memory(f"Frame {i+1}: ")
 
             if not embed_frames:
                 raise ValueError("No frames were extracted.")
 
+            # Move all embeddings back to GPU for overlap-add
+            device_frames = [f.to(self.device) for f in embed_frames]
+            log_gpu_memory("Before overlap-add: ")
+            
             # Overlap-add the frames
             output_array = overlap_add(
-                embed_frames,
+                device_frames,
                 hop_length=self.embed_hop_length,
                 total_length=int((audio.shape[-1] / sr) * self.nac.config.frame_rate),
             )
 
-            if self.device != torch.device("cpu"):
-                logging.info(
-                    f"GPU memory: {torch.cuda.memory_allocated() / 1e9:.2f}GB"
-                    f" / {torch.cuda.max_memory_allocated() / 1e9:.2f}GB"
-                )
+            log_gpu_memory("After overlap-add: ")
 
-            output_array = output_array.detach().cpu().numpy()
-
+            # Clear references to device tensors
+            device_frames = None
+            torch.cuda.empty_cache()
+            
+            output_array = output_array.cpu().numpy()
+            
             if np.isnan(output_array).any():
                 raise ValueError("NaN values detected in output array")
 
+            log_gpu_memory("After processing: ")
             return output_array
 
 
