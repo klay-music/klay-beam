@@ -297,6 +297,16 @@ class KlayNACProcessor:
             log_gpu_memory("After processing: ")
             return output_array
 
+    def get_output_path(self, input_path: str, output_dir: Optional[str] = None, output_suffix: Optional[str] = None) -> str:
+        """Generate the output file path for a given input audio file."""
+        base = os.path.basename(remove_suffix(input_path, self.audio_suffix))
+        suffix = output_suffix if output_suffix is not None else self.suffix
+        filename = base + suffix
+        if output_dir is not None:
+            return os.path.join(output_dir, filename)
+        else:
+            return os.path.join(os.path.dirname(input_path), filename)
+
 
 def find_audio_files(input_path: str, match_suffix: str) -> List[str]:
     """Find all audio files matching the pattern."""
