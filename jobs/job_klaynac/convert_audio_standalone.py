@@ -295,7 +295,7 @@ class KlayNACProcessor:
                 raise ValueError("NaN values detected in output array")
 
             log_gpu_memory("After processing: ")
-            return output_array
+        return output_array
 
     def get_output_path(self, input_path: str, output_dir: Optional[str] = None) -> str:
         """Generate the output file path for a given input audio file."""
@@ -444,7 +444,8 @@ def main():
     success_count = 0
     error_count = 0
     total_audio_duration = 0.0
-    start_time = time.time()
+    total_apply_model_time = 0.0
+    program_start_time = time.time()
 
     for audio_file, audio in dataloader:
         audio_file = audio_file[0]  # Unbatch
@@ -460,7 +461,10 @@ def main():
             
             # Process with model
             audio = audio.to(processor.device)
+            model_start = time.time()
             output_array = processor.apply_model(audio, processor.nac.config.sample_rate)
+            model_end = time.time()
+            total_apply_model_time += (model_end - model_start)
             
             # Save output
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -475,15 +479,16 @@ def main():
             logging.error(f"Error processing {audio_file}: {str(e)}")
             error_count += 1
 
-    total_time = time.time() - start_time
-    throughput = total_audio_duration / total_time if total_time > 0 else 0
+    total_program_time = time.time() - program_start_time
+    apply_model_percentage = (total_apply_model_time / total_program_time) * 100 if total_program_time > 0 else 0
 
     logging.info(f"Processing complete! Success: {success_count}, Errors: {error_count}")
     logging.info(
         f"Throughput Summary:\n"
         f"Total audio duration: {total_audio_duration:.2f} seconds\n"
-        f"Total processing time: {total_time:.2f} seconds\n"
-        f"Processing speed: {throughput:.2f}x realtime"
+        f"Total processing time: {total_program_time:.2f} seconds\n"
+        f"Processing speed: {total_audio_duration / total_program_time if total_program_time > 0 else 0:.2f}x realtime\n"
+        f"Apply model time: {total_apply_model_time:.2f} seconds ({apply_model_percentage:.2f}%)"
     )
 
 
