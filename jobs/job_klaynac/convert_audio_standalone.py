@@ -297,11 +297,10 @@ class KlayNACProcessor:
             log_gpu_memory("After processing: ")
             return output_array
 
-    def get_output_path(self, input_path: str, output_dir: Optional[str] = None, output_suffix: Optional[str] = None) -> str:
+    def get_output_path(self, input_path: str, output_dir: Optional[str] = None) -> str:
         """Generate the output file path for a given input audio file."""
         base = os.path.basename(remove_suffix(input_path, self.audio_suffix))
-        suffix = output_suffix if output_suffix is not None else self.suffix
-        filename = base + suffix
+        filename = base + self.suffix
         if output_dir is not None:
             return os.path.join(output_dir, filename)
         else:
@@ -452,7 +451,7 @@ def main():
         audio = audio[0]  # Unbatch
         
         try:
-            output_path = processor.get_output_path(audio_file, args.output_dir, args.output_suffix)
+            output_path = processor.get_output_path(audio_file, args.output_dir)
             if os.path.exists(output_path) and not args.overwrite:
                 logging.info(f"Skipping {audio_file}, output already exists: {output_path}")
                 continue
