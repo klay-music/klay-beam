@@ -1,0 +1,28 @@
+name: job-unified
+
+channels:
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.10
+  - numpy=1.23
+  - conda-forge::ffmpeg>=4.2,<5
+  - pytorch::pytorch>=2.1=py3.10_cuda12.1_cudnn8.9.2_0
+  - pytorch::torchaudio>=2
+  - pytorch::torchvision>=0.15
+  - nvidia::cuda-toolkit>=12
+
+  - pip:
+    # Core dependencies
+    - -e '../..[code-style, tests, type-check]'
+    # KlayNAC dependencies
+    - -e '../../../../klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-data/submodules/klay-audiotools'
+    - -e '../../../../klay_beam/submodules/klay-codecs/submodules/klay-nac[type-check, code-style, tests]'
+    - -e '../../../../klay_beam/submodules/klay-codecs/submodules/klay-nac/submodules/klay-config'
+    - -e '../../../../klay_beam/submodules/klay-codecs[code-style, tests, type-check]'
+    # MTRPP dependencies
+    - -e '../../../../submodules/klay-data[mtrpp]'
+    # Demucs dependencies
+    - demucs@git+https://github.com/facebookresearch/demucs.git@2e79e6e
+    - diffq 

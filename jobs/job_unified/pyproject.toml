@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job_unified"
+description = "Unified audio processing job combining multiple models"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    "av",
+    "numpy",
+    "torch>=2.1.0",
+    "torchaudio>=2.1.0",
+    "demucs@git+https://github.com/facebookresearch/demucs.git@2e79e6e",
+    "diffq",
+    "klay_beam[pytorch]==0.13.7",
+    "apache_beam[gcp]==2.53",
+]
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+code-style = ["black>=22.9.0", "flake8>=5"]
+tests = ["pytest"]
+type-check = ["mypy>=0.990", "pydantic>=1.10"]
+
+[tool.setuptools.dynamic]
+version = {attr = "job_unified.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+warn_redundant_casts = true
+check_untyped_defs = true
+allow_redefinition = true
+warn_unreachable = true
+plugins = [
+    "pydantic.mypy",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "apache_beam.*",
+    "torchaudio.*",
+]
+ignore_missing_imports = true 
