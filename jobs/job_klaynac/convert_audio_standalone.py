@@ -9,6 +9,8 @@ import logging
 import math
 import os
 import glob
+import io
+import tempfile
 from pathlib import Path
 from typing import Optional, Tuple, List
 import numpy as np
@@ -17,10 +19,71 @@ from torch import Tensor
 import torchaudio
 import time
 from torch.utils.data import Dataset, DataLoader
+from google.cloud import storage
+from google.api_core import retry
+from tqdm import tqdm
 
 # Import the KlayNAC models
 import klay_codecs
 from klay_codecs.nac import KlayNAC, KlayNACVAE
+
+
+def list_gcs_files(bucket_name: str, prefix: str, suffix: str) -> List[str]:
+    """List all files in a GCS bucket with given prefix and suffix."""
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+
+    files = []
+    pbar = tqdm(desc="Listing GCS files", unit=" files")
+    for blob in bucket.list_blobs(prefix=prefix):
+        if blob.name.endswith(suffix):
+            files.append(f"gs://{bucket_name}/{blob.name}")
+        pbar.update(1)
+    pbar.close()
+
+    logging.info(f"Found {len(files)} matching files with suffix {suffix}")
+    return sorted(files)
+
+
+def read_gcs_file(gcs_path: str) -> bytes:
+    """Read a file from GCS into memory."""
+    storage_client = storage.Client()
+    bucket_name = gcs_path.split("/")[2]
+    blob_name = "/".join(gcs_path.split("/")[3:])
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    return blob.download_as_bytes()
+
+
+def write_gcs_file(gcs_path: str, data: bytes):
+    """Write data to a GCS file."""
+    storage_client = storage.Client()
+    bucket_name = gcs_path.split("/")[2]
+    blob_name = "/".join(gcs_path.split("/")[3:])
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    blob.upload_from_string(data)
+
+
+def parse_gcs_path(gcs_path: str) -> Tuple[str, str]:
+    """Parse a GCS path into bucket name and blob name."""
+    parts = gcs_path.replace("gs://", "").split("/")
+    bucket_name = parts[0]
+    blob_name = "/".join(parts[1:])
+    return bucket_name, blob_name
+
+
+def get_output_gcs_path(
+    input_gcs_path: str, input_dataset: str, output_dataset: str, suffix: str
+) -> str:
+    """Generate the output GCS path for a given input path."""
+    bucket_name, blob_name = parse_gcs_path(input_gcs_path)
+    # Replace the dataset name in the path
+    output_blob = blob_name.replace(input_dataset, output_dataset)
+    # Remove the audio suffix and add the new suffix
+    base = remove_suffix(output_blob, ".source.ogg")
+    output_blob = base + suffix
+    return f"gs://{bucket_name}/{output_blob}"
 
 
 def get_device(mps_valid: bool = False) -> torch.device:
@@ -113,10 +176,10 @@ def overlap_add(tensors: List[Tensor], hop_length: int, total_length: int) -> Te
     D, window_length = tensors[0].shape
     overlap = window_length - hop_length
     device = tensors[0].device
-    
+
     # Pre-allocate output tensor on same device as input
     out = torch.zeros(D, total_length, device=device)
-    
+
     # Pre-compute fade curves for efficiency
     fade_in, fade_out = make_fade_curves(overlap, device)
 
@@ -220,7 +283,7 @@ class KlayNACProcessor:
             audio = audio.to(self.device)
             audio = resampler(audio)
             sr = self.nac.config.sample_rate
-        
+
         # Crop audio if max_duration is specified
         if self.max_duration is not None:
             max_samples = int(self.max_duration * sr)
@@ -229,7 +292,7 @@ class KlayNACProcessor:
                     f"Cropping audio from {audio.shape[-1]/sr:.2f}s to {self.max_duration}s"
                 )
                 audio = audio[..., :max_samples]
-        
+
         # Move audio to device if not already there
         if audio.device != self.device:
             audio = audio.to(self.device)
@@ -252,7 +315,7 @@ class KlayNACProcessor:
             for i, audio_frame in enumerate(audio_frames):
                 # Move frame to GPU just before processing
                 audio_frame = audio_frame.to(self.device)
-                
+
                 if self.extract_tokens:
                     raise NotImplementedError(
                         "Token extraction is not supported. Use 'continuous' mode instead."
@@ -275,7 +338,7 @@ class KlayNACProcessor:
             # Move all embeddings back to GPU for overlap-add
             device_frames = [f.to(self.device) for f in embed_frames]
             log_gpu_memory("Before overlap-add: ")
-            
+
             # Overlap-add the frames
             output_array = overlap_add(
                 device_frames,
@@ -288,9 +351,9 @@ class KlayNACProcessor:
             # Clear references to device tensors
             device_frames = None
             torch.cuda.empty_cache()
-            
+
             output_array = output_array.cpu().numpy()
-            
+
             if np.isnan(output_array).any():
                 raise ValueError("NaN values detected in output array")
 
@@ -299,12 +362,18 @@ class KlayNACProcessor:
 
     def get_output_path(self, input_path: str, output_dir: Optional[str] = None) -> str:
         """Generate the output file path for a given input audio file."""
-        base = os.path.basename(remove_suffix(input_path, self.audio_suffix))
-        filename = base + self.suffix
-        if output_dir is not None:
-            return os.path.join(output_dir, filename)
+        if input_path.startswith("gs://"):
+            # For GCS paths, use the full path
+            base = remove_suffix(input_path, self.audio_suffix)
+            return base + self.suffix
         else:
-            return os.path.join(os.path.dirname(input_path), filename)
+            # For local paths, use the existing logic
+            base = os.path.basename(remove_suffix(input_path, self.audio_suffix))
+            filename = base + self.suffix
+            if output_dir is not None:
+                return os.path.join(output_dir, filename)
+            else:
+                return os.path.join(os.path.dirname(input_path), filename)
 
 
 def find_audio_files(input_path: str, match_suffix: str) -> List[str]:
@@ -321,7 +390,12 @@ def find_audio_files(input_path: str, match_suffix: str) -> List[str]:
 
 
 class AudioDataset(Dataset):
-    def __init__(self, audio_files: List[str], sample_rate: int, max_duration: Optional[float] = None):
+    def __init__(
+        self,
+        audio_files: List[str],
+        sample_rate: int,
+        max_duration: Optional[float] = None,
+    ):
         self.audio_files = audio_files
         self.sample_rate = sample_rate
         self.max_duration = max_duration
@@ -331,17 +405,29 @@ class AudioDataset(Dataset):
 
     def __getitem__(self, idx):
         audio_file = self.audio_files[idx]
-        waveform, sr = torchaudio.load(audio_file)
-        
+
+        if audio_file.startswith("gs://"):
+            # For GCS files, download to a temporary file first
+            audio_bytes = read_gcs_file(audio_file)
+            with tempfile.NamedTemporaryFile(suffix=".ogg") as temp_file:
+                temp_file.write(audio_bytes)
+                temp_file.flush()
+                waveform, sr = torchaudio.load(temp_file.name)
+        else:
+            # For local files, load directly
+            waveform, sr = torchaudio.load(audio_file)
+
         if sr != self.sample_rate:
-            resampler = torchaudio.transforms.Resample(orig_freq=sr, new_freq=self.sample_rate)
+            resampler = torchaudio.transforms.Resample(
+                orig_freq=sr, new_freq=self.sample_rate
+            )
             waveform = resampler(waveform)
-        
+
         if self.max_duration is not None:
             max_samples = int(self.max_duration * self.sample_rate)
             if waveform.shape[-1] > max_samples:
                 waveform = waveform[..., :max_samples]
-        
+
         return audio_file, waveform
 
 
@@ -353,7 +439,12 @@ def main():
     parser.add_argument(
         "--source_audio_path",
         required=True,
-        help="Path to audio file or directory containing audio files",
+        help="Path to audio file, directory, or GCS path (gs://bucket/dataset-name)",
+    )
+
+    parser.add_argument(
+        "--output_dataset",
+        help="Output dataset name for GCS paths (if different from input dataset)",
     )
 
     parser.add_argument(
@@ -369,14 +460,14 @@ def main():
 
     parser.add_argument(
         "--match_suffix",
-        default=".instrumental.stem.mp3",
+        default=".source.ogg",
         help="Suffix to match audio files",
     )
 
     parser.add_argument(
         "--audio_suffix",
         choices=[".mp3", ".wav", ".aif", ".aiff", ".webm", ".ogg"],
-        default=".mp3",
+        default=".ogg",
         help="Audio file extension",
     )
 
@@ -408,6 +499,12 @@ def main():
         help="Logging level",
     )
 
+    parser.add_argument(
+        "--num_files",
+        type=int,
+        help="Maximum number of files to process (default: process all files)",
+    )
+
     args = parser.parse_args()
 
     # Setup logging
@@ -417,7 +514,13 @@ def main():
     )
 
     # Find audio files
-    audio_files = find_audio_files(args.source_audio_path, args.match_suffix)
+    if args.source_audio_path.startswith("gs://"):
+        # Parse GCS path
+        bucket_name, prefix = parse_gcs_path(args.source_audio_path)
+        audio_files = list_gcs_files(bucket_name, prefix, args.match_suffix)
+    else:
+        # Use local file system
+        audio_files = find_audio_files(args.source_audio_path, args.match_suffix)
 
     if not audio_files:
         logging.error("No audio files found!")
@@ -433,12 +536,14 @@ def main():
     )
 
     # Create dataset and dataloader
-    dataset = AudioDataset(audio_files, processor.nac.config.sample_rate, args.max_duration)
+    dataset = AudioDataset(
+        audio_files, processor.nac.config.sample_rate, args.max_duration
+    )
     dataloader = DataLoader(
         dataset,
         batch_size=1,  # Process one file at a time
         num_workers=2,  # Use 2 worker processes for loading
-        prefetch_factor=2  # Each worker will prefetch 2 samples
+        prefetch_factor=2,  # Each worker will prefetch 2 samples
     )
 
     success_count = 0
@@ -448,29 +553,68 @@ def main():
     program_start_time = time.time()
 
     for audio_file, audio in dataloader:
+        if args.num_files and success_count + error_count >= args.num_files:
+            logging.info(
+                f"Reached maximum number of files to process ({args.num_files})"
+            )
+            break
+
         audio_file = audio_file[0]  # Unbatch
         audio = audio[0]  # Unbatch
-        
+
         try:
-            output_path = processor.get_output_path(audio_file, args.output_dir)
-            if os.path.exists(output_path) and not args.overwrite:
-                logging.info(f"Skipping {audio_file}, output already exists: {output_path}")
+            # For GCS paths, potentially use a different output dataset name
+            if audio_file.startswith("gs://") and args.output_dataset:
+                input_dataset = args.source_audio_path.split("/")[-1]
+                output_path = get_output_gcs_path(
+                    audio_file, input_dataset, args.output_dataset, processor.suffix
+                )
+            else:
+                output_path = processor.get_output_path(audio_file, args.output_dir)
+
+            # Check if output exists (for both local and GCS paths)
+            output_exists = False
+            if output_path.startswith("gs://"):
+                bucket_name, blob_name = parse_gcs_path(output_path)
+                storage_client = storage.Client()
+                bucket = storage_client.bucket(bucket_name)
+                blob = bucket.blob(blob_name)
+                output_exists = blob.exists()
+            else:
+                output_exists = os.path.exists(output_path)
+
+            if output_exists and not args.overwrite:
+                logging.info(
+                    f"Skipping {audio_file}, output already exists: {output_path}"
+                )
                 continue
 
             logging.info(f"Processing audio -> {output_path}")
-            
+
             # Process with model
             audio = audio.to(processor.device)
             model_start = time.time()
-            output_array = processor.apply_model(audio, processor.nac.config.sample_rate)
+            output_array = processor.apply_model(
+                audio, processor.nac.config.sample_rate
+            )
             model_end = time.time()
-            total_apply_model_time += (model_end - model_start)
-            
+            total_apply_model_time += model_end - model_start
+
             # Save output
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            np.save(output_path, output_array)
-            logging.info(f"Saved embeddings with shape {output_array.shape} to {output_path}")
-            
+            if output_path.startswith("gs://"):
+                # Save to GCS
+                with io.BytesIO() as buffer:
+                    np.save(buffer, output_array)
+                    write_gcs_file(output_path, buffer.getvalue())
+            else:
+                # Save locally
+                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                np.save(output_path, output_array)
+
+            logging.info(
+                f"Saved embeddings with shape {output_array.shape} to {output_path}"
+            )
+
             duration = audio.shape[-1] / processor.nac.config.sample_rate
             total_audio_duration += duration
             success_count += 1
@@ -480,9 +624,15 @@ def main():
             error_count += 1
 
     total_program_time = time.time() - program_start_time
-    apply_model_percentage = (total_apply_model_time / total_program_time) * 100 if total_program_time > 0 else 0
+    apply_model_percentage = (
+        (total_apply_model_time / total_program_time) * 100
+        if total_program_time > 0
+        else 0
+    )
 
-    logging.info(f"Processing complete! Success: {success_count}, Errors: {error_count}")
+    logging.info(
+        f"Processing complete! Success: {success_count}, Errors: {error_count}"
+    )
     logging.info(
         f"Throughput Summary:\n"
         f"Total audio duration: {total_audio_duration:.2f} seconds\n"
