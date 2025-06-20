@@ -13,6 +13,7 @@ import io
 import tempfile
 from pathlib import Path
 from typing import Optional, Tuple, List
+from functools import lru_cache
 import numpy as np
 import torch
 from torch import Tensor
@@ -28,9 +29,15 @@ import klay_codecs
 from klay_codecs.nac import KlayNAC, KlayNACVAE
 
 
+@lru_cache(maxsize=1)
+def get_storage_client():
+    """Get a cached storage client."""
+    return storage.Client()
+
+
 def list_gcs_files(bucket_name: str, prefix: str, suffix: str) -> List[str]:
     """List all files in a GCS bucket with given prefix and suffix."""
-    storage_client = storage.Client()
+    storage_client = get_storage_client()
     bucket = storage_client.bucket(bucket_name)
 
     files = []
@@ -47,7 +54,7 @@ def list_gcs_files(bucket_name: str, prefix: str, suffix: str) -> List[str]:
 
 def read_gcs_file(gcs_path: str) -> bytes:
     """Read a file from GCS into memory."""
-    storage_client = storage.Client()
+    storage_client = get_storage_client()
     bucket_name = gcs_path.split("/")[2]
     blob_name = "/".join(gcs_path.split("/")[3:])
     bucket = storage_client.bucket(bucket_name)
@@ -57,7 +64,7 @@ def read_gcs_file(gcs_path: str) -> bytes:
 
 def write_gcs_file(gcs_path: str, data: bytes):
     """Write data to a GCS file."""
-    storage_client = storage.Client()
+    storage_client = get_storage_client()
     bucket_name = gcs_path.split("/")[2]
     blob_name = "/".join(gcs_path.split("/")[3:])
     bucket = storage_client.bucket(bucket_name)
@@ -548,6 +555,7 @@ def main():
 
     success_count = 0
     error_count = 0
+    skip_count = 0
     total_audio_duration = 0.0
     total_apply_model_time = 0.0
     program_start_time = time.time()
@@ -576,7 +584,7 @@ def main():
             output_exists = False
             if output_path.startswith("gs://"):
                 bucket_name, blob_name = parse_gcs_path(output_path)
-                storage_client = storage.Client()
+                storage_client = get_storage_client()
                 bucket = storage_client.bucket(bucket_name)
                 blob = bucket.blob(blob_name)
                 output_exists = blob.exists()
@@ -587,6 +595,7 @@ def main():
                 logging.info(
                     f"Skipping {audio_file}, output already exists: {output_path}"
                 )
+                skip_count += 1
                 continue
 
             logging.info(f"Processing audio -> {output_path}")
@@ -631,7 +640,7 @@ def main():
     )
 
     logging.info(
-        f"Processing complete! Success: {success_count}, Errors: {error_count}"
+        f"Processing complete! Success: {success_count}, Errors: {error_count}, Skipped: {skip_count}"
     )
     logging.info(
         f"Throughput Summary:\n"
