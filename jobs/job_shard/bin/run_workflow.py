@@ -14,8 +14,14 @@ from apache_beam.options.pipeline_options import (
 import logging
 import os
 
-from klay_beam.transforms import SkipCompleted
-from job_shard.transforms import ShardCopy, Enumerate
+from job_shard.transforms import (
+    ShardCopy,
+    Enumerate,
+    WriteManifest,
+    LoadExistingVideoIds,
+    ExtractVideoIdFromFile,
+    FilterOutExistingFiles,
+)
 
 
 def parse_args():
@@ -153,17 +159,13 @@ def run():
             "DOCKER_IMAGE_NAME"
         ]
 
-    if known_args.max_dataset_size < known_args.num_files_per_shard:
+    if (
+        known_args.max_dataset_size
+        and known_args.max_dataset_size < known_args.num_files_per_shard
+    ):
         known_args.num_files_per_shard = known_args.max_dataset_size
 
-    # Check if a shard already exists in the destination directory
-    if known_args.dest_dir:
-        shard_files = FileSystems.match([f"{known_args.dest_dir}/shard-*"])
-        if shard_files:
-            raise ValueError(
-                "Destination directory already contains shard files. "
-                "Please choose a different destination directory."
-            )
+    # Note: We now allow existing shard files since we'll filter duplicates
 
     # Fully-qualified glob for MatchFiles
     src_root = known_args.src_dir.rstrip("/") + "/"
@@ -171,9 +173,31 @@ def run():
 
     with beam.Pipeline(argv=pipeline_args, options=pipeline_opts) as p:
         # -------------------------------------------------------------- #
-        # 1. Find candidate audio files, skip the ones already copied
+        # 1. Find candidate audio files, filter out already processed ones
         # -------------------------------------------------------------- #
         audio_files = p | beam_io.MatchFiles(match_pattern) | beam.Reshuffle()
+
+        # Filter out existing video IDs if destination directory is provided
+        if known_args.dest_dir:
+            # Load existing video IDs from MANIFEST.txt files
+            existing_video_ids = audio_files | LoadExistingVideoIds(
+                dest_dir=known_args.dest_dir
+            )
+
+            # Key audio files by video ID
+            keyed_audio_files = audio_files | "KeyAudioFilesByVideoId" >> beam.ParDo(
+                ExtractVideoIdFromFile(audio_suffix=known_args.audio_suffix)
+            )
+
+            # Join and filter out existing files
+            audio_files = (
+                {
+                    "files": keyed_audio_files,
+                    "existing": existing_video_ids,
+                }
+                | "CoGroupByVideoId" >> beam.CoGroupByKey()
+                | "FilterOutExisting" >> beam.ParDo(FilterOutExistingFiles())
+            )
 
         # -------------------------------------------------------------- #
         # 2. Optionally cap the data set size (first N elements)
@@ -208,10 +232,23 @@ def run():
         )
 
         # -------------------------------------------------------------- #
-        # 4. Build copy jobs and execute them
+        # 4. Write MANIFEST.txt files for each shard (if dest_dir provided)
+        # -------------------------------------------------------------- #
+        shard_with_manifest = batched
+        if known_args.dest_dir:
+            shard_with_manifest = batched | "WriteManifest" >> beam.ParDo(
+                WriteManifest(
+                    dest_dir=known_args.dest_dir,
+                    audio_suffix=known_args.audio_suffix,
+                    min_shard_idx=known_args.min_shard_idx,
+                )
+            )
+
+        # -------------------------------------------------------------- #
+        # 5. Build copy jobs and execute them
         # -------------------------------------------------------------- #
         _ = (
-            batched
+            shard_with_manifest
             | "BuildCopyPairs"
             >> beam.ParDo(
                 ShardCopy(
