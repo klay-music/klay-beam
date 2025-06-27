@@ -128,6 +128,25 @@ class CopyBinaryFileFn(beam.DoFn):
                 read_write_file(source_path, dest_dir)
             elif source_path.startswith("s3://") and dest_dir.startswith("gs://"):
                 read_write_file(source_path, dest_dir)
+            else:
+                # Handle local file paths
+                self._copy_local_file(source_path, dest_dir)
+
+    def _copy_local_file(self, source_path, dest_path):
+        """Copy a local file to another local path."""
+        import shutil
+        import os
+
+        try:
+            # Ensure destination directory exists
+            dest_dir = os.path.dirname(dest_path)
+            os.makedirs(dest_dir, exist_ok=True)
+
+            # Copy the file
+            shutil.copy2(source_path, dest_path)
+            logging.debug(f"Copied {source_path} to {dest_path}")
+        except Exception as e:
+            logging.error(f"Error copying {source_path} to {dest_path}: {e}")
 
 
 def get_dir_name(md: FileMetadata) -> tuple[str, str]:
