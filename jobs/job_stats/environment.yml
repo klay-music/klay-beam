@@ -1,0 +1,15 @@
+name: job-stats
+
+channels:
+  - defaults
+
+dependencies:
+  - pip
+  - python=3.10
+  - pytorch::pytorch>=2=py3.10_cpu_0
+  - pytorch::torchaudio>=2
+
+  - pip:
+    - -e '../../klay_beam/submodules/klay-data[type-check]'
+    - -e '../../klay_beam/submodules/klay-audiotools'
+    - -e '.[code-style, tests, type-check]'

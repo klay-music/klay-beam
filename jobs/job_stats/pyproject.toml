@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job_stats"
+description = "Beam job for acquiring dataset stats."
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+  # Both klay_beam and apache_beam are pre-installed in the docker container.
+  # Mismatched or incompatible versions between the launch and dockerized
+  # Dataflow runtime environments are likely to break the job or cause bugs that
+  # are subtle and difficult-to-detect.
+  #
+  # If you need to update either dependency, you should also update the default
+  # default docker image which is likely to specified in the the jobs launch
+  # script (bin/run_job_<name>.py).
+  "klay_beam[pytorch]==0.14.6",
+  "apache_beam[gcp]==2.64.0",
+  "pandas",
+  "matplotlib",
+]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+code-style = ["black>=22.9.0", "flake8>=5"]
+tests = ["pytest"]
+type-check = ["mypy>=0.990", "pydantic>=1.10"]
+
+[tool.setuptools.dynamic]
+version = {attr = "job_stats.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+klaymm = ["py.typed"]
+
+[tool.mypy]
+warn_redundant_casts = true
+check_untyped_defs = true
+allow_redefinition = true
+warn_unreachable = true
+plugins = [
+  "pydantic.mypy",
+]
+
+[[tool.mypy.overrides]]
+module = []
+ignore_missing_imports = true
